@@ -21,13 +21,13 @@
   console.log("Second message, after 2 seconds");
   myFunction2()
    await sleep(2000); // Wait for 2 seconds
+   alert("done")
   }
 function myFunction() {
   var link = document.createElement("a")
   link.href = "https://earth.google.com/web/@36.07119375,-104.41923803,-788.35814333a,13861194.99732971d,35y,359.98051136h,0t,0r/data=CgRCAggBMikKJwolCiExY0JNTkllMkxDaVZZRi10YUlYYmVFUTd5M2F2dHZ6WUcgAToDCgEwQgIIAEoICOKwyuAFEAE"
   link.target = "_blank"
   link.click()
-  myFunction2()
 }
   function myFunction2() {
   var link = document.createElement("a")
