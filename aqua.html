@@ -12,21 +12,31 @@
 <h1>Aqua Earth</h1>
 <p>updated: 05/13/2025</p>
    <br>
-  <button onclick="myFunction()">1) Click to Open AASI Installations on Google Earth</button>
-    <br><br>
-  <button onclick="myFunction2()">2) Once Google Earth is Open. Click Here to Show United States View of AASI Installations</button>
+  <button onclick="Go()">Click here to Open AASI Installations on Google Earth</button>
 <script>
+  async function Go(){
+ console.log("First message");
+ myFunction()
+  await sleep(2000); // Wait for 2 seconds
+  console.log("Second message, after 2 seconds");
+  myFunction2()
+   await sleep(2000); // Wait for 2 seconds
+  }
 function myFunction() {
   var link = document.createElement("a")
   link.href = "https://earth.google.com/web/@36.07119375,-104.41923803,-788.35814333a,13861194.99732971d,35y,359.98051136h,0t,0r/data=CgRCAggBMikKJwolCiExY0JNTkllMkxDaVZZRi10YUlYYmVFUTd5M2F2dHZ6WUcgAToDCgEwQgIIAEoICOKwyuAFEAE"
   link.target = "_blank"
   link.click()
+  myFunction2()
 }
   function myFunction2() {
   var link = document.createElement("a")
   link.href = "https://earth.google.com/web/@36.07119375,-104.41923803,-788.35814333a,13861194.99732971d,35y,359.98051136h,0t,0r/data=CgRCAggBMikKJwolCiExY0JNTkllMkxDaVZZRi10YUlYYmVFUTd5M2F2dHZ6WUcgAToDCgEwQgIIAEoICOKwyuAFEAE"
   link.target = "_blank"
   link.click()
+}
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 </script>
 </body>
