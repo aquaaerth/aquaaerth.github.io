@@ -11,7 +11,7 @@
 </head>
 <body>
   <h2>Aqua Earth</h2>
-  <div>
+  <div id="loginarea">
     <input type="email" id="email" placeholder="Email" />
     <input type="password" id="password" placeholder="Password" />
     <button onclick="login()">Login</button>
@@ -57,11 +57,13 @@
 
     function logout() {
       auth.signOut();
+        document.getElementById('loginarea').style.display = 'block';
     }
 
     auth.onAuthStateChanged(user => {
       if (user) {
         document.getElementById('protectedContent').style.display = 'block';
+        document.getElementById('loginarea').style.display = 'none';
       } else {
         document.getElementById('protectedContent').style.display = 'none';
       }
