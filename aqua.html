@@ -1,19 +1,73 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="description" content="Aqua Earth"">
-  <meta name="keywords" content="Aqua Earth">
-  <meta name="author" content="Chuck Konkol">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
- 
+  <title>Protected Folder</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+  <style>
+    body { font-family: Arial; }
+    #protectedContent { display: none; margin-top: 20px; }
+  </style>
 </head>
 <body>
-  <img src="https://aquavisitorsystem.github.io/aqua.png" width="250px"><br>
-<h1>Aqua Earth</h1>
-<p>updated: 05/19/2025</p>
-   <br>
-  <button onclick="Go()">Click here to Open AASI Installations on Google Earth</button><br><br>
-<script src="aquaaerth.js"></script>
+  <h2>Login to Access Folder</h2>
+  <div>
+    <input type="email" id="email" placeholder="Email" />
+    <input type="password" id="password" placeholder="Password" />
+    <button onclick="login()">Login</button>
+    <button onclick="signup()">Sign Up</button>
+  </div>
+
+  <div id="protectedContent">
+    <h3>🔒 Protected Folder</h3>
+    <p>Here are your secret files!</p>
+    <ul>
+      <li><a href="files/file1.pdf" target="_blank">File 1</a></li>
+      <li><a href="files/file2.pdf" target="_blank">File 2</a></li>
+    </ul>
+    <button onclick="logout()">Logout</button>
+  </div>
+
+  <script>
+    // 🔧 Your Firebase Config
+
+    const firebaseConfig = {
+  apiKey: "AIzaSyASkzRh3RKKWV1TZyHgVK3vC8-N9JknW_w",
+  authDomain: "aquaearth-27417.firebaseapp.com",
+  projectId: "aquaearth-27417",
+  storageBucket: "aquaearth-27417.firebasestorage.app",
+  messagingSenderId: "1057475890763",
+  appId: "1:1057475890763:web:9a5fb7dae9a7cf573c47ce"
+};
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    function login() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      auth.signInWithEmailAndPassword(email, password)
+        .catch(err => alert(err.message));
+    }
+
+    function signup() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      auth.createUserWithEmailAndPassword(email, password)
+        .catch(err => alert(err.message));
+    }
+
+    function logout() {
+      auth.signOut();
+    }
+
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        document.getElementById('protectedContent').style.display = 'block';
+      } else {
+        document.getElementById('protectedContent').style.display = 'none';
+      }
+    });
+  </script>
 </body>
 </html>
