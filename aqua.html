@@ -12,7 +12,8 @@
 <h1>Aqua Earth</h1>
 <p>updated: 05/13/2025</p>
    <br>
-  <button onclick="Go()">Click here to Open AASI Installations on Google Earth</button>
+  <button onclick="InitLoad()">1) Click here to Open AASI Installations on Google Earth</button>
+  <button onclick="USLoad()">2) Click here to Open United States view on Google Earth (Optional)</button>
 <script>
   async function Go(){
  console.log("First message");
@@ -21,13 +22,13 @@
   console.log("Second message, after 2 seconds");
   myFunction()
   }
-function myFunction() {
+function InitLoad() {
   var link = document.createElement("a")
   link.href = "https://earth.google.com/web/@36.07119375,-104.41923803,-788.35814333a,13861194.99732971d,35y,359.98051136h,0t,0r/data=CgRCAggBMikKJwolCiExY0JNTkllMkxDaVZZRi10YUlYYmVFUTd5M2F2dHZ6WUcgAToDCgEwQgIIAEoICOKwyuAFEAE"
   link.target = "_blank"
   link.click()
 }
-  function myFunction2() {
+  function USLoad() {
   var link = document.createElement("a")
   link.href = "https://earth.google.com/web/@36.07119375,-104.41923803,-788.35814333a,13861194.99732971d,35y,359.98051136h,0t,0r/data=CgRCAggBMikKJwolCiExY0JNTkllMkxDaVZZRi10YUlYYmVFUTd5M2F2dHZ6WUcgAToDCgEwQgIIAEoICOKwyuAFEAE"
   link.target = "_blank"
