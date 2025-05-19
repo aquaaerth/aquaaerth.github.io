@@ -12,14 +12,15 @@
 <h1>Aqua Earth</h1>
 <p>updated: 05/19/2025</p>
    <br>
-  <button onclick="InitLoad()">Click here to Open AASI Installations on Google Earth</button><br><br>
+  <button onclick="Go()">Click here to Open AASI Installations on Google Earth</button><br><br>
 <script>
   async function Go(){
- console.log("First message");
- myFunction()
-  await sleep(5000); // Wait for 2 seconds
-  console.log("Second message, after 2 seconds");
-  myFunction()
+var ok = confirm("By clicking 'OK', I agree not to share this program or any of its files with anyone outside of Aqua-Aerobic Systems, Inc.");
+    if (ok== true){
+        InitLoad();
+    }else{
+        alert("Loading Aqua-Earth has been cancelled!");
+    }
   }
 function InitLoad() {
   var link = document.createElement("a")
