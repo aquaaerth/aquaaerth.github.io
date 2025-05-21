@@ -60,7 +60,12 @@
             // Create a URL for the Blob
            const url = URL.createObjectURL(blob);
              // Open the URL in a new window
-            window.open(url, '_blank');
+
+            var link = document.createElement("a")
+  link.href = url
+  link.target = "_blank"
+  link.click()
+           // window.open(url, '_blank');
           } else {
             alert("Incorrect access code.");
           }
