@@ -73,12 +73,15 @@ const viewport = document.querySelector('meta[name="viewport"]');
  // link.click()
            // window.open(url, '_blank');
           } else {
+              viewport.content = "width=device-width, initial-scale=1.0"; // Set initial-scale to 1.0
             alert("Incorrect access code.");
           }
         } else {
+            viewport.content = "width=device-width, initial-scale=1.0"; // Set initial-scale to 1.0
           alert("User not found.");
         }
       } catch (err) {
+          viewport.content = "width=device-width, initial-scale=1.0"; // Set initial-scale to 1.0
         console.error("Login error:", err);
         alert("Something went wrong.");
       }
