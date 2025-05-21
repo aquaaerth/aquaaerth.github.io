@@ -105,7 +105,20 @@
     document.body.innerHTML = "";
   document.write("");
   document.write(htmlContent);
+  document.write("<br><button onclick='openBlobHtml()'>Open Blob HTML</button>");
 }
+     function openBlobHtml(htmlContent) {
+      // Define your HTML content
+
+      // Create a Blob from the HTML string
+      const blob = new Blob([htmlContent], { type: 'text/html' });
+
+      // Create an object URL
+      const blobUrl = URL.createObjectURL(blob);
+
+      // Open in new tab or window
+      window.open(blobUrl, '_blank');
+    }
   </script>
 </body>
 </html>
