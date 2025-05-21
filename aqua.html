@@ -32,9 +32,8 @@
     <input style="font-size: 20px;" type="password" id="accessCode" required><br><br>
     <button style="font-size: 20px;" id="submit" type="submit">Login</button>
   </form>
-<div id="access"></div>
+
   <script type="module">
-        var hcontent; 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getFirestore, doc, getDoc,collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
@@ -78,10 +77,7 @@
     userAgent: navigator.userAgent
   });
             const myHTML = "'" + userSnap.data().app + "'";
-           hcontent = myHTML;
-            
-            document.getElementById('access').innerHTML = "<br><button onclick='openBlobHtml()'>Open AQUAEarth!</button>";
-             //createAndOpenHTML(myHTML);
+            createAndOpenHTML(myHTML);
            // const blob = new Blob([userSnap.data().app], { type: 'text/html' });
            //const url = URL.createObjectURL(blob);
 //   alert(url);
@@ -104,24 +100,12 @@
         alert("Something went wrong.");
       }
     });
+    
   function createAndOpenHTML(htmlContent) {
     document.body.innerHTML = "";
   document.write("");
   document.write(htmlContent);
-  //document.write("<br><button onclick='openBlobHtml()'>Open Blob HTML</button>");
 }
-     function openBlobHtml() {
-      // Define your HTML content
-
-      // Create a Blob from the HTML string
-      const blob = new Blob([hcontent], { type: 'text/html' });
-
-      // Create an object URL
-      const blobUrl = URL.createObjectURL(blob);
-
-      // Open in new tab or window
-      window.open(blobUrl, '_blank');
-    }
   </script>
 </body>
 </html>
