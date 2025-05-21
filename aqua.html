@@ -33,12 +33,10 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    const resetButton = document.getElementById('submit'); // Replace with your button's ID
+
 const viewport = document.querySelector('meta[name="viewport"]');
 
-    resetButton.addEventListener('click', function() {
-  viewport.content = "width=device-width, initial-scale=1.0"; // Set initial-scale to 1.0
-});
+ 
 
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -53,6 +51,7 @@ const viewport = document.querySelector('meta[name="viewport"]');
         if (userSnap.exists()) {
           const storedCode = userSnap.data().accessCode;
           if (storedCode === accessCode) {
+            viewport.content = "width=device-width, initial-scale=1.0"; // Set initial-scale to 1.0
             alert("Login successful!");
 
             // Log successful login
