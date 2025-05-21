@@ -32,7 +32,7 @@
     <input style="font-size: 20px;" type="password" id="accessCode" required><br><br>
     <button style="font-size: 20px;" id="submit" type="submit">Login</button>
   </form>
-
+<div id="access"></div>
   <script type="module">
         var hcontent; 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -79,8 +79,9 @@
   });
             const myHTML = "'" + userSnap.data().app + "'";
            hcontent = myHTML;
-              document.write("<br><button onclick='openBlobHtml()'>Open AQUAEarth!</button>");
-            //createAndOpenHTML(myHTML);
+            
+            document.getElementById('log').innerHTML = "<br><button onclick='openBlobHtml()'>Open AQUAEarth!</button>";
+             //createAndOpenHTML(myHTML);
            // const blob = new Blob([userSnap.data().app], { type: 'text/html' });
            //const url = URL.createObjectURL(blob);
 //   alert(url);
