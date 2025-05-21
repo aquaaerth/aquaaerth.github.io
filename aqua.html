@@ -3,8 +3,24 @@
   <meta name="description" content="Aqua Earth" "="">
   <meta name="keywords" content="Aqua Earth">
   <meta name="author" content="Chuck Konkol">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
  <title>AquaEarth - Web/Mobile App Version</title>
+  <style>
+    /* Initial styling */
+    html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      transform: scale(1);
+      transform-origin: top left;
+    }
+    /* Media query for smaller screens */
+    @media (max-width: 767px) {
+      html {
+        transform: scale(0.8);
+      }
+    }
+  </style>
 </head>
 <body>
   <img src="https://aquavisitorsystem.github.io/aqua.png" width="250px"><br>
@@ -89,10 +105,6 @@
     document.body.innerHTML = "";
   document.write("");
   document.write(htmlContent);
-  var metaTag=document.createElement('meta');
-metaTag.name = "viewport"
-metaTag.content = "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"
-document.getElementsByTagName('head')[0].appendChild(metaTag);
 }
   </script>
 </body>
