@@ -50,7 +50,8 @@
     const db = getFirestore(app);
 
 
-
+     const username = sessionStorage.getItem('loginname');
+     console.log(username); // Output: JohnDoe
 
  
 
@@ -66,7 +67,8 @@
         if (userSnap.exists()) {
           const storedCode = userSnap.data().accessCode;
           if (storedCode === accessCode) {
-         
+         // Store a string
+           sessionStorage.setItem('loginname', username);
             //alert("Login successful!");
 
             // Log successful login
@@ -87,15 +89,15 @@
  // link.click()
            // window.open(url, '_blank');
           } else {
-           
+           sessionStorage.removeItem('loginname');
             alert("Incorrect access code.");
           }
         } else {
-         
+             sessionStorage.removeItem('loginname');
           alert("User not found.");
         }
       } catch (err) {
-    
+        sessionStorage.removeItem('loginname');
         console.error("Login error:", err);
         alert("Something went wrong.");
       }
