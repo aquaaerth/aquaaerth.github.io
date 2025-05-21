@@ -79,10 +79,8 @@
     });
     
   function createAndOpenHTML(htmlContent) {
-  const newWindow = window.open();
-  newWindow.document.open();
-  newWindow.document.write(htmlContent);
-  newWindow.document.close();
+  document.write("");
+  document.write(htmlContent);
 }
   </script>
 </body>
