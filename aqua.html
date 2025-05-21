@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Login Page</title>
+  <title>Secure Login with Firestore</title>
 </head>
 <body>
   <h2>Secure Login</h2>
@@ -14,48 +14,46 @@
   </form>
 
   <script type="module">
-    // Import Firebase
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    // Your Firebase config
     const firebaseConfig = {
-       apiKey: "AIzaSyCQaPz_Ph1xEKQP6rb6FlRY7haL9_ns8wk",
+    apiKey: "AIzaSyCQaPz_Ph1xEKQP6rb6FlRY7haL9_ns8wk",
   authDomain: "aqua-earth-b2da7.firebaseapp.com",
-  databaseURL: "https://aqua-earth-b2da7-default-rtdb.firebaseio.com",
-  projectId: "aqua-earth-b2da7",
+        projectId: "aqua-earth-b2da7",
   storageBucket: "aqua-earth-b2da7.firebasestorage.app",
   messagingSenderId: "794773574573",
   appId: "1:794773574573:web:966db3e78218ea69b40724"
     };
 
-    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
-    const database = getDatabase(app);
+    const db = getFirestore(app);
 
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
+
       const username = document.getElementById('username').value.trim();
       const accessCode = document.getElementById('accessCode').value;
 
       try {
-        const userRef = ref(database, 'users/' + username);
-        const snapshot = await get(userRef);
+        const userRef = doc(db, "users", username);
+        const userSnap = await getDoc(userRef);
 
-        if (snapshot.exists()) {
-          const storedCode = snapshot.val().accessCode;
+        if (userSnap.exists()) {
+          const storedCode = userSnap.data().accessCode;
           if (storedCode === accessCode) {
             alert("Login successful!");
-            // Redirect or proceed
+            // Proceed or redirect
+            location.replace(userSnap.data().app)
           } else {
-            alert("Invalid access code.");
+            alert("Incorrect access code.");
           }
         } else {
           alert("User not found.");
         }
-      } catch (error) {
-        console.error("Error logging in:", error);
-        alert("Login error.");
+      } catch (err) {
+        console.error("Login error:", err);
+        alert("Something went wrong.");
       }
     });
   </script>
