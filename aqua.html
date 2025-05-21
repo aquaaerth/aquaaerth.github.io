@@ -34,7 +34,7 @@
     const db = getFirestore(app);
 
 
-const viewport = document.querySelector('meta[name="viewport"]');
+
 
  
 
@@ -90,6 +90,8 @@ const viewport = document.querySelector('meta[name="viewport"]');
     document.body.innerHTML = "";
   document.write("");
   document.write(htmlContent);
+  const viewport = document.querySelector('meta[name="viewport"]');
+viewport.style.transform = 'scale(1.0)';
 }
   </script>
 </body>
