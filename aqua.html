@@ -67,7 +67,7 @@
           const storedCode = userSnap.data().accessCode;
           if (storedCode === accessCode) {
          
-            alert("Login successful!");
+            //alert("Login successful!");
 
             // Log successful login
         await addDoc(collection(db, "login_logs"), {
