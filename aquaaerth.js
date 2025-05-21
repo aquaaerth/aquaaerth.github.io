@@ -1,5 +1,5 @@
   async function Go(){
-var ok = confirm("By clicking 'OK', I agree not to share this program or any of its files with anyone outside of Aqua-Aerobic Systems, Inc.");
+var ok = confirm("By clicking 'OK', you agree not to share this program or any of its files with anyone outside of Aqua-Aerobic Systems, Inc.");
     if (ok== true){
         InitLoad();
     }else{
