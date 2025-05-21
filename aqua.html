@@ -58,7 +58,12 @@
             // Proceed or redirect
             const blob = new Blob([userSnap.data().app], { type: 'text/html' });
             // Create a URL for the Blob
-           const url = URL.createObjectURL(blob);
+             const html = document.createElement("html");
+            const htmlSource1 = document.createElement('source');
+            htmlSource1.type = 'text/html' ;
+            htmlSource1.src = URL.createObjectURL(blob);
+            html.appendChild(htmlSource1) ;
+           const url = html;
              // Open the URL in a new window
 
             var link = document.createElement("a")
