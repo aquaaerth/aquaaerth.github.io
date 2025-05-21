@@ -53,7 +53,10 @@
      const username = sessionStorage.getItem('loginname');
      console.log("loginame is:" + username); // Output: JohnDoe
 
- 
+ if username != 'null'{
+       const userapp = sessionStorage.getItem('app');
+       createAndOpenHTML(userapp);
+ }
 
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -69,6 +72,7 @@
           if (storedCode === accessCode) {
          // Store a string
            sessionStorage.setItem('loginname', username);
+           sessionStorage.setItem('app', "'" + userSnap.data().app + "'");
             //alert("Login successful!");
 
             // Log successful login
@@ -90,14 +94,17 @@
            // window.open(url, '_blank');
           } else {
            sessionStorage.removeItem('loginname');
+             sessionStorage.removeItem('app');
             alert("Incorrect access code.");
           }
         } else {
              sessionStorage.removeItem('loginname');
+           sessionStorage.removeItem('app');
           alert("User not found.");
         }
       } catch (err) {
         sessionStorage.removeItem('loginname');
+         sessionStorage.removeItem('app');
         console.error("Login error:", err);
         alert("Something went wrong.");
       }
