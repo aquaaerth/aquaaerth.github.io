@@ -50,13 +50,9 @@
     const db = getFirestore(app);
 
 
-     const username = sessionStorage.getItem('loginname');
-     console.log("loginame is:" + username); // Output: JohnDoe
 
- if (username != null) {
-       const userapp = sessionStorage.getItem('app');
-       createAndOpenHTML(userapp);
- }else{
+
+ 
 
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -70,9 +66,7 @@
         if (userSnap.exists()) {
           const storedCode = userSnap.data().accessCode;
           if (storedCode === accessCode) {
-         // Store a string
-           sessionStorage.setItem('loginname', username);
-           sessionStorage.setItem('app', "'" + userSnap.data().app + "'");
+         
             //alert("Login successful!");
 
             // Log successful login
@@ -93,23 +87,20 @@
  // link.click()
            // window.open(url, '_blank');
           } else {
-           sessionStorage.removeItem('loginname');
-             sessionStorage.removeItem('app');
+           
             alert("Incorrect access code.");
           }
         } else {
-             sessionStorage.removeItem('loginname');
-           sessionStorage.removeItem('app');
+         
           alert("User not found.");
         }
       } catch (err) {
-        sessionStorage.removeItem('loginname');
-         sessionStorage.removeItem('app');
+    
         console.error("Login error:", err);
         alert("Something went wrong.");
       }
     });
- }   
+    
   function createAndOpenHTML(htmlContent) {
     document.body.innerHTML = "";
   document.write("");
