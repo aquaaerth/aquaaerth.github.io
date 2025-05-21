@@ -44,7 +44,7 @@
           if (storedCode === accessCode) {
             alert("Login successful!");
             // Proceed or redirect
-            const blob = new Blob(userSnap.data().app, { type: 'text/html' });
+            const blob = new Blob([userSnap.data().app], { type: 'text/html' });
             // Create a URL for the Blob
            const url = URL.createObjectURL(blob);
              // Open the URL in a new window
