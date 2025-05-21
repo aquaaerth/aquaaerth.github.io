@@ -79,7 +79,8 @@
   });
             const myHTML = "'" + userSnap.data().app + "'";
            hcontent = myHTML;
-            createAndOpenHTML(myHTML);
+              document.write("<br><button onclick='openBlobHtml()'>Open AQUAEarth!</button>");
+            //createAndOpenHTML(myHTML);
            // const blob = new Blob([userSnap.data().app], { type: 'text/html' });
            //const url = URL.createObjectURL(blob);
 //   alert(url);
@@ -106,7 +107,7 @@
     document.body.innerHTML = "";
   document.write("");
   document.write(htmlContent);
-  document.write("<br><button onclick='openBlobHtml()'>Open Blob HTML</button>");
+  //document.write("<br><button onclick='openBlobHtml()'>Open Blob HTML</button>");
 }
      function openBlobHtml() {
       // Define your HTML content
