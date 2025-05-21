@@ -40,7 +40,6 @@ const viewport = document.querySelector('meta[name="viewport"]');
 
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-       viewport.content = "width=device-width, initial-scale=1.0"; // Set initial-scale to 1.0
       const username = document.getElementById('username').value.trim();
       const accessCode = document.getElementById('accessCode').value;
 
@@ -63,7 +62,7 @@ const viewport = document.querySelector('meta[name="viewport"]');
   });
             const myHTML = "'" + userSnap.data().app + "'";
             createAndOpenHTML(myHTML);
-      
+            viewport.content = "width=device-width, initial-scale=1.0"; // Set initial-scale to 1.0
            // const blob = new Blob([userSnap.data().app], { type: 'text/html' });
            //const url = URL.createObjectURL(blob);
 //   alert(url);
