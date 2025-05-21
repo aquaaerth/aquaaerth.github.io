@@ -55,16 +55,15 @@
     status: "success accessing AquaEarth page",
     userAgent: navigator.userAgent
   });
-            // Proceed or redirect
-            const blob = new Blob([userSnap.data().app], { type: 'text/html' });
-            // Create a URL for the Blob
-           const url = URL.createObjectURL(blob);
-             // Open the URL in a new window
-   alert(url);
-            var link = document.createElement("a")
-  link.href = url
-  link.target = "_blank"
-  link.click()
+            openHtmlInNewTab(userSnap.data().app);
+      
+           // const blob = new Blob([userSnap.data().app], { type: 'text/html' });
+           //const url = URL.createObjectURL(blob);
+//   alert(url);
+   //var link = document.createElement("a")
+  //link.href = url
+ // link.target = "_blank"
+ // link.click()
            // window.open(url, '_blank');
           } else {
             alert("Incorrect access code.");
@@ -77,6 +76,19 @@
         alert("Something went wrong.");
       }
     });
+    
+    function openHtmlInNewTab(html) {
+  let a = document.createElement("a");
+  a.setAttribute(
+    "href",
+    "data:text/html;charset=utf-8," + encodeURIComponent(html)
+  );
+  a.setAttribute("target", "_blank");
+  a.style.display = "none";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
   </script>
 </body>
 </html>
