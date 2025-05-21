@@ -15,7 +15,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc,collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
     apiKey: "AIzaSyCQaPz_Ph1xEKQP6rb6FlRY7haL9_ns8wk",
@@ -43,6 +43,14 @@
           const storedCode = userSnap.data().accessCode;
           if (storedCode === accessCode) {
             alert("Login successful!");
+
+            // Log successful login
+        await addDoc(collection(db, "login_logs"), {
+    username: username,
+    timestamp: serverTimestamp(),
+    status: "success",
+    userAgent: navigator.userAgent
+  });
             // Proceed or redirect
             const blob = new Blob([userSnap.data().app], { type: 'text/html' });
             // Create a URL for the Blob
