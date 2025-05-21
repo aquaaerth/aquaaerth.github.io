@@ -8,7 +8,7 @@ var ok = confirm("By clicking 'OK', I agree not to share this program or any of 
   }
 function InitLoad() {
   var link = document.createElement("a")
-  link.href = "https://earth.google.com/web/@34.0203263,-87.85906616,-505.00590501a,22252259.66572523d,35y,0h,0t,0r/data=CgRCAggBMikKJwolCiExY0JNTkllMkxDaVZZRi10YUlYYmVFUTd5M2F2dHZ6WUcgAUICCABKCAjaxuGHBxAB"
+  link.href = "https://earth.google.com/web/@36.6968476,-102.20716007,-2293.42673403a,12252139.42289114d,35y,0.07477014h,0t,0r/data=CgRCAggBMikKJwolCiExY0JNTkllMkxDaVZZRi10YUlYYmVFUTd5M2F2dHZ6WUcgAToDCgEwQgIIAEoHCNPtlUYQAQ"
   link.target = "_blank"
   link.click()
 }
