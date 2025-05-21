@@ -56,7 +56,7 @@
  if (username != null) {
        const userapp = sessionStorage.getItem('app');
        createAndOpenHTML(userapp);
- }
+ }else{
 
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -109,7 +109,7 @@
         alert("Something went wrong.");
       }
     });
-    
+ }   
   function createAndOpenHTML(htmlContent) {
     document.body.innerHTML = "";
   document.write("");
