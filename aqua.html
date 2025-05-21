@@ -40,7 +40,7 @@ const viewport = document.querySelector('meta[name="viewport"]');
 
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-
+       viewport.content = "width=device-width, initial-scale=1.0"; // Set initial-scale to 1.0
       const username = document.getElementById('username').value.trim();
       const accessCode = document.getElementById('accessCode').value;
 
@@ -51,7 +51,7 @@ const viewport = document.querySelector('meta[name="viewport"]');
         if (userSnap.exists()) {
           const storedCode = userSnap.data().accessCode;
           if (storedCode === accessCode) {
-            viewport.content = "width=device-width, initial-scale=1.0"; // Set initial-scale to 1.0
+         
             alert("Login successful!");
 
             // Log successful login
@@ -73,15 +73,15 @@ const viewport = document.querySelector('meta[name="viewport"]');
  // link.click()
            // window.open(url, '_blank');
           } else {
-              viewport.content = "width=device-width, initial-scale=1.0"; // Set initial-scale to 1.0
+           
             alert("Incorrect access code.");
           }
         } else {
-            viewport.content = "width=device-width, initial-scale=1.0"; // Set initial-scale to 1.0
+         
           alert("User not found.");
         }
       } catch (err) {
-          viewport.content = "width=device-width, initial-scale=1.0"; // Set initial-scale to 1.0
+    
         console.error("Login error:", err);
         alert("Something went wrong.");
       }
