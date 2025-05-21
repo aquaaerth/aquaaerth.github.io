@@ -55,7 +55,7 @@
     status: "success accessing AquaEarth page",
     userAgent: navigator.userAgent
   });
-            const myHTML = ' + userSnap.data().app + ';
+            const myHTML = "'" + userSnap.data().app + "'";
             createAndOpenHTML(myHTML);
       
            // const blob = new Blob([userSnap.data().app], { type: 'text/html' });
