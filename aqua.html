@@ -89,8 +89,8 @@
     document.body.innerHTML = "";
   document.write("");
   document.write(htmlContent);
-  viewport = document.querySelector("meta[name=viewport]");
-viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0');
+  const viewports = document.querySelector("meta[name=viewport]");
+viewports.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0');
 }
   </script>
 </body>
