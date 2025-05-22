@@ -23,8 +23,7 @@
   </style>
 </head>
 <body>
-  
-  <img src="https://aquavisitorsystem.github.io/aqua.png" width="250px"><br>
+    <img src="https://aquavisitorsystem.github.io/aqua.png" width="250px"><br>
   <h1 style="font-size: 30px;">AquaEarth Secure Login</h1>
   <form id="loginForm">
     <label style="font-size: 20px;" for="username">Login:</label><br>
@@ -49,12 +48,6 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-
-
-
-
- 
-
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       var username = document.getElementById('username').value.trim();
@@ -67,11 +60,7 @@
         if (userSnap.exists()) {
           const storedCode = userSnap.data().accessCode;
           if (storedCode === accessCode) {
-         
-            //alert("Login successful!");
-
-            // Log successful login
-        await addDoc(collection(db, "login_logs"), {
+             await addDoc(collection(db, "login_logs"), {
     username: username,
     timestamp: serverTimestamp(),
     status: "success accessing AquaEarth page",
@@ -79,14 +68,7 @@
   });
             const myHTML = "'" + userSnap.data().app + "'";
             createAndOpenHTML(myHTML);
-           // const blob = new Blob([userSnap.data().app], { type: 'text/html' });
-           //const url = URL.createObjectURL(blob);
-//   alert(url);
-   //var link = document.createElement("a")
-  //link.href = url
- // link.target = "_blank"
- // link.click()
-           // window.open(url, '_blank');
+
           } else {
            
             alert("Incorrect access code.");
