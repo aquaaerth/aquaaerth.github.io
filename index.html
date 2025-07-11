@@ -21,6 +21,11 @@
       }
     }
   </style>
+    <!-- Firebase Modular SDK Scripts in HEAD -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  </script>
 </head>
 <body>
   <img src="https://aquavisitorsystem.github.io/aqua.png" width="250px"><br>
@@ -34,6 +39,7 @@
   </form>
 <br>
 * See Chuck Konkol to request access, ext. 4574
-  <script src="home.js"></script>
+  <!-- External JavaScript Module -->
+  <script type="module" src="home.js"></script>
 </body>
 </html>
