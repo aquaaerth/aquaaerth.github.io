@@ -2,7 +2,8 @@ async function Go() {
   var ok = confirm("By clicking 'OK', you agree not to share this program or any of its files with anyone outside of Aqua-Aerobic Systems, Inc.");
   if (ok == true) {
     if (isMobileDevice()) {
-      InitLoad();
+      <!-- InitLoad(); -->
+      openMetaRedirectPage(htmllink, 3);
     } else {
       openMetaRedirectPage(htmllink, 3);
     }
