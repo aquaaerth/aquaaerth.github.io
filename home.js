@@ -31,7 +31,11 @@
 
             // Log successful login
         // Create a custom ID for the document
-const docId = `${username}_${new Date().toISOString()}`;
+const now = new Date();
+const pad = (n) => n.toString().padStart(2, '0');
+const hhmm = `${pad(now.getHours())}${pad(now.getMinutes())}`;
+const id = `${mmddyy}_${hhmm}`;
+const docId = `${username}_${id}`;
 
 // Set the document with a specific ID
 await setDoc(doc(collection(db, "login_logs"), docId), {
