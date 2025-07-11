@@ -32,8 +32,9 @@
             // Log successful login
         // Create a custom ID for the document
 const now = new Date();
-const pad = (n) => n.toString().padStart(2, '0');
+const pad = (n) => n.toString().padStart(2, '0');   
 const hhmm = `${pad(now.getHours())}${pad(now.getMinutes())}`;
+const mmddyy = `${pad(now.getMonth() + 1)}${pad(now.getDate())}${now.getFullYear().toString().slice(-2)}`;
 const id = `${mmddyy}_${hhmm}`;
 const docId = `${username}_${id}`;
 
