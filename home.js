@@ -1,5 +1,5 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, doc, getDoc,collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, getDoc,collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
     apiKey: "AIzaSyCQaPz_Ph1xEKQP6rb6FlRY7haL9_ns8wk",
@@ -30,12 +30,22 @@
             //alert("Login successful!");
 
             // Log successful login
-        await addDoc(collection(db, "login_logs"), {
-    username: username,
-    timestamp: serverTimestamp(),
-    status: "success accessing AquaEarth page",
-    userAgent: navigator.userAgent
-  });
+        // Create a custom ID for the document
+const docId = `${username}_${new Date().toISOString()}`;
+
+// Set the document with a specific ID
+await setDoc(doc(collection(db, "login_logs"), docId), {
+  username: username,
+  timestamp: serverTimestamp(),
+  status: "success accessing AquaEarth page",
+  userAgent: navigator.userAgent
+});
+//await addDoc(collection(db, "login_logs"), {
+//    username: username,
+//    timestamp: serverTimestamp(),
+//    status: "success accessing AquaEarth page",
+//    userAgent: navigator.userAgent
+//  });
             const myHTML = "'" + userSnap.data().app + "'";
             createAndOpenHTML(myHTML);
           } else {       
