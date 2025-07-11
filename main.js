@@ -15,7 +15,7 @@ async function Go() {
 
 function InitLoad() {
   var link = document.createElement("a");
-  link.href = "https://earth.google.com/web/@36.6968476,-102.20716007,-2293.42673403a,12252139.42289114d,35y,0.07477014h,0t,0r/data=CgRCAggBMikKJwolCiExY0JNTkllMkxDaVZZRi10YUlYYmVFUTd5M2F2dHZ6WUcgAToDCgEwQgIIAEoHCNPtlUYQAQ";
+  link.href = window.GoogleEarthURL;
   link.target = "_blank";
   link.click();
 }
@@ -76,4 +76,4 @@ function isMobileDevice() {
   return /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 }
 
-const htmllink = "https://earth.google.com/web/@36.6968476,-102.20716007,-2293.42673403a,12252139.42289114d,35y,0.07477014h,0t,0r/data=CgRCAggBMikKJwolCiExY0JNTkllMkxDaVZZRi10YUlYYmVFUTd5M2F2dHZ6WUcgAToDCgEwQgIIAEoHCNPtlUYQAQ";
+const htmllink = window.GoogleEarthURL;
