@@ -43,8 +43,8 @@ function openMetaRedirectPage(redirectUrl, delaySeconds = 3) {
       </style>
     </head>
     <body>
-      <h1>🔄 Redirecting to AQUAEarth AASI INstallations...</h1>
-      <p>You will be redirected to AquaEarth in ${delaySeconds} seconds.</p>
+      <h1>🔄 Loading AQUAEarth AASI Installations...</h1>
+      <p>You will be redirected in ${delaySeconds} seconds.</p>
       <p>If you are not redirected, <a href="${redirectUrl}">click here</a>.</p>
     </body>
     </html>
