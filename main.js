@@ -5,7 +5,8 @@ async function Go() {
       InitLoad();
       <!-- openMetaRedirectPage(htmllink, 3); -->
     } else {
-      openMetaRedirectPage(htmllink, 3);
+       InitLoad();
+      <!-- openMetaRedirectPage(htmllink, 3); -->
     }
   } else {
     alert("...Loading Aqua-Earth has been cancelled!");
