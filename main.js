@@ -47,7 +47,7 @@ function openMetaRedirectPage(redirectUrl, delaySeconds = 3) {
     <body>
       <img src="https://aquavisitorsystem.github.io/aqua.png"><br> 
       <h1>🔄 ...Loading AASI Installations, please wait!</h1>
-      <p>If you are not redirected, <a href="${redirectUrl}">click here</a>.</p>
+      <br><br><br><p style="font-size: 10px; color: grey;">If you are not redirected, <a href="${redirectUrl}">click here</a>.</p>
     </body>
     </html>
   `;
