@@ -1,4 +1,3 @@
-  <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getFirestore, doc, getDoc,collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
@@ -56,4 +55,3 @@
   document.write("");
   document.write(htmlContent);
 }
-  </script>
