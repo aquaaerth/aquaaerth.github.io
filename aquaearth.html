@@ -140,14 +140,15 @@
 
     // Viewer with ESRI World Imagery
     const viewer = new Cesium.Viewer("cesiumContainer", {
-      terrain: Cesium.Terrain.fromWorldTerrain(),
-      imageryProvider: new Cesium.UrlTemplateImageryProvider({
-        url: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-      }),
-      baseLayerPicker: false,
-      timeline: false,
-      animation: false,
-    });
+  terrainProvider: new Cesium.EllipsoidTerrainProvider(),
+  imageryProvider: new Cesium.UrlTemplateImageryProvider({
+    url: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+  }),
+  baseLayerPicker: false,
+  timeline: false,
+  animation: false,
+});
+
 
     // Globals
     let searchMatches = [];
@@ -315,3 +316,4 @@
   </script>
 </body>
 </html>
+
