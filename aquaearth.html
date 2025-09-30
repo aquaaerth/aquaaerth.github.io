@@ -156,9 +156,8 @@
 
           const allNodes = treeContainer.querySelectorAll("li, div.folder");
 
-          allNodes.forEach(el => {
-            el.classList.remove("hidden");
-          });
+          // Reset visibility
+          allNodes.forEach(el => el.classList.remove("hidden"));
 
           if (term === "") return; // nothing typed → show all
 
@@ -167,15 +166,15 @@
 
             if (el.classList.contains("folder")) {
               if (text.includes(term)) {
-                // ✅ Folder matches → keep it + keep all children visible
+                // ✅ Folder matches → expand and show everything inside
                 el.classList.add("expanded");
                 el.classList.remove("collapsed");
                 const descendants = el.querySelectorAll("li, div");
                 descendants.forEach(d => d.classList.remove("hidden"));
               } else {
-                // Non-matching folder gets hidden unless one of its children matches
+                // Non-matching folder → hide unless children match
                 let hasMatchingChild = false;
-                el.querySelectorAll("li, div").forEach(child => {
+                el.querySelectorAll("li.placemark, li.folder").forEach(child => {
                   if (child.textContent.toLowerCase().includes(term)) {
                     hasMatchingChild = true;
                   }
@@ -191,7 +190,7 @@
               if (!text.includes(term)) {
                 el.classList.add("hidden");
               } else {
-                // ✅ placemark matches → expand its parents
+                // ✅ Placemark matches → expand its parents
                 let parent = el.parentElement;
                 while (parent && parent !== treeContainer) {
                   if (parent.classList.contains("folder")) {
