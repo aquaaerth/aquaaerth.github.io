@@ -67,14 +67,16 @@
       animation: false
     });
 
-    // ✅ Default World Imagery is already applied by Cesium Viewer, no need to add buttons
+    // ✅ Set default view to continental United States
+    viewer.camera.setView({
+      destination: Cesium.Rectangle.fromDegrees(-125.0, 24.0, -66.0, 49.0) // W,S,E,N
+    });
 
     // ---- KMZ/KML Loading ----
     const kmlUrl = "AASI Installations.kmz"; // 🔹 Replace with your KMZ/KML path
     Cesium.KmlDataSource.load(kmlUrl, { camera: viewer.scene.camera, canvas: viewer.scene.canvas })
       .then(function(dataSource) {
         viewer.dataSources.add(dataSource);
-        viewer.zoomTo(dataSource);
 
         const allEntities = dataSource.entities.values;
         const treeContainer = document.getElementById("kmlTree");
@@ -127,12 +129,7 @@
         // Build tree ONLY from "My Places", but rename root
         const myRoot = document.createElement("div");
         myRoot.textContent = "AASI Installations";  // ✅ renamed root
-        myRoot.classList.add("folder", "collapsed");
-        myRoot.onclick = function(e) {
-          e.stopPropagation();
-          myRoot.classList.toggle("collapsed");
-          myRoot.classList.toggle("expanded");
-        };
+        myRoot.classList.add("folder", "expanded"); // ✅ start expanded
         treeContainer.appendChild(myRoot);
 
         buildTree(myPlaces._children, myRoot);
