@@ -112,30 +112,27 @@
       destination: Cesium.Rectangle.fromDegrees(-125.0, 24.0, -66.0, 49.0)
     });
 
-    // 🔹 Folder → Pin mapping
-    const pinBase = "https://cesium.com/downloads/cesiumjs/releases/1.119/Apps/SampleData/pin";
-    const folderIconMap = {
-      "Biological Installations": pinBase + "3.png", // green
-      "Alabama": pinBase + "7.png",                 // red
-      "Ashland WWTP AL": pinBase + "12.png"         // purple
-      // ➕ add more folders here
+    // 🔹 Define folder → color mapping
+    const folderColorMap = {
+      "Biological Installations": Cesium.Color.GREEN,
+      "Filter Installations": Cesium.Color.RED,
+      "Tours": Cesium.Color.PURPLE
+      // ➕ add more folder → color mappings here
     };
-    let rotatingPinIndex = 1;
+
+    const pinBuilder = new Cesium.PinBuilder();
 
     function getIconForEntity(entity) {
-      // Check ancestors for a mapped folder
+      // Walk up ancestors to find folder color
       let parent = entity.parent;
       while (parent) {
-        if (parent.name && folderIconMap[parent.name]) {
-          return folderIconMap[parent.name];
+        if (parent.name && folderColorMap[parent.name]) {
+          return pinBuilder.fromColor(folderColorMap[parent.name], 32).toDataURL();
         }
         parent = parent.parent;
       }
-
-      // If no folder match → fallback to rotating pins
-      const url = `${pinBase}${rotatingPinIndex}.png`;
-      rotatingPinIndex = (rotatingPinIndex % 16) + 1;
-      return url;
+      // fallback: blue
+      return pinBuilder.fromColor(Cesium.Color.BLUE, 32).toDataURL();
     }
 
     const kmlUrl = "AASI Installations.kmz"; // 🔹 Replace with your KMZ/KML path
@@ -143,7 +140,7 @@
       .then(function(dataSource) {
         viewer.dataSources.add(dataSource);
 
-        // 🔧 Replace broken Google icons with mapped ones
+        // 🔧 Replace broken Google icons with generated pins
         dataSource.entities.values.forEach(entity => {
           if (entity.billboard && entity.billboard.image && typeof entity.billboard.image.getValue === "function") {
             const imgVal = entity.billboard.image.getValue();
@@ -265,13 +262,14 @@
           });
         });
 
-        // ✅ Build legend
+        // ✅ Build legend dynamically
         const legendContainer = document.getElementById("legend");
         legendContainer.innerHTML = "<h4>Legend</h4>";
-        Object.keys(folderIconMap).forEach(folderName => {
+        Object.keys(folderColorMap).forEach(folderName => {
+          const pinUrl = pinBuilder.fromColor(folderColorMap[folderName], 24).toDataURL();
           const div = document.createElement("div");
           div.classList.add("legend-item");
-          div.innerHTML = `<img src="${folderIconMap[folderName]}"> ${folderName}`;
+          div.innerHTML = `<img src="${pinUrl}"> ${folderName}`;
           legendContainer.appendChild(div);
         });
       })
