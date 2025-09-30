@@ -12,16 +12,17 @@
       font-family: sans-serif;
     }
     #sidebar {
-      width: 250px;
+      width: 300px;
       height: 100%;
       float: left;
       background: #1e1e1e;
       color: #fff;
       padding: 10px;
+      overflow-y: auto;
       box-sizing: border-box;
     }
     #cesiumContainer {
-      width: calc(100% - 250px);
+      width: calc(100% - 300px);
       height: 100%;
       float: left;
     }
@@ -36,8 +37,20 @@
       cursor: pointer;
       border-radius: 4px;
     }
-    .layer-btn:hover {
-      background: #444;
+    .tree ul {
+      list-style: none;
+      padding-left: 20px;
+      margin: 4px 0;
+    }
+    .tree li {
+      margin: 2px 0;
+    }
+    .folder {
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .collapsed > ul {
+      display: none;
     }
   </style>
 </head>
@@ -47,14 +60,15 @@
     <button class="layer-btn" onclick="setWorldImagery()">🌍 World Imagery</button>
     <button class="layer-btn" onclick="setOSM()">🗺️ OpenStreetMap</button>
     <button class="layer-btn" onclick="setESRI()">🛰️ ESRI Satellite</button>
+
+    <h3>KMZ/KML Layers</h3>
+    <div class="tree" id="kmlTree">Loading KMZ structure...</div>
   </div>
   <div id="cesiumContainer"></div>
 
   <script>
-    // ✅ Set your Cesium ion token here
     Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3NmEwNjdiZi02Y2E3LTQwNzEtYWRkMy03MjU1MTU3YWZmNTciLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyNDUyMTN9.C_4ZYmFZ-ShXYbhckuorrIbc_OlB1pwsyuAAdmJK3Ww";
 
-    // Create viewer
     const viewer = new Cesium.Viewer("cesiumContainer", {
       baseLayerPicker: false,
       timeline: false,
@@ -63,14 +77,12 @@
 
     let activeLayer;
 
-    // Remove current layer before adding new one
+    // Imagery switching
     function switchLayer(newProviderPromise) {
       if (activeLayer) {
         viewer.imageryLayers.remove(activeLayer);
         activeLayer = undefined;
       }
-
-      // providerPromise may be sync or async
       if (newProviderPromise.then) {
         newProviderPromise.then(provider => {
           activeLayer = viewer.imageryLayers.addImageryProvider(provider);
@@ -79,24 +91,74 @@
         activeLayer = viewer.imageryLayers.addImageryProvider(newProviderPromise);
       }
     }
-
-    // ✅ Layer options
     function setWorldImagery() {
       switchLayer(Cesium.createWorldImageryAsync());
     }
-
     function setOSM() {
       switchLayer(new Cesium.OpenStreetMapImageryProvider());
     }
-
     function setESRI() {
       switchLayer(new Cesium.UrlTemplateImageryProvider({
         url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
       }));
     }
+    setWorldImagery(); // default
 
-    // Load default
-    setWorldImagery();
+    // ---- KMZ/KML Loading ----
+    const kmlUrl = "YOUR_FILE.kmz"; // 🔹 Replace with your KMZ/KML path
+    Cesium.KmlDataSource.load(kmlUrl, { camera: viewer.scene.camera, canvas: viewer.scene.canvas })
+      .then(function(dataSource) {
+        viewer.dataSources.add(dataSource);
+        viewer.zoomTo(dataSource);
+
+        const rootEntities = dataSource.entities.values;
+        const treeContainer = document.getElementById("kmlTree");
+        treeContainer.innerHTML = ""; // clear loading text
+
+        // Recursive tree builder
+        function buildTree(entities, parentEl) {
+          const ul = document.createElement("ul");
+          parentEl.appendChild(ul);
+
+          entities.forEach(entity => {
+            const li = document.createElement("li");
+
+            // Folder vs. placemark
+            if (entity._children && entity._children.length > 0) {
+              li.classList.add("folder");
+              li.textContent = entity.name || "Folder";
+
+              // Click to expand/collapse
+              li.onclick = function(e) {
+                e.stopPropagation();
+                li.classList.toggle("collapsed");
+              };
+
+              ul.appendChild(li);
+              buildTree(entity._children, li);
+            } else {
+              // Leaf node with checkbox
+              const label = document.createElement("label");
+              const checkbox = document.createElement("input");
+              checkbox.type = "checkbox";
+              checkbox.checked = entity.show;
+              checkbox.onchange = function() {
+                entity.show = this.checked;
+              };
+              label.appendChild(checkbox);
+              label.appendChild(document.createTextNode(" " + (entity.name || "Unnamed")));
+              li.appendChild(label);
+              ul.appendChild(li);
+            }
+          });
+        }
+
+        buildTree(rootEntities, treeContainer);
+      })
+      .catch(function(error) {
+        document.getElementById("kmlTree").textContent = "Error loading KMZ: " + error;
+        console.error(error);
+      });
   </script>
 </body>
 </html>
