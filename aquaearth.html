@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>AquaEarth KMZ Viewer - Cesium Maps Only</title>
+  <title>AquaEarth KMZ Viewer</title>
   <script src="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Cesium.js"></script>
   <link href="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
 
@@ -12,274 +12,91 @@
       font-family: sans-serif;
     }
     #sidebar {
-      width: 300px;
+      width: 250px;
       height: 100%;
       float: left;
       background: #1e1e1e;
-      color: #ffffff;
-      overflow-y: auto;
+      color: #fff;
       padding: 10px;
-      z-index: 9999;
-      transition: all 0.3s ease;
+      box-sizing: border-box;
     }
-    #sidebar.collapsed { width: 0; padding: 0; overflow: hidden; }
-    #sidebar h2, #sidebar h3 { margin-top: 10px; font-size: 16px; color: #ffd479; }
-    #searchBox, #resetBtn, #layerSelect {
-      width: 100%; padding: 6px; margin: 8px 0;
-      border-radius: 4px; border: none; font-size: 14px;
-    }
-    #resetBtn { background: #444; color: #fff; cursor: pointer; }
-    #resetBtn:hover { background: #666; }
-    #folderList, #locationList { list-style: none; padding-left: 0; }
-    #folderList li, #locationList li {
-      margin: 4px 0; padding: 4px 6px; cursor: pointer;
-      background: #333; border-radius: 4px;
-    }
-    #folderList li:hover, #locationList li:hover { background: #555; }
-    .active-match { background: #0078d7 !important; font-weight: bold; }
-    .folder-toggle { font-weight: bold; cursor: pointer; margin-right: 6px; color: #ffd479; }
     #cesiumContainer {
-      position: absolute; top: 0; left: 300px; right: 0; bottom: 0;
-      transition: all 0.3s ease;
+      width: calc(100% - 250px);
+      height: 100%;
+      float: left;
     }
-    #cesiumContainer.full { left: 0; }
-    #toggleSidebarBtn {
-      position: absolute; top: 10px; left: 310px; z-index: 10000;
-      background: rgba(30, 30, 30, 0.85); color: #fff; border: none;
-      border-radius: 6px; padding: 8px 12px; cursor: pointer; font-size: 18px;
+    .layer-btn {
+      display: block;
+      margin: 8px 0;
+      padding: 6px 10px;
+      background: #333;
+      border: 1px solid #555;
+      color: #fff;
+      text-align: left;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .layer-btn:hover {
+      background: #444;
     }
   </style>
 </head>
 <body>
   <div id="sidebar">
-    <h2>Locations</h2>
-    <input type="text" id="searchBox" placeholder="Search..." />
-    <button id="resetBtn">Reset Highlights</button>
-
-    <h3>Map Layers</h3>
-    <select id="layerSelect">
-      <option value="world">Cesium World Imagery</option>
-      <option value="bing">Cesium Bing Aerial</option>
-      <option value="none">None (Blank Globe)</option>
-    </select>
-
-    <h3>Folder Structure</h3>
-    <ul id="folderList"></ul>
-
-    <h3>All Placemarks</h3>
-    <ul id="locationList"></ul>
+    <h3>Imagery Layers</h3>
+    <button class="layer-btn" onclick="setWorldImagery()">🌍 World Imagery</button>
+    <button class="layer-btn" onclick="setOSM()">🗺️ OpenStreetMap</button>
+    <button class="layer-btn" onclick="setESRI()">🛰️ ESRI Satellite</button>
   </div>
-
   <div id="cesiumContainer"></div>
-  <button id="toggleSidebarBtn">✖</button>
 
   <script>
-    // --- CONFIG ---
-    Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3NmEwNjdiZi02Y2E3LTQwNzEtYWRkMy03MjU1MTU3YWZmNTciLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyNDUyMTN9.C_4ZYmFZ-ShXYbhckuorrIbc_OlB1pwsyuAAdmJK3Ww"; // 👈 replace with your Ion token
-    const DEFAULT_KMZ_URL = "https://aquaaerth.github.io/AASI%20Installations.kmz";
+    // ✅ Set your Cesium ion token here
+    Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3NmEwNjdiZi02Y2E3LTQwNzEtYWRkMy03MjU1MTU3YWZmNTciLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyNDUyMTN9.C_4ZYmFZ-ShXYbhckuorrIbc_OlB1pwsyuAAdmJK3Ww";
 
-    // Viewer setup
+    // Create viewer
     const viewer = new Cesium.Viewer("cesiumContainer", {
-      terrainProvider: new Cesium.EllipsoidTerrainProvider(),
       baseLayerPicker: false,
       timeline: false,
-      animation: false,
+      animation: false
     });
 
-    // Remove default Bing layer
-   Cesium.createWorldImageryAsync().then(function(provider) {
-  viewer.imageryLayers.addImageryProvider(provider);
-});
+    let activeLayer;
 
-
-    // Cesium imagery options
-    Cesium.createWorldImageryAsync().then(function (worldImagery) {
-  viewer.imageryLayers.addImageryProvider(worldImagery);
-});
-
-    const bingAerial = new Cesium.IonImageryProvider({ assetId: 2 }); // Bing Maps Aerial via Ion
-
-    // Start with World Imagery
-    let activeLayer = viewer.imageryLayers.addImageryProvider(worldImagery);
-
-    // Layer switcher
-    document.getElementById("layerSelect").addEventListener("change", function () {
-      if (activeLayer) viewer.imageryLayers.remove(activeLayer);
-      if (this.value === "world") {
-        activeLayer = viewer.imageryLayers.addImageryProvider(Cesium.createWorldImagery());
-      } else if (this.value === "bing") {
-        activeLayer = viewer.imageryLayers.addImageryProvider(bingAerial);
-      } else if (this.value === "none") {
-        activeLayer = null;
+    // Remove current layer before adding new one
+    function switchLayer(newProviderPromise) {
+      if (activeLayer) {
+        viewer.imageryLayers.remove(activeLayer);
+        activeLayer = undefined;
       }
-    });
 
-    // Globals
-    let searchMatches = [], currentMatchIndex = -1;
-    let lastHighlightedEntity = null, loadedDataSource = null;
-
-    // Highlight entity
-    function highlightEntity(entity) {
-      if (lastHighlightedEntity && lastHighlightedEntity.billboard) {
-        lastHighlightedEntity.billboard.scale = 1.0;
-        lastHighlightedEntity.billboard.color = Cesium.Color.WHITE;
-      }
-      if (entity && entity.billboard) {
-        entity.billboard.scale = 1.8;
-        entity.billboard.color = Cesium.Color.YELLOW;
-        lastHighlightedEntity = entity;
-      }
-    }
-
-    // Sidebar search
-    const searchBox = document.getElementById("searchBox");
-    searchBox.addEventListener("input", function () {
-      const filter = this.value.toLowerCase();
-      const items = document.querySelectorAll("#locationList li");
-      searchMatches = [];
-      currentMatchIndex = -1;
-      items.forEach(li => {
-        if (li.dataset.name.includes(filter)) {
-          li.style.display = "block";
-          searchMatches.push(li.dataset.entityId);
-        } else {
-          li.style.display = "none";
-        }
-      });
-      if (searchMatches.length > 0) {
-        currentMatchIndex = 0;
-        const entity = viewer.entities.getById(searchMatches[currentMatchIndex]);
-        if (entity) {
-          viewer.flyTo(entity);
-          highlightEntity(entity);
-        }
-      }
-    });
-
-    // Reset button
-    document.getElementById("resetBtn").addEventListener("click", function () {
-      searchBox.value = "";
-      const items = document.querySelectorAll("#locationList li");
-      items.forEach(li => li.style.display = "block");
-      if (lastHighlightedEntity && lastHighlightedEntity.billboard) {
-        lastHighlightedEntity.billboard.scale = 1.0;
-        lastHighlightedEntity.billboard.color = Cesium.Color.WHITE;
-        lastHighlightedEntity = null;
-      }
-      if (loadedDataSource) viewer.flyTo(loadedDataSource);
-    });
-
-    // Toggle sidebar
-    document.getElementById("toggleSidebarBtn").addEventListener("click", function () {
-      const sidebar = document.getElementById("sidebar");
-      const map = document.getElementById("cesiumContainer");
-      if (!sidebar.classList.contains("collapsed")) {
-        sidebar.classList.add("collapsed");
-        map.classList.add("full");
-        this.style.left = "10px";
-        this.textContent = "☰";
+      // providerPromise may be sync or async
+      if (newProviderPromise.then) {
+        newProviderPromise.then(provider => {
+          activeLayer = viewer.imageryLayers.addImageryProvider(provider);
+        });
       } else {
-        sidebar.classList.remove("collapsed");
-        map.classList.remove("full");
-        this.style.left = "310px";
-        this.textContent = "✖";
+        activeLayer = viewer.imageryLayers.addImageryProvider(newProviderPromise);
       }
-    });
-
-    // Populate flat list
-    function populateSidebar(entities) {
-      const list = document.getElementById("locationList");
-      list.innerHTML = "";
-      entities.forEach(entity => {
-        if (entity.name && entity.position) {
-          const carto = Cesium.Cartographic.fromCartesian(
-            entity.position.getValue(Cesium.JulianDate.now())
-          );
-          const lat = Cesium.Math.toDegrees(carto.latitude).toFixed(5);
-          const lon = Cesium.Math.toDegrees(carto.longitude).toFixed(5);
-          const li = document.createElement("li");
-          li.textContent = `${entity.name} (${lat}, ${lon})`;
-          li.dataset.name = entity.name.toLowerCase();
-          li.dataset.entityId = entity.id;
-          li.addEventListener("click", () => {
-            viewer.flyTo(entity);
-            highlightEntity(entity);
-          });
-          list.appendChild(li);
-        }
-      });
     }
 
-    // Folder tree builder
-    function buildFolderTree(entities, parentUl) {
-      entities.forEach(entity => {
-        const li = document.createElement("li");
-        const hasChildren = entity.entities && entity.entities.values.length > 0;
-
-        if (hasChildren) {
-          const toggle = document.createElement("span");
-          toggle.textContent = "➕";
-          toggle.className = "folder-toggle";
-          li.appendChild(toggle);
-
-          const span = document.createElement("span");
-          span.textContent = entity.name || "(unnamed folder)";
-          li.appendChild(span);
-
-          const ul = document.createElement("ul");
-          ul.style.display = "none";
-          li.appendChild(ul);
-
-          toggle.addEventListener("click", () => {
-            if (ul.style.display === "none") {
-              ul.style.display = "block";
-              toggle.textContent = "➖";
-            } else {
-              ul.style.display = "none";
-              toggle.textContent = "➕";
-            }
-          });
-
-          buildFolderTree(entity.entities.values, ul);
-        } else {
-          li.textContent = entity.name || "(unnamed)";
-          if (entity.position) {
-            li.addEventListener("click", () => {
-              viewer.flyTo(entity);
-              highlightEntity(entity);
-            });
-          }
-        }
-
-        parentUl.appendChild(li);
-      });
+    // ✅ Layer options
+    function setWorldImagery() {
+      switchLayer(Cesium.createWorldImageryAsync());
     }
 
-    // Load KMZ
-    function loadKmlKmz(sourceUrl) {
-      Cesium.KmlDataSource.load(sourceUrl, {
-        camera: viewer.scene.camera,
-        canvas: viewer.scene.canvas,
-        clampToGround: true
-      }).then(function (dataSource) {
-        loadedDataSource = dataSource;
-        viewer.dataSources.add(dataSource);
-        viewer.flyTo(dataSource);
-
-        // Build folder tree
-        const folderList = document.getElementById("folderList");
-        folderList.innerHTML = "";
-        buildFolderTree(dataSource.entities.values, folderList);
-
-        // Flat list
-        populateSidebar(dataSource.entities.values);
-      }).catch(err => console.error("Error loading KMZ/KML:", err));
+    function setOSM() {
+      switchLayer(new Cesium.OpenStreetMapImageryProvider());
     }
 
-    // Load default file
-    loadKmlKmz(DEFAULT_KMZ_URL);
+    function setESRI() {
+      switchLayer(new Cesium.UrlTemplateImageryProvider({
+        url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+      }));
+    }
+
+    // Load default
+    setWorldImagery();
   </script>
 </body>
 </html>
-
-
