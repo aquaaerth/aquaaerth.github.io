@@ -78,36 +78,43 @@
         const list = document.getElementById("locationList");
         list.innerHTML = "";
 
-        entities.forEach(entity => {
-          if (entity.name && entity.position) {
-            // --- Ensure valid icon ---
-            if (Cesium.defined(entity.billboard) && entity.billboard.image) {
-              let url = entity.billboard.image._value;
-              if (url && url.startsWith("http://maps.google.com")) {
-                // force HTTPS
-                url = url.replace("http://", "https://");
-                entity.billboard.image = url;
-              }
-              // fallback if missing or broken
-              if (!url || url.includes("track.png")) {
-                entity.billboard.image = DEFAULT_ICON;
-              }
-            }
+entities.forEach(entity => {
+  if (entity.name && entity.position) {
+    // --- Ensure valid icon ---
+    if (Cesium.defined(entity.billboard) && entity.billboard.image) {
+      let url = entity.billboard.image._value;
 
-            // --- Extract coordinates ---
-            const carto = Cesium.Cartographic.fromCartesian(
-              entity.position.getValue(Cesium.JulianDate.now())
-            );
-            const lat = Cesium.Math.toDegrees(carto.latitude).toFixed(5);
-            const lon = Cesium.Math.toDegrees(carto.longitude).toFixed(5);
+      // If url is a string, sanitize it
+      if (typeof url === "string") {
+        if (url.startsWith("http://maps.google.com")) {
+          // force HTTPS
+          url = url.replace("http://", "https://");
+          entity.billboard.image = url;
+        }
+        // if broken or missing file
+        if (url.includes("track.png")) {
+          entity.billboard.image = DEFAULT_ICON;
+        }
+      } else {
+        // Not a string → set fallback
+        entity.billboard.image = DEFAULT_ICON;
+      }
+    }
 
-            // --- Add to sidebar ---
-            const li = document.createElement("li");
-            li.textContent = `${entity.name} (${lat}, ${lon})`;
-            li.addEventListener("click", () => viewer.flyTo(entity));
-            list.appendChild(li);
-          }
-        });
+    // --- Extract coordinates ---
+    const carto = Cesium.Cartographic.fromCartesian(
+      entity.position.getValue(Cesium.JulianDate.now())
+    );
+    const lat = Cesium.Math.toDegrees(carto.latitude).toFixed(5);
+    const lon = Cesium.Math.toDegrees(carto.longitude).toFixed(5);
+
+    // --- Add to sidebar ---
+    const li = document.createElement("li");
+    li.textContent = `${entity.name} (${lat}, ${lon})`;
+    li.addEventListener("click", () => viewer.flyTo(entity));
+    list.appendChild(li);
+  }
+});
       }).catch(err => console.error("Error loading KMZ/KML:", err));
     }
 
@@ -116,3 +123,4 @@
   </script>
 </body>
 </html>
+
