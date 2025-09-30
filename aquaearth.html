@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Google Earth Web App - KMZ Loader</title>
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/CesiumUnminified/Cesium.js"></script>
+  <link href="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+
+  <style>
+    html, body, #cesiumContainer {
+      width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden;
+    }
+    #toolbar {
+      position: absolute;
+      top: 10px; left: 10px;
+      background: rgba(42, 42, 42, 0.85);
+      padding: 12px;
+      border-radius: 8px;
+      z-index: 100;
+      font-family: sans-serif;
+      color: white;
+    }
+    input[type="text"], input[type="file"], button {
+      margin-top: 6px;
+      display: block;
+      width: 260px;
+    }
+  </style>
+</head>
+<body>
+  <div id="cesiumContainer"></div>
+  <div id="toolbar">
+    <label>Load local KMZ/KML:</label>
+    <input type="file" id="kmzInput" accept=".kmz,.kml" />
+
+    <label>Load KMZ/KML from URL:</label>
+    <input type="text" id="urlInput" placeholder="https://example.com/map.kmz" />
+    <button id="loadUrlBtn">Load from URL</button>
+
+    <hr>
+    <button id="toggleTerrainBtn">Toggle Terrain</button>
+  </div>
+
+  <script>
+    // --- CONFIG: Set your default KMZ/KML URL here ---
+    const DEFAULT_KMZ_URL = "https://aquaaerth.github.io/AASI%20Installations.kmz";
+
+    let viewer;
+
+    try {
+      // Try loading with terrain
+      viewer = new Cesium.Viewer("cesiumContainer", {
+        terrainProvider: new Cesium.WorldTerrain(),
+        timeline: false,
+        animation: false,
+      });
+    } catch (e) {
+      console.warn("WorldTerrain not available, falling back to flat globe:", e);
+      // Fallback to flat earth
+      viewer = new Cesium.Viewer("cesiumContainer", {
+        terrainProvider: new Cesium.EllipsoidTerrainProvider(),
+        timeline: false,
+        animation: false,
+      });
+    }
+
+    // --- Function to load KMZ/KML ---
+    function loadKmlKmz(sourceUrl) {
+      Cesium.KmlDataSource.load(sourceUrl, {
+        camera: viewer.scene.camera,
+        canvas: viewer.scene.canvas,
+      }).then(function (dataSource) {
+        viewer.dataSources.add(dataSource);
+        viewer.flyTo(dataSource);
+      }).catch(err => console.error("Error loading KMZ/KML:", err));
+    }
+
+    // --- Auto-load default KMZ/KML ---
+    if (DEFAULT_KMZ_URL) {
+      loadKmlKmz(DEFAULT_KMZ_URL);
+    }
+
+    // --- Handle Local Upload ---
+    document.getElementById("kmzInput").addEventListener("change", function (event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const blob = new Blob([e.target.result], { type: file.type });
+        const url = URL.createObjectURL(blob);
+        loadKmlKmz(url);
+      };
+      reader.readAsArrayBuffer(file);
+    });
+
+    // --- Handle URL Input ---
+    document.getElementById("loadUrlBtn").addEventListener("click", function () {
+      const url = document.getElementById("urlInput").value.trim();
+      if (url) {
+        loadKmlKmz(url);
+      } else {
+        alert("Please enter a valid KMZ/KML URL");
+      }
+    });
+
+    // --- Toggle Terrain Button ---
+    document.getElementById("toggleTerrainBtn").addEventListener("click", function () {
+      if (viewer.terrainProvider instanceof Cesium.EllipsoidTerrainProvider) {
+        viewer.terrainProvider = new Cesium.WorldTerrain();
+        console.log("Switched to 3D World Terrain");
+      } else {
+        viewer.terrainProvider = new Cesium.EllipsoidTerrainProvider();
+        console.log("Switched to Flat Globe");
+      }
+    });
+  </script>
+</body>
+</html>
