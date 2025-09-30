@@ -65,12 +65,36 @@
     .hidden {
       display: none !important;
     }
+    /* 🔹 Legend */
+    #legend {
+      margin-top: 12px;
+      padding: 8px;
+      background: #2a2a2a;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+    #legend h4 {
+      margin: 0 0 6px;
+      font-size: 14px;
+      color: #ddd;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      margin: 4px 0;
+    }
+    .legend-item img {
+      width: 18px;
+      height: 18px;
+      margin-right: 6px;
+    }
   </style>
 </head>
 <body>
   <div id="sidebar">
     <input type="text" id="searchBox" placeholder="Search folders & placemarks...">
     <div class="tree" id="kmlTree">Loading KMZ structure...</div>
+    <div id="legend"></div>
   </div>
   <div id="cesiumContainer"></div>
 
@@ -122,8 +146,8 @@
         // 🔧 Replace broken Google icons with mapped ones
         dataSource.entities.values.forEach(entity => {
           if (entity.billboard && entity.billboard.image && typeof entity.billboard.image.getValue === "function") {
-            const url = entity.billboard.image.getValue();
-            if (url && url.includes("maps.google.com/mapfiles/kml")) {
+            const imgVal = entity.billboard.image.getValue();
+            if (typeof imgVal === "string" && imgVal.includes("maps.google.com/mapfiles/kml")) {
               entity.billboard.image = getIconForEntity(entity);
             }
           }
@@ -239,6 +263,16 @@
               }
             }
           });
+        });
+
+        // ✅ Build legend
+        const legendContainer = document.getElementById("legend");
+        legendContainer.innerHTML = "<h4>Legend</h4>";
+        Object.keys(folderIconMap).forEach(folderName => {
+          const div = document.createElement("div");
+          div.classList.add("legend-item");
+          div.innerHTML = `<img src="${folderIconMap[folderName]}"> ${folderName}`;
+          legendContainer.appendChild(div);
         });
       })
       .catch(function(error) {
