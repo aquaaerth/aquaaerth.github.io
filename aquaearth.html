@@ -46,10 +46,6 @@
       font-size: 14px;
     }
 
-    #searchBox {
-      box-sizing: border-box;
-    }
-
     #resetBtn {
       background: #444;
       color: #fff;
@@ -86,20 +82,22 @@
     }
 
     #cesiumContainer {
-      width: calc(100% - 300px);
-      height: 100%;
-      float: right;
+      position: absolute;
+      top: 0;
+      left: 300px;
+      right: 0;
+      bottom: 0;
       transition: all 0.3s ease;
     }
 
     #cesiumContainer.full {
-      width: 100% !important;
+      left: 0;
     }
 
     #toggleSidebarBtn {
       position: absolute;
       top: 10px;
-      left: 310px; /* docked by default */
+      left: 310px;
       z-index: 10000;
       background: rgba(30, 30, 30, 0.85);
       color: #fff;
@@ -114,20 +112,6 @@
     #toggleSidebarBtn:hover {
       background: rgba(60, 60, 60, 0.95);
     }
-
-    #cesiumContainer {
-  position: absolute;
-  top: 0;
-  left: 300px;  /* leave space for sidebar */
-  right: 0;
-  bottom: 0;
-  transition: all 0.3s ease;
-}
-
-#cesiumContainer.full {
-  left: 0; /* when sidebar collapsed, globe fills screen */
-}
-
   </style>
 </head>
 <body>
@@ -144,10 +128,10 @@
   <script>
     // --- CONFIG ---
     const DEFAULT_KMZ_URL = "https://aquaaerth.github.io/AASI%20Installations.kmz";
-    Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJhMDM4YzlkOC1hYWM5LTRjY2ItODQ5Yy02M2IwMzZmMjFlNDEiLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyMzY3MjJ9.QkY283vgiPJpUzHpsMXPK-kPXum1ToOsMI1Cr_fgoYU"; // replace with your token
+    Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJhMDM4YzlkOC1hYWM5LTRjY2ItODQ5Yy02M2IwMzZmMjFlNDEiLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyMzY3MjJ9.QkY283vgiPJpUzHpsMXPK-kPXum1ToOsMI1Cr_fgoYU"; // replace with your real token
     const DEFAULT_ICON = "https://upload.wikimedia.org/wikipedia/commons/e/ec/RedDot.svg";
 
-    // Suppress Cesium KML warnings
+    // Suppress Cesium warnings
     const originalWarn = console.warn;
     console.warn = function (msg, ...rest) {
       if (typeof msg === "string" && msg.includes("KML - Unsupported StyleMap")) return;
@@ -157,13 +141,12 @@
 
     // Viewer
     const viewer = new Cesium.Viewer("cesiumContainer", {
-  terrain: Cesium.Terrain.fromWorldTerrain(),
-  imageryProvider: Cesium.createWorldImagery(),
-  baseLayerPicker: false,
-  timeline: false,
-  animation: false,
-});
-
+      terrain: Cesium.Terrain.fromWorldTerrain(),
+      imageryProvider: Cesium.createWorldImagery(),
+      baseLayerPicker: false,
+      timeline: false,
+      animation: false,
+    });
 
     // Globals
     let searchMatches = [];
@@ -171,12 +154,34 @@
     let lastHighlightedEntity = null;
     let loadedDataSource = null;
 
+    // --- ICON SANITIZER ---
+    function fixBillboardIcon(entity) {
+      if (Cesium.defined(entity.billboard) && entity.billboard.image) {
+        let url = entity.billboard.image._value;
+
+        if (typeof url === "string") {
+          if (url.startsWith("http://")) {
+            url = url.replace("http://", "https://");
+            entity.billboard.image = url;
+          }
+          if (url.includes("track.png")) {
+            entity.billboard.image = DEFAULT_ICON;
+          }
+        } else {
+          entity.billboard.image = DEFAULT_ICON;
+        }
+      }
+    }
+
     function populateSidebar(entities) {
       const list = document.getElementById("locationList");
       list.innerHTML = "";
 
       entities.forEach(entity => {
         if (entity.name && entity.position) {
+          // Fix icon if broken
+          fixBillboardIcon(entity);
+
           const carto = Cesium.Cartographic.fromCartesian(
             entity.position.getValue(Cesium.JulianDate.now())
           );
@@ -262,7 +267,7 @@
       }
     });
 
-    // Reset Highlights
+    // Reset
     document.getElementById("resetBtn").addEventListener("click", function () {
       searchBox.value = "";
       const items = document.querySelectorAll("#locationList li");
@@ -284,7 +289,7 @@
       }
     });
 
-    // Sidebar Toggle Button
+    // Toggle Sidebar
     document.getElementById("toggleSidebarBtn").addEventListener("click", function () {
       const sidebar = document.getElementById("sidebar");
       const map = document.getElementById("cesiumContainer");
@@ -321,4 +326,3 @@
   </script>
 </body>
 </html>
-
