@@ -26,20 +26,6 @@
       height: 100%;
       float: left;
     }
-    .layer-btn {
-      display: block;
-      margin: 8px 0;
-      padding: 6px 10px;
-      background: #333;
-      border: 1px solid #555;
-      color: #fff;
-      text-align: left;
-      cursor: pointer;
-      border-radius: 4px;
-    }
-    .layer-btn:hover {
-      background: #444;
-    }
     .tree ul {
       list-style: none;
       padding-left: 18px;
@@ -68,12 +54,6 @@
 </head>
 <body>
   <div id="sidebar">
-    <h3>Imagery Layers</h3>
-    <button class="layer-btn" onclick="setWorldImagery()">🌍 World Imagery</button>
-    <button class="layer-btn" onclick="setOSM()">🗺️ OpenStreetMap</button>
-    <button class="layer-btn" onclick="setESRI()">🛰️ ESRI Satellite</button>
-
-    <h3>KMZ/KML Layers</h3>
     <div class="tree" id="kmlTree">Loading KMZ structure...</div>
   </div>
   <div id="cesiumContainer"></div>
@@ -87,34 +67,7 @@
       animation: false
     });
 
-    let activeLayer;
-
-    // Imagery switching
-    function switchLayer(newProviderPromise) {
-      if (activeLayer) {
-        viewer.imageryLayers.remove(activeLayer);
-        activeLayer = undefined;
-      }
-      if (newProviderPromise.then) {
-        newProviderPromise.then(provider => {
-          activeLayer = viewer.imageryLayers.addImageryProvider(provider);
-        });
-      } else {
-        activeLayer = viewer.imageryLayers.addImageryProvider(newProviderPromise);
-      }
-    }
-    function setWorldImagery() {
-      switchLayer(Cesium.createWorldImageryAsync());
-    }
-    function setOSM() {
-      switchLayer(new Cesium.OpenStreetMapImageryProvider());
-    }
-    function setESRI() {
-      switchLayer(new Cesium.UrlTemplateImageryProvider({
-        url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-      }));
-    }
-    setWorldImagery(); // default
+    // ✅ Default World Imagery is already applied by Cesium Viewer, no need to add buttons
 
     // ---- KMZ/KML Loading ----
     const kmlUrl = "AASI Installations.kmz"; // 🔹 Replace with your KMZ/KML path
@@ -171,9 +124,9 @@
           });
         }
 
-        // Build tree ONLY from "My Places"
+        // Build tree ONLY from "My Places", but rename root
         const myRoot = document.createElement("div");
-        myRoot.textContent = myPlaces.name;
+        myRoot.textContent = "AASI Installations";  // ✅ renamed root
         myRoot.classList.add("folder", "collapsed");
         myRoot.onclick = function(e) {
           e.stopPropagation();
