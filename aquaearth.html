@@ -161,39 +161,43 @@
 
         // Recursive tree builder
         function buildTree(entities, parentEl) {
-          const ul = document.createElement("ul");
-          parentEl.appendChild(ul);
+  const ul = document.createElement("ul");
+  parentEl.appendChild(ul);
 
-          entities.forEach(entity => {
-            const li = document.createElement("li");
+  entities.forEach(entity => {
+    // Skip hidden entities (visibility=0 in KMZ)
+    if (entity.show === false) return;
 
-            if (entity._children && entity._children.length > 0) {
-              li.textContent = entity.name || "Folder";
-              li.classList.add("folder", "collapsed");
+    const li = document.createElement("li");
 
-              li.onclick = function(e) {
-                e.stopPropagation();
-                li.classList.toggle("collapsed");
-                li.classList.toggle("expanded");
-              };
+    if (entity._children && entity._children.length > 0) {
+      li.textContent = entity.name || "Folder";
+      li.classList.add("folder", "collapsed");
 
-              ul.appendChild(li);
-              buildTree(entity._children, li);
-            } else {
-              li.textContent = entity.name || "Unnamed";
-              li.classList.add("placemark");
+      li.onclick = function(e) {
+        e.stopPropagation();
+        li.classList.toggle("collapsed");
+        li.classList.toggle("expanded");
+      };
 
-              li.onclick = function(e) {
-                e.stopPropagation();
-                if (entity.position) {
-                  viewer.flyTo(entity, { duration: 2.0 });
-                }
-              };
+      ul.appendChild(li);
+      buildTree(entity._children, li);
+    } else {
+      li.textContent = entity.name || "Unnamed";
+      li.classList.add("placemark");
 
-              ul.appendChild(li);
-            }
-          });
+      li.onclick = function(e) {
+        e.stopPropagation();
+        if (entity.position) {
+          viewer.flyTo(entity, { duration: 2.0 });
         }
+      };
+
+      ul.appendChild(li);
+    }
+  });
+}
+
 
         // Build tree ONLY from "My Places", but rename root
         const myRoot = document.createElement("div");
@@ -278,3 +282,4 @@
   </script>
 </body>
 </html>
+
