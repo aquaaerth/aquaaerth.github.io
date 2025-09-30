@@ -56,20 +56,29 @@
     // --- CONFIG ---
     const DEFAULT_KMZ_URL = "https://aquaaerth.github.io/AASI%20Installations.kmz";
     Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJhMDM4YzlkOC1hYWM5LTRjY2ItODQ5Yy02M2IwMzZmMjFlNDEiLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyMzY3MjJ9.QkY283vgiPJpUzHpsMXPK-kPXum1ToOsMI1Cr_fgoYU"; // replace with your real token
-    const DEFAULT_ICON = "https://upload.wikimedia.org/wikipedia/commons/e/ec/RedDot.svg"; // fallback pin
+    const DEFAULT_ICON = "https://upload.wikimedia.org/wikipedia/commons/e/ec/RedDot.svg";
 
-    // Create viewer with terrain
+    // Suppress Cesium's KML warnings about unsupported styles
+    const originalWarn = console.warn;
+    console.warn = function (msg, ...rest) {
+      if (typeof msg === "string" && msg.includes("KML - Unsupported StyleMap")) return;
+      if (typeof msg === "string" && msg.includes("KML - <gx:altitudeMode>")) return;
+      originalWarn.apply(console, [msg, ...rest]);
+    };
+
+    // Create Cesium Viewer
     const viewer = new Cesium.Viewer("cesiumContainer", {
       terrain: Cesium.Terrain.fromWorldTerrain(),
       timeline: false,
       animation: false,
     });
 
-    // Load KMZ/KML and build sidebar
+    // Load KMZ/KML and populate sidebar
     function loadKmlKmz(sourceUrl) {
       Cesium.KmlDataSource.load(sourceUrl, {
         camera: viewer.scene.camera,
         canvas: viewer.scene.canvas,
+        clampToGround: true
       }).then(function (dataSource) {
         viewer.dataSources.add(dataSource);
         viewer.flyTo(dataSource);
@@ -78,49 +87,44 @@
         const list = document.getElementById("locationList");
         list.innerHTML = "";
 
-entities.forEach(entity => {
-  if (entity.name && entity.position) {
-    // --- Ensure valid icon ---
-    if (Cesium.defined(entity.billboard) && entity.billboard.image) {
-      let url = entity.billboard.image._value;
+        entities.forEach(entity => {
+          if (entity.name && entity.position) {
+            // --- Fix icons ---
+            if (Cesium.defined(entity.billboard) && entity.billboard.image) {
+              let url = entity.billboard.image._value;
 
-      // If url is a string, sanitize it
-      if (typeof url === "string") {
-        if (url.startsWith("http://maps.google.com")) {
-          // force HTTPS
-          url = url.replace("http://", "https://");
-          entity.billboard.image = url;
-        }
-        // if broken or missing file
-        if (url.includes("track.png")) {
-          entity.billboard.image = DEFAULT_ICON;
-        }
-      } else {
-        // Not a string → set fallback
-        entity.billboard.image = DEFAULT_ICON;
-      }
-    }
+              if (typeof url === "string") {
+                if (url.startsWith("http://maps.google.com")) {
+                  url = url.replace("http://", "https://");
+                  entity.billboard.image = url;
+                }
+                if (url.includes("track.png")) {
+                  entity.billboard.image = DEFAULT_ICON;
+                }
+              } else {
+                entity.billboard.image = DEFAULT_ICON;
+              }
+            }
 
-    // --- Extract coordinates ---
-    const carto = Cesium.Cartographic.fromCartesian(
-      entity.position.getValue(Cesium.JulianDate.now())
-    );
-    const lat = Cesium.Math.toDegrees(carto.latitude).toFixed(5);
-    const lon = Cesium.Math.toDegrees(carto.longitude).toFixed(5);
+            // --- Extract coordinates ---
+            const carto = Cesium.Cartographic.fromCartesian(
+              entity.position.getValue(Cesium.JulianDate.now())
+            );
+            const lat = Cesium.Math.toDegrees(carto.latitude).toFixed(5);
+            const lon = Cesium.Math.toDegrees(carto.longitude).toFixed(5);
 
-    // --- Add to sidebar ---
-    const li = document.createElement("li");
-    li.textContent = `${entity.name} (${lat}, ${lon})`;
-    li.addEventListener("click", () => viewer.flyTo(entity));
-    list.appendChild(li);
-  }
-});
+            // --- Add to sidebar ---
+            const li = document.createElement("li");
+            li.textContent = `${entity.name} (${lat}, ${lon})`;
+            li.addEventListener("click", () => viewer.flyTo(entity));
+            list.appendChild(li);
+          }
+        });
       }).catch(err => console.error("Error loading KMZ/KML:", err));
     }
 
-    // --- Auto-load ---
+    // Auto-load default KMZ
     loadKmlKmz(DEFAULT_KMZ_URL);
   </script>
 </body>
 </html>
-
