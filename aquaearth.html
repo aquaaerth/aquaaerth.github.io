@@ -37,20 +37,32 @@
       cursor: pointer;
       border-radius: 4px;
     }
+    .layer-btn:hover {
+      background: #444;
+    }
     .tree ul {
       list-style: none;
-      padding-left: 20px;
+      padding-left: 18px;
       margin: 4px 0;
     }
     .tree li {
       margin: 2px 0;
-    }
-    .folder {
       cursor: pointer;
-      font-weight: bold;
+    }
+    .folder::before {
+      content: "▶ ";
+      display: inline-block;
+      transition: transform 0.2s;
+    }
+    .folder.expanded::before {
+      transform: rotate(90deg);
     }
     .collapsed > ul {
       display: none;
+    }
+    .placemark:hover {
+      text-decoration: underline;
+      color: #a3d3ff;
     }
   </style>
 </head>
@@ -123,31 +135,31 @@
           entities.forEach(entity => {
             const li = document.createElement("li");
 
-            // Folder vs. placemark
             if (entity._children && entity._children.length > 0) {
-              li.classList.add("folder");
               li.textContent = entity.name || "Folder";
+              li.classList.add("folder", "collapsed");
 
-              // Click to expand/collapse
               li.onclick = function(e) {
                 e.stopPropagation();
                 li.classList.toggle("collapsed");
+                li.classList.toggle("expanded");
               };
 
               ul.appendChild(li);
               buildTree(entity._children, li);
             } else {
-              // Leaf node with checkbox
-              const label = document.createElement("label");
-              const checkbox = document.createElement("input");
-              checkbox.type = "checkbox";
-              checkbox.checked = entity.show;
-              checkbox.onchange = function() {
-                entity.show = this.checked;
+              li.textContent = entity.name || "Unnamed";
+              li.classList.add("placemark");
+
+              li.onclick = function(e) {
+                e.stopPropagation();
+                if (entity.position) {
+                  viewer.flyTo(entity, {
+                    duration: 2.0
+                  });
+                }
               };
-              label.appendChild(checkbox);
-              label.appendChild(document.createTextNode(" " + (entity.name || "Unnamed")));
-              li.appendChild(label);
+
               ul.appendChild(li);
             }
           });
@@ -162,4 +174,3 @@
   </script>
 </body>
 </html>
-
