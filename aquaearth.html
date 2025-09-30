@@ -16,22 +16,22 @@
       height: 100%;
       float: left;
     }
- #sidebar {
+#sidebar {
   width: 300px;
   height: 100%;
-  float: right;
-  background: #1e1e1e !important;   /* dark background */
-  color: #ffffff !important;        /* white text */
+  float: left;                       /* move to left */
+  background: #1e1e1e !important;    /* dark background */
+  color: #ffffff !important;         /* white text */
   overflow-y: auto;
   padding: 10px;
   font-family: sans-serif !important;
-  z-index: 9999; /* make sure it's above Cesium canvas */
+  z-index: 9999;                     /* ensure above Cesium canvas */
 }
 
 #sidebar h2 {
   margin-top: 0;
   font-size: 16px;
-  color: #ffd479 !important;  /* gold title for contrast */
+  color: #ffd479 !important;         /* gold title */
 }
 
 #sidebar li {
@@ -46,6 +46,13 @@
 #sidebar li:hover {
   background: #555 !important;
 }
+
+#cesiumContainer {
+  width: calc(100% - 300px); /* adjust to fill rest of screen */
+  height: 100%;
+  float: right;              /* now globe sits on right side */
+}
+
 
   </style>
 </head>
@@ -132,4 +139,5 @@
   </script>
 </body>
 </html>
+
 
