@@ -87,7 +87,10 @@
     });
 
     // Remove default Bing layer
-    viewer.imageryLayers.removeAll();
+   Cesium.createWorldImageryAsync().then(function(provider) {
+  viewer.imageryLayers.addImageryProvider(provider);
+});
+
 
     // Cesium imagery options
     const worldImagery = Cesium.createWorldImagery();
@@ -275,3 +278,4 @@
   </script>
 </body>
 </html>
+
