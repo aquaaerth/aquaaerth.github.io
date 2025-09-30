@@ -44,14 +44,18 @@
   <script>
     // --- CONFIG: Set your default KMZ/KML URL here ---
     const DEFAULT_KMZ_URL = "https://aquaaerth.github.io/AASI%20Installations.kmz";
-   Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJhMDM4YzlkOC1hYWM5LTRjY2ItODQ5Yy02M2IwMzZmMjFlNDEiLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyMzY3MjJ9.QkY283vgiPJpUzHpsMXPK-kPXum1ToOsMI1Cr_fgoYU';
-    
+
+    // ✅ Your Ion access token (keep it private if possible!)
+    Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJhMDM4YzlkOC1hYWM5LTRjY2ItODQ5Yy02M2IwMzZmMjFlNDEiLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyMzY3MjJ9.QkY283vgiPJpUzHpsMXPK-kPXum1ToOsMI1Cr_fgoYU';
+
     let viewer;
 
     try {
-      // Try loading with terrain
+      // ✅ NEW CesiumJS 1.119 way to enable terrain
       viewer = new Cesium.Viewer("cesiumContainer", {
-        terrain: Cesium.Terrain.fromWorldTerrain(),
+        terrain: Cesium.Terrain.fromWorldTerrain(), // <-- Correct API
+        timeline: false,
+        animation: false,
       });
     } catch (e) {
       console.warn("WorldTerrain not available, falling back to flat globe:", e);
@@ -106,7 +110,7 @@
     // --- Toggle Terrain Button ---
     document.getElementById("toggleTerrainBtn").addEventListener("click", function () {
       if (viewer.terrainProvider instanceof Cesium.EllipsoidTerrainProvider) {
-        viewer.terrainProvider = new Cesium.WorldTerrain();
+        viewer.terrainProvider = Cesium.Terrain.fromWorldTerrain();
         console.log("Switched to 3D World Terrain");
       } else {
         viewer.terrainProvider = new Cesium.EllipsoidTerrainProvider();
@@ -116,4 +120,3 @@
   </script>
 </body>
 </html>
-
