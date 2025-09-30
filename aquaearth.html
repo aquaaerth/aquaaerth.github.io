@@ -142,7 +142,7 @@
     // Viewer
     const viewer = new Cesium.Viewer("cesiumContainer", {
       terrain: Cesium.Terrain.fromWorldTerrain(),
-      imageryProvider: Cesium.createWorldImagery(),
+      imageryProvider: new Cesium.IonImageryProvider({ assetId: 3 }),
       baseLayerPicker: false,
       timeline: false,
       animation: false,
@@ -326,3 +326,4 @@
   </script>
 </body>
 </html>
+
