@@ -114,6 +114,20 @@
     #toggleSidebarBtn:hover {
       background: rgba(60, 60, 60, 0.95);
     }
+
+    #cesiumContainer {
+  position: absolute;
+  top: 0;
+  left: 300px;  /* leave space for sidebar */
+  right: 0;
+  bottom: 0;
+  transition: all 0.3s ease;
+}
+
+#cesiumContainer.full {
+  left: 0; /* when sidebar collapsed, globe fills screen */
+}
+
   </style>
 </head>
 <body>
@@ -143,10 +157,13 @@
 
     // Viewer
     const viewer = new Cesium.Viewer("cesiumContainer", {
-      terrain: Cesium.Terrain.fromWorldTerrain(),
-      timeline: false,
-      animation: false,
-    });
+  terrain: Cesium.Terrain.fromWorldTerrain(),
+  imageryProvider: Cesium.createWorldImagery(),
+  baseLayerPicker: false,
+  timeline: false,
+  animation: false,
+});
+
 
     // Globals
     let searchMatches = [];
@@ -304,3 +321,4 @@
   </script>
 </body>
 </html>
+
