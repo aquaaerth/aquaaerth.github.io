@@ -88,10 +88,46 @@
       destination: Cesium.Rectangle.fromDegrees(-125.0, 24.0, -66.0, 49.0)
     });
 
+    // 🔹 Folder → Pin mapping
+    const pinBase = "https://cesium.com/downloads/cesiumjs/releases/1.119/Apps/SampleData/pin";
+    const folderIconMap = {
+      "Biological Installations": pinBase + "3.png", // green
+      "Alabama": pinBase + "7.png",                 // red
+      "Ashland WWTP AL": pinBase + "12.png"         // purple
+      // ➕ add more folders here
+    };
+    let rotatingPinIndex = 1;
+
+    function getIconForEntity(entity) {
+      // Check ancestors for a mapped folder
+      let parent = entity.parent;
+      while (parent) {
+        if (parent.name && folderIconMap[parent.name]) {
+          return folderIconMap[parent.name];
+        }
+        parent = parent.parent;
+      }
+
+      // If no folder match → fallback to rotating pins
+      const url = `${pinBase}${rotatingPinIndex}.png`;
+      rotatingPinIndex = (rotatingPinIndex % 16) + 1;
+      return url;
+    }
+
     const kmlUrl = "AASI Installations.kmz"; // 🔹 Replace with your KMZ/KML path
     Cesium.KmlDataSource.load(kmlUrl, { camera: viewer.scene.camera, canvas: viewer.scene.canvas })
       .then(function(dataSource) {
         viewer.dataSources.add(dataSource);
+
+        // 🔧 Replace broken Google icons with mapped ones
+        dataSource.entities.values.forEach(entity => {
+          if (entity.billboard && entity.billboard.image && typeof entity.billboard.image.getValue === "function") {
+            const url = entity.billboard.image.getValue();
+            if (url && url.includes("maps.google.com/mapfiles/kml")) {
+              entity.billboard.image = getIconForEntity(entity);
+            }
+          }
+        });
 
         const allEntities = dataSource.entities.values;
         const treeContainer = document.getElementById("kmlTree");
@@ -149,38 +185,32 @@
 
         buildTree(myPlaces._children, myRoot);
 
-        // 🔎 Smarter Search Filter
+        // 🔎 Search filter
         const searchBox = document.getElementById("searchBox");
         searchBox.addEventListener("input", function() {
           const term = this.value.toLowerCase();
 
           const allNodes = treeContainer.querySelectorAll("li, div.folder");
-
-          // Reset everything visible
           allNodes.forEach(el => el.classList.remove("hidden"));
 
-          if (term === "") return; // nothing typed → show all
+          if (term === "") return;
 
           allNodes.forEach(el => {
             const text = el.textContent.toLowerCase();
 
             if (el.classList.contains("folder")) {
               if (text.includes(term)) {
-                // ✅ Folder matches → expand + show everything inside
                 el.classList.add("expanded");
                 el.classList.remove("collapsed");
-
                 const descendants = el.querySelectorAll("li, div");
                 descendants.forEach(d => d.classList.remove("hidden"));
               } else {
-                // Hide folder unless one of its descendants matches
                 let hasMatchingDescendant = false;
                 el.querySelectorAll("li, div").forEach(child => {
                   if (child.textContent.toLowerCase().includes(term)) {
                     hasMatchingDescendant = true;
                   }
                 });
-
                 if (!hasMatchingDescendant) {
                   el.classList.add("hidden");
                 } else {
@@ -192,7 +222,6 @@
 
             if (el.classList.contains("placemark")) {
               if (text.includes(term)) {
-                // ✅ Placemark matches → ensure parents expand
                 let parent = el.parentElement;
                 while (parent && parent !== treeContainer) {
                   if (parent.classList.contains("folder")) {
@@ -203,7 +232,6 @@
                   parent = parent.parentElement;
                 }
               } else {
-                // Hide placemarks that don’t match, unless their folder matched
                 let parentFolder = el.closest(".folder");
                 if (!parentFolder || !parentFolder.textContent.toLowerCase().includes(term)) {
                   el.classList.add("hidden");
