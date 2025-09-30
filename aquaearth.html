@@ -26,6 +26,14 @@
       height: 100%;
       float: left;
     }
+    #searchBox {
+      width: 100%;
+      padding: 6px;
+      margin-bottom: 10px;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+    }
     .tree ul {
       list-style: none;
       padding-left: 18px;
@@ -46,14 +54,22 @@
     .collapsed > ul {
       display: none;
     }
+    .placemark::before {
+      content: "• "; /* could change to "- " if you prefer */
+      color: #00c3ff;
+    }
     .placemark:hover {
       text-decoration: underline;
       color: #a3d3ff;
+    }
+    .hidden {
+      display: none !important;
     }
   </style>
 </head>
 <body>
   <div id="sidebar">
+    <input type="text" id="searchBox" placeholder="Search folders & placemarks...">
     <div class="tree" id="kmlTree">Loading KMZ structure...</div>
   </div>
   <div id="cesiumContainer"></div>
@@ -67,12 +83,11 @@
       animation: false
     });
 
-    // ✅ Set default view to continental United States
+    // ✅ Default view to continental United States
     viewer.camera.setView({
-      destination: Cesium.Rectangle.fromDegrees(-125.0, 24.0, -66.0, 49.0) // W,S,E,N
+      destination: Cesium.Rectangle.fromDegrees(-125.0, 24.0, -66.0, 49.0)
     });
 
-    // ---- KMZ/KML Loading ----
     const kmlUrl = "AASI Installations.kmz"; // 🔹 Replace with your KMZ/KML path
     Cesium.KmlDataSource.load(kmlUrl, { camera: viewer.scene.camera, canvas: viewer.scene.canvas })
       .then(function(dataSource) {
@@ -128,11 +143,37 @@
 
         // Build tree ONLY from "My Places", but rename root
         const myRoot = document.createElement("div");
-        myRoot.textContent = "AASI Installations";  // ✅ renamed root
-        myRoot.classList.add("folder", "expanded"); // ✅ start expanded
+        myRoot.textContent = "AASI Installations";
+        myRoot.classList.add("folder", "expanded");
         treeContainer.appendChild(myRoot);
 
         buildTree(myPlaces._children, myRoot);
+
+        // 🔎 Search filter
+        const searchBox = document.getElementById("searchBox");
+        searchBox.addEventListener("input", function() {
+          const term = this.value.toLowerCase();
+          const items = treeContainer.querySelectorAll("li, div.folder");
+
+          items.forEach(el => {
+            const text = el.textContent.toLowerCase();
+            if (term === "" || text.includes(term)) {
+              el.classList.remove("hidden");
+              // ensure parent folders stay visible
+              let parent = el.parentElement;
+              while (parent && parent !== treeContainer) {
+                if (parent.tagName === "LI" || parent.tagName === "DIV") {
+                  parent.classList.remove("hidden");
+                  parent.classList.add("expanded"); // auto-expand parents
+                  parent.classList.remove("collapsed");
+                }
+                parent = parent.parentElement;
+              }
+            } else {
+              el.classList.add("hidden");
+            }
+          });
+        });
       })
       .catch(function(error) {
         document.getElementById("kmlTree").textContent = "Error loading KMZ: " + error;
