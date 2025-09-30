@@ -2,329 +2,118 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>AquaEarth KMZ Viewer</title>
+  <title>Google Earth Web App - KMZ Loader</title>
   <script src="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/CesiumUnminified/Cesium.js"></script>
   <link href="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
 
   <style>
-    html, body {
+    html, body, #cesiumContainer {
       width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden;
+    }
+    #toolbar {
+      position: absolute;
+      top: 10px; left: 10px;
+      background: rgba(42, 42, 42, 0.85);
+      padding: 12px;
+      border-radius: 8px;
+      z-index: 100;
       font-family: sans-serif;
+      color: white;
     }
-
-    #sidebar {
-      width: 300px;
-      height: 100%;
-      float: left;
-      background: #1e1e1e !important;
-      color: #ffffff !important;
-      overflow-y: auto;
-      padding: 10px;
-      font-family: sans-serif !important;
-      z-index: 9999;
-      transition: all 0.3s ease;
-    }
-
-    #sidebar.collapsed {
-      width: 0;
-      padding: 0;
-      overflow: hidden;
-    }
-
-    #sidebar h2 {
-      margin-top: 0;
-      font-size: 16px;
-      color: #ffd479 !important;
-    }
-
-    #searchBox, #resetBtn {
-      width: 100%;
-      padding: 6px;
-      margin: 8px 0;
-      border-radius: 4px;
-      border: none;
-      font-size: 14px;
-    }
-
-    #resetBtn {
-      background: #444;
-      color: #fff;
-      cursor: pointer;
-    }
-
-    #resetBtn:hover {
-      background: #666;
-    }
-
-    #sidebar ul {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-
-    #sidebar li {
-      margin: 6px 0;
-      padding: 6px;
-      cursor: pointer;
-      background: #333 !important;
-      border-radius: 4px;
-      color: #fff !important;
-    }
-
-    #sidebar li:hover {
-      background: #555 !important;
-    }
-
-    #sidebar li.active-match {
-      background: #0078d7 !important;
-      color: #fff !important;
-      font-weight: bold;
-    }
-
-    #cesiumContainer {
-      position: absolute;
-      top: 0;
-      left: 300px;
-      right: 0;
-      bottom: 0;
-      transition: all 0.3s ease;
-    }
-
-    #cesiumContainer.full {
-      left: 0;
-    }
-
-    #toggleSidebarBtn {
-      position: absolute;
-      top: 10px;
-      left: 310px;
-      z-index: 10000;
-      background: rgba(30, 30, 30, 0.85);
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      padding: 8px 12px;
-      cursor: pointer;
-      font-size: 18px;
-      transition: left 0.3s ease, background 0.3s ease;
-    }
-
-    #toggleSidebarBtn:hover {
-      background: rgba(60, 60, 60, 0.95);
+    input[type="text"], input[type="file"], button {
+      margin-top: 6px;
+      display: block;
+      width: 260px;
     }
   </style>
 </head>
 <body>
-  <div id="sidebar">
-    <h2>Locations</h2>
-    <input type="text" id="searchBox" placeholder="Search..." />
-    <button id="resetBtn">Reset Highlights</button>
-    <ul id="locationList"></ul>
+  <div id="cesiumContainer"></div>
+  <div id="toolbar">
+    <label>Load local KMZ/KML:</label>
+    <input type="file" id="kmzInput" accept=".kmz,.kml" />
+
+    <label>Load KMZ/KML from URL:</label>
+    <input type="text" id="urlInput" placeholder="https://example.com/map.kmz" />
+    <button id="loadUrlBtn">Load from URL</button>
+
+    <hr>
+    <button id="toggleTerrainBtn">Toggle Terrain</button>
   </div>
 
-  <div id="cesiumContainer"></div>
-  <button id="toggleSidebarBtn">✖</button>
-
   <script>
-    // --- CONFIG ---
+    // --- CONFIG: Set your default KMZ/KML URL here ---
     const DEFAULT_KMZ_URL = "https://aquaaerth.github.io/AASI%20Installations.kmz";
-    Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJhMDM4YzlkOC1hYWM5LTRjY2ItODQ5Yy02M2IwMzZmMjFlNDEiLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyMzY3MjJ9.QkY283vgiPJpUzHpsMXPK-kPXum1ToOsMI1Cr_fgoYU"; // replace with your real token
-    const DEFAULT_ICON = "https://upload.wikimedia.org/wikipedia/commons/e/ec/RedDot.svg";
 
-    // Suppress Cesium warnings
-    const originalWarn = console.warn;
-    console.warn = function (msg, ...rest) {
-      if (typeof msg === "string" && msg.includes("KML - Unsupported StyleMap")) return;
-      if (typeof msg === "string" && msg.includes("KML - <gx:altitudeMode>")) return;
-      originalWarn.apply(console, [msg, ...rest]);
-    };
+    let viewer;
 
-    // Viewer
-    const viewer = new Cesium.Viewer("cesiumContainer", {
-      terrain: Cesium.Terrain.fromWorldTerrain(),
-      imageryProvider: new Cesium.IonImageryProvider({ assetId: 3 }),
-      baseLayerPicker: false,
-      timeline: false,
-      animation: false,
-    });
-
-    // Globals
-    let searchMatches = [];
-    let currentMatchIndex = -1;
-    let lastHighlightedEntity = null;
-    let loadedDataSource = null;
-
-    // --- ICON SANITIZER ---
-    function fixBillboardIcon(entity) {
-      if (Cesium.defined(entity.billboard) && entity.billboard.image) {
-        let url = entity.billboard.image._value;
-
-        if (typeof url === "string") {
-          if (url.startsWith("http://")) {
-            url = url.replace("http://", "https://");
-            entity.billboard.image = url;
-          }
-          if (url.includes("track.png")) {
-            entity.billboard.image = DEFAULT_ICON;
-          }
-        } else {
-          entity.billboard.image = DEFAULT_ICON;
-        }
-      }
-    }
-
-    function populateSidebar(entities) {
-      const list = document.getElementById("locationList");
-      list.innerHTML = "";
-
-      entities.forEach(entity => {
-        if (entity.name && entity.position) {
-          // Fix icon if broken
-          fixBillboardIcon(entity);
-
-          const carto = Cesium.Cartographic.fromCartesian(
-            entity.position.getValue(Cesium.JulianDate.now())
-          );
-          const lat = Cesium.Math.toDegrees(carto.latitude).toFixed(5);
-          const lon = Cesium.Math.toDegrees(carto.longitude).toFixed(5);
-
-          const li = document.createElement("li");
-          li.textContent = `${entity.name} (${lat}, ${lon})`;
-          li.dataset.name = entity.name.toLowerCase();
-          li.dataset.entityId = entity.id;
-          li.addEventListener("click", () => {
-            viewer.flyTo(entity);
-            highlightEntity(entity);
-          });
-          list.appendChild(li);
-        }
+    try {
+      // Try loading with terrain
+      viewer = new Cesium.Viewer("cesiumContainer", {
+        terrainProvider: new Cesium.WorldTerrain(),
+        timeline: false,
+        animation: false,
+      });
+    } catch (e) {
+      console.warn("WorldTerrain not available, falling back to flat globe:", e);
+      // Fallback to flat earth
+      viewer = new Cesium.Viewer("cesiumContainer", {
+        terrainProvider: new Cesium.EllipsoidTerrainProvider(),
+        timeline: false,
+        animation: false,
       });
     }
 
-    function highlightSidebarItem(index) {
-      const items = document.querySelectorAll("#locationList li");
-      items.forEach(li => li.classList.remove("active-match"));
-      if (index >= 0 && index < searchMatches.length) {
-        const entityId = searchMatches[index];
-        const li = Array.from(items).find(li => li.dataset.entityId === entityId);
-        if (li) {
-          li.classList.add("active-match");
-          li.scrollIntoView({ block: "nearest", behavior: "smooth" });
-        }
-      }
-    }
-
-    function highlightEntity(entity) {
-      if (lastHighlightedEntity && lastHighlightedEntity.billboard) {
-        lastHighlightedEntity.billboard.scale = 1.0;
-        lastHighlightedEntity.billboard.color = Cesium.Color.WHITE;
-      }
-      if (entity && entity.billboard) {
-        entity.billboard.scale = 1.8;
-        entity.billboard.color = Cesium.Color.YELLOW;
-        lastHighlightedEntity = entity;
-      }
-    }
-
-    // Search
-    const searchBox = document.getElementById("searchBox");
-    searchBox.addEventListener("input", function () {
-      const filter = this.value.toLowerCase();
-      const items = document.querySelectorAll("#locationList li");
-
-      searchMatches = [];
-      currentMatchIndex = -1;
-
-      items.forEach(li => {
-        if (li.dataset.name.includes(filter)) {
-          li.style.display = "block";
-          searchMatches.push(li.dataset.entityId);
-        } else {
-          li.style.display = "none";
-        }
-      });
-
-      if (searchMatches.length > 0) {
-        currentMatchIndex = 0;
-        const entity = viewer.entities.getById(searchMatches[currentMatchIndex]);
-        if (entity) {
-          viewer.flyTo(entity);
-          highlightSidebarItem(currentMatchIndex);
-          highlightEntity(entity);
-        }
-      }
-    });
-
-    searchBox.addEventListener("keydown", function (e) {
-      if (e.key === "Enter" && searchMatches.length > 1) {
-        currentMatchIndex = (currentMatchIndex + 1) % searchMatches.length;
-        const entity = viewer.entities.getById(searchMatches[currentMatchIndex]);
-        if (entity) {
-          viewer.flyTo(entity);
-          highlightSidebarItem(currentMatchIndex);
-          highlightEntity(entity);
-        }
-      }
-    });
-
-    // Reset
-    document.getElementById("resetBtn").addEventListener("click", function () {
-      searchBox.value = "";
-      const items = document.querySelectorAll("#locationList li");
-      items.forEach(li => {
-        li.style.display = "block";
-        li.classList.remove("active-match");
-      });
-
-      if (lastHighlightedEntity && lastHighlightedEntity.billboard) {
-        lastHighlightedEntity.billboard.scale = 1.0;
-        lastHighlightedEntity.billboard.color = Cesium.Color.WHITE;
-        lastHighlightedEntity = null;
-      }
-
-      document.getElementById("locationList").scrollTo({ top: 0, behavior: "smooth" });
-
-      if (loadedDataSource) {
-        viewer.flyTo(loadedDataSource);
-      }
-    });
-
-    // Toggle Sidebar
-    document.getElementById("toggleSidebarBtn").addEventListener("click", function () {
-      const sidebar = document.getElementById("sidebar");
-      const map = document.getElementById("cesiumContainer");
-      const toggleBtn = document.getElementById("toggleSidebarBtn");
-
-      if (!sidebar.classList.contains("collapsed")) {
-        sidebar.classList.add("collapsed");
-        map.classList.add("full");
-        toggleBtn.style.left = "10px";
-        toggleBtn.textContent = "☰";
-      } else {
-        sidebar.classList.remove("collapsed");
-        map.classList.remove("full");
-        toggleBtn.style.left = "310px";
-        toggleBtn.textContent = "✖";
-      }
-    });
-
-    // Load KMZ
+    // --- Function to load KMZ/KML ---
     function loadKmlKmz(sourceUrl) {
       Cesium.KmlDataSource.load(sourceUrl, {
         camera: viewer.scene.camera,
         canvas: viewer.scene.canvas,
-        clampToGround: true
       }).then(function (dataSource) {
-        loadedDataSource = dataSource;
         viewer.dataSources.add(dataSource);
         viewer.flyTo(dataSource);
-        populateSidebar(dataSource.entities.values);
       }).catch(err => console.error("Error loading KMZ/KML:", err));
     }
 
-    loadKmlKmz(DEFAULT_KMZ_URL);
+    // --- Auto-load default KMZ/KML ---
+    if (DEFAULT_KMZ_URL) {
+      loadKmlKmz(DEFAULT_KMZ_URL);
+    }
+
+    // --- Handle Local Upload ---
+    document.getElementById("kmzInput").addEventListener("change", function (event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const blob = new Blob([e.target.result], { type: file.type });
+        const url = URL.createObjectURL(blob);
+        loadKmlKmz(url);
+      };
+      reader.readAsArrayBuffer(file);
+    });
+
+    // --- Handle URL Input ---
+    document.getElementById("loadUrlBtn").addEventListener("click", function () {
+      const url = document.getElementById("urlInput").value.trim();
+      if (url) {
+        loadKmlKmz(url);
+      } else {
+        alert("Please enter a valid KMZ/KML URL");
+      }
+    });
+
+    // --- Toggle Terrain Button ---
+    document.getElementById("toggleTerrainBtn").addEventListener("click", function () {
+      if (viewer.terrainProvider instanceof Cesium.EllipsoidTerrainProvider) {
+        viewer.terrainProvider = new Cesium.WorldTerrain();
+        console.log("Switched to 3D World Terrain");
+      } else {
+        viewer.terrainProvider = new Cesium.EllipsoidTerrainProvider();
+        console.log("Switched to Flat Globe");
+      }
+    });
   </script>
 </body>
 </html>
-
-
