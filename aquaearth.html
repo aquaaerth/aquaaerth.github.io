@@ -21,30 +21,6 @@
       overflow-y: auto;
       box-sizing: border-box;
     }
-    #sidebar h1 {
-      margin: 0;
-      font-size: 20px;
-      color: #4FC3F7;
-    }
-    #sidebar h2 {
-      margin: 2px 0 12px 0;
-      font-size: 12px;
-      font-weight: normal;
-      color: #bbb;
-    }
-    #resetBtn {
-      width: 100%;
-      padding: 6px;
-      margin-bottom: 10px;
-      background: #444;
-      border: none;
-      border-radius: 4px;
-      color: #fff;
-      cursor: pointer;
-    }
-    #resetBtn:hover {
-      background: #666;
-    }
     #cesiumContainer {
       width: calc(100% - 300px);
       height: 100%;
@@ -116,9 +92,6 @@
 </head>
 <body>
   <div id="sidebar">
-    <h1>AquaEarth</h1>
-    <h2>Protecting the World’s Water</h2>
-    <button id="resetBtn">Reset</button>
     <input type="text" id="searchBox" placeholder="Search folders & placemarks...">
     <div class="tree" id="kmlTree">Loading KMZ structure...</div>
     <div id="legend"></div>
@@ -134,10 +107,12 @@
       animation: false
     });
 
-    // ✅ Default camera view
-    const initialRectangle = Cesium.Rectangle.fromDegrees(-125.0, 24.0, -66.0, 49.0);
-    viewer.camera.setView({ destination: initialRectangle });
+    // ✅ Default view to continental United States
+    viewer.camera.setView({
+      destination: Cesium.Rectangle.fromDegrees(-125.0, 24.0, -66.0, 49.0)
+    });
 
+    // 🔹 Fixed folder → color mapping
     const folderColorMap = {
       "Biological Installations": Cesium.Color.GREEN,
       "Filter Installations": Cesium.Color.ORANGE,
@@ -146,6 +121,7 @@
 
     const pinBuilder = new Cesium.PinBuilder();
 
+    // Always return a pin for placemarks
     function getIconForEntity(entity) {
       let parent = entity.parent;
       while (parent) {
@@ -154,133 +130,154 @@
         }
         parent = parent.parent;
       }
-      return pinBuilder.fromColor(folderColorMap["Biological Installations"] || Cesium.Color.BLUE, 32).toDataURL();
+      // fallback to root
+      return pinBuilder.fromColor(folderColorMap["AASI Installations"], 32).toDataURL();
     }
 
     const kmlUrl = "AASI Installations.kmz"; // 🔹 Replace with your KMZ/KML path
-
-    let dataSource, allEntities, treeContainer, legendContainer;
-
-    function buildTree(entities, parentEl) {
-      const ul = document.createElement("ul");
-      parentEl.appendChild(ul);
-
-      entities.forEach(entity => {
-        if (entity.show === false) return;
-        const li = document.createElement("li");
-
-        if (entity._children && entity._children.length > 0) {
-          li.textContent = entity.name || "Folder";
-          li.classList.add("folder", "collapsed");
-
-          li.onclick = function(e) {
-            e.stopPropagation();
-            li.classList.toggle("collapsed");
-            li.classList.toggle("expanded");
-          };
-
-          ul.appendChild(li);
-          buildTree(entity._children, li);
-        } else {
-          li.textContent = entity.name || "Unnamed";
-          li.classList.add("placemark");
-
-          li.onclick = function(e) {
-            e.stopPropagation();
-            if (entity.position) {
-              viewer.flyTo(entity, { duration: 2.0 });
-            }
-          };
-
-          ul.appendChild(li);
-        }
-      });
-    }
-
-    function buildUI() {
-      treeContainer = document.getElementById("kmlTree");
-      legendContainer = document.getElementById("legend");
-      treeContainer.innerHTML = "";
-      legendContainer.innerHTML = "<h4>Legend</h4>";
-
-      const myPlaces = allEntities.find(e => e.name && e.name.trim() === "My Places");
-      if (!myPlaces || !myPlaces._children) {
-        treeContainer.textContent = "Could not find 'My Places' folder in KMZ.";
-        return;
-      }
-
-      const myRoot = document.createElement("div");
-      myRoot.textContent = "AASI Installations";
-      myRoot.classList.add("folder", "expanded");
-      treeContainer.appendChild(myRoot);
-
-      buildTree(myPlaces._children, myRoot);
-
-      Object.keys(folderColorMap).forEach(folderName => {
-        const color = folderColorMap[folderName] || Cesium.Color.BLUE;
-        const pinUrl = pinBuilder.fromColor(color, 24).toDataURL();
-        const div = document.createElement("div");
-        div.classList.add("legend-item");
-        div.innerHTML = `<img src="${pinUrl}"> ${folderName}`;
-        legendContainer.appendChild(div);
-      });
-    }
-
-    // Load KMZ
     Cesium.KmlDataSource.load(kmlUrl, { camera: viewer.scene.camera, canvas: viewer.scene.canvas })
-      .then(function(ds) {
-        dataSource = ds;
+      .then(function(dataSource) {
         viewer.dataSources.add(dataSource);
 
+        // 🔧 Force icon for every placemark
         dataSource.entities.values.forEach(entity => {
           if (entity.billboard) {
             entity.billboard.image = getIconForEntity(entity);
           }
         });
 
-        allEntities = dataSource.entities.values;
-        buildUI();
+        const allEntities = dataSource.entities.values;
+        const treeContainer = document.getElementById("kmlTree");
+        treeContainer.innerHTML = ""; // clear loading text
+
+        // 🔍 Find the "My Places" folder entity
+        const myPlaces = allEntities.find(e => e.name && e.name.trim() === "My Places");
+
+        if (!myPlaces || !myPlaces._children) {
+          treeContainer.textContent = "Could not find 'My Places' folder in KMZ.";
+          return;
+        }
+
+        // Recursive tree builder
+        function buildTree(entities, parentEl) {
+  const ul = document.createElement("ul");
+  parentEl.appendChild(ul);
+
+  entities.forEach(entity => {
+    // Skip hidden entities (visibility=0 in KMZ)
+    if (entity.show === false) return;
+
+    const li = document.createElement("li");
+
+    if (entity._children && entity._children.length > 0) {
+      li.textContent = entity.name || "Folder";
+      li.classList.add("folder", "collapsed");
+
+      li.onclick = function(e) {
+        e.stopPropagation();
+        li.classList.toggle("collapsed");
+        li.classList.toggle("expanded");
+      };
+
+      ul.appendChild(li);
+      buildTree(entity._children, li);
+    } else {
+      li.textContent = entity.name || "Unnamed";
+      li.classList.add("placemark");
+
+      li.onclick = function(e) {
+        e.stopPropagation();
+        if (entity.position) {
+          viewer.flyTo(entity, { duration: 2.0 });
+        }
+      };
+
+      ul.appendChild(li);
+    }
+  });
+}
+
+
+        // Build tree ONLY from "My Places", but rename root
+        const myRoot = document.createElement("div");
+        myRoot.textContent = "AASI Installations";
+        myRoot.classList.add("folder", "expanded");
+        treeContainer.appendChild(myRoot);
+
+        buildTree(myPlaces._children, myRoot);
+
+        // 🔎 Search filter
+        const searchBox = document.getElementById("searchBox");
+        searchBox.addEventListener("input", function() {
+          const term = this.value.toLowerCase();
+
+          const allNodes = treeContainer.querySelectorAll("li, div.folder");
+          allNodes.forEach(el => el.classList.remove("hidden"));
+
+          if (term === "") return;
+
+          allNodes.forEach(el => {
+            const text = el.textContent.toLowerCase();
+
+            if (el.classList.contains("folder")) {
+              if (text.includes(term)) {
+                el.classList.add("expanded");
+                el.classList.remove("collapsed");
+                const descendants = el.querySelectorAll("li, div");
+                descendants.forEach(d => d.classList.remove("hidden"));
+              } else {
+                let hasMatchingDescendant = false;
+                el.querySelectorAll("li, div").forEach(child => {
+                  if (child.textContent.toLowerCase().includes(term)) {
+                    hasMatchingDescendant = true;
+                  }
+                });
+                if (!hasMatchingDescendant) {
+                  el.classList.add("hidden");
+                } else {
+                  el.classList.add("expanded");
+                  el.classList.remove("collapsed");
+                }
+              }
+            }
+
+            if (el.classList.contains("placemark")) {
+              if (text.includes(term)) {
+                let parent = el.parentElement;
+                while (parent && parent !== treeContainer) {
+                  if (parent.classList.contains("folder")) {
+                    parent.classList.add("expanded");
+                    parent.classList.remove("collapsed");
+                    parent.classList.remove("hidden");
+                  }
+                  parent = parent.parentElement;
+                }
+              } else {
+                let parentFolder = el.closest(".folder");
+                if (!parentFolder || !parentFolder.textContent.toLowerCase().includes(term)) {
+                  el.classList.add("hidden");
+                }
+              }
+            }
+          });
+        });
+
+        // ✅ Build legend dynamically
+        const legendContainer = document.getElementById("legend");
+        legendContainer.innerHTML = "<h4>Legend</h4>";
+        Object.keys(folderColorMap).forEach(folderName => {
+          const color = folderColorMap[folderName] || Cesium.Color.BLUE;
+          const pinUrl = pinBuilder.fromColor(color, 24).toDataURL();
+          const div = document.createElement("div");
+          div.classList.add("legend-item");
+          div.innerHTML = `<img src="${pinUrl}"> ${folderName}`;
+          legendContainer.appendChild(div);
+        });
       })
       .catch(function(error) {
         document.getElementById("kmlTree").textContent = "Error loading KMZ: " + error;
         console.error(error);
       });
-
-    // 🔹 Reset function
-    function resetView() {
-      viewer.camera.flyTo({ destination: initialRectangle });
-      if (allEntities) buildUI();
-      document.getElementById("searchBox").value = "";
-    }
-
-    // Hook Reset button
-    document.getElementById("resetBtn").addEventListener("click", resetView);
-
-    // Hook search
-    document.getElementById("searchBox").addEventListener("input", function() {
-      const term = this.value.toLowerCase();
-      if (term === "") {
-        resetView();
-        return;
-      }
-      const allNodes = treeContainer.querySelectorAll("li, div.folder");
-      allNodes.forEach(el => el.classList.remove("hidden"));
-      allNodes.forEach(el => {
-        const text = el.textContent.toLowerCase();
-        if (el.classList.contains("folder")) {
-          if (!text.includes(term)) {
-            let hasMatching = false;
-            el.querySelectorAll("li, div").forEach(child => {
-              if (child.textContent.toLowerCase().includes(term)) hasMatching = true;
-            });
-            if (!hasMatching) el.classList.add("hidden");
-          }
-        }
-        if (el.classList.contains("placemark") && !text.includes(term)) {
-          el.classList.add("hidden");
-        }
-      });
-    });
   </script>
 </body>
 </html>
