@@ -128,7 +128,7 @@
         treeContainer.innerHTML = ""; // clear loading text
 
         // Recursive tree builder
-        function buildTree(entities, parentEl) {
+        function buildTree(entities, parentEl, insideFolder) {
           const ul = document.createElement("ul");
           parentEl.appendChild(ul);
 
@@ -146,17 +146,16 @@
               };
 
               ul.appendChild(li);
-              buildTree(entity._children, li);
-            } else {
+              buildTree(entity._children, li, true); // ✅ mark as inside folder
+            } else if (insideFolder) {
+              // ✅ Only show placemarks if inside a folder
               li.textContent = entity.name || "Unnamed";
               li.classList.add("placemark");
 
               li.onclick = function(e) {
                 e.stopPropagation();
                 if (entity.position) {
-                  viewer.flyTo(entity, {
-                    duration: 2.0
-                  });
+                  viewer.flyTo(entity, { duration: 2.0 });
                 }
               };
 
@@ -165,7 +164,8 @@
           });
         }
 
-        buildTree(rootEntities, treeContainer);
+        // Pass insideFolder=false at root so placemarks at root are skipped
+        buildTree(rootEntities, treeContainer, false);
       })
       .catch(function(error) {
         document.getElementById("kmlTree").textContent = "Error loading KMZ: " + error;
