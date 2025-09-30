@@ -149,14 +149,14 @@
 
         buildTree(myPlaces._children, myRoot);
 
-        // 🔎 Search filter
+        // 🔎 Smarter Search Filter
         const searchBox = document.getElementById("searchBox");
         searchBox.addEventListener("input", function() {
           const term = this.value.toLowerCase();
 
           const allNodes = treeContainer.querySelectorAll("li, div.folder");
 
-          // Reset visibility
+          // Reset everything visible
           allNodes.forEach(el => el.classList.remove("hidden"));
 
           if (term === "") return; // nothing typed → show all
@@ -166,31 +166,33 @@
 
             if (el.classList.contains("folder")) {
               if (text.includes(term)) {
-                // ✅ Folder matches → expand and show everything inside
+                // ✅ Folder matches → expand + show everything inside
                 el.classList.add("expanded");
                 el.classList.remove("collapsed");
+
                 const descendants = el.querySelectorAll("li, div");
                 descendants.forEach(d => d.classList.remove("hidden"));
               } else {
-                // Non-matching folder → hide unless children match
-                let hasMatchingChild = false;
-                el.querySelectorAll("li.placemark, li.folder").forEach(child => {
+                // Hide folder unless one of its descendants matches
+                let hasMatchingDescendant = false;
+                el.querySelectorAll("li, div").forEach(child => {
                   if (child.textContent.toLowerCase().includes(term)) {
-                    hasMatchingChild = true;
+                    hasMatchingDescendant = true;
                   }
                 });
-                if (!hasMatchingChild) {
+
+                if (!hasMatchingDescendant) {
                   el.classList.add("hidden");
                 } else {
                   el.classList.add("expanded");
                   el.classList.remove("collapsed");
                 }
               }
-            } else if (el.classList.contains("placemark")) {
-              if (!text.includes(term)) {
-                el.classList.add("hidden");
-              } else {
-                // ✅ Placemark matches → expand its parents
+            }
+
+            if (el.classList.contains("placemark")) {
+              if (text.includes(term)) {
+                // ✅ Placemark matches → ensure parents expand
                 let parent = el.parentElement;
                 while (parent && parent !== treeContainer) {
                   if (parent.classList.contains("folder")) {
@@ -199,6 +201,12 @@
                     parent.classList.remove("hidden");
                   }
                   parent = parent.parentElement;
+                }
+              } else {
+                // Hide placemarks that don’t match, unless their folder matched
+                let parentFolder = el.closest(".folder");
+                if (!parentFolder || !parentFolder.textContent.toLowerCase().includes(term)) {
+                  el.classList.add("hidden");
                 }
               }
             }
