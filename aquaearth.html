@@ -123,12 +123,20 @@
         viewer.dataSources.add(dataSource);
         viewer.zoomTo(dataSource);
 
-        const rootEntities = dataSource.entities.values;
+        const allEntities = dataSource.entities.values;
         const treeContainer = document.getElementById("kmlTree");
         treeContainer.innerHTML = ""; // clear loading text
 
+        // 🔍 Find the "My Places" folder entity
+        const myPlaces = allEntities.find(e => e.name && e.name.trim() === "My Places");
+
+        if (!myPlaces || !myPlaces._children) {
+          treeContainer.textContent = "Could not find 'My Places' folder in KMZ.";
+          return;
+        }
+
         // Recursive tree builder
-        function buildTree(entities, parentEl, insideFolder) {
+        function buildTree(entities, parentEl) {
           const ul = document.createElement("ul");
           parentEl.appendChild(ul);
 
@@ -146,9 +154,8 @@
               };
 
               ul.appendChild(li);
-              buildTree(entity._children, li, true); // ✅ mark as inside folder
-            } else if (insideFolder) {
-              // ✅ Only show placemarks if inside a folder
+              buildTree(entity._children, li);
+            } else {
               li.textContent = entity.name || "Unnamed";
               li.classList.add("placemark");
 
@@ -164,8 +171,18 @@
           });
         }
 
-        // Pass insideFolder=false at root so placemarks at root are skipped
-        buildTree(rootEntities, treeContainer, false);
+        // Build tree ONLY from "My Places"
+        const myRoot = document.createElement("div");
+        myRoot.textContent = myPlaces.name;
+        myRoot.classList.add("folder", "collapsed");
+        myRoot.onclick = function(e) {
+          e.stopPropagation();
+          myRoot.classList.toggle("collapsed");
+          myRoot.classList.toggle("expanded");
+        };
+        treeContainer.appendChild(myRoot);
+
+        buildTree(myPlaces._children, myRoot);
       })
       .catch(function(error) {
         document.getElementById("kmlTree").textContent = "Error loading KMZ: " + error;
