@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>AquaEarth KMZ Viewer - With Folder Tree</title>
-  <script src="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/CesiumUnminified/Cesium.js"></script>
+  <title>AquaEarth KMZ Viewer - Cesium Maps Only</title>
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Cesium.js"></script>
   <link href="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
 
   <style>
@@ -11,7 +11,6 @@
       width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden;
       font-family: sans-serif;
     }
-
     #sidebar {
       width: 300px;
       height: 100%;
@@ -23,92 +22,31 @@
       z-index: 9999;
       transition: all 0.3s ease;
     }
-
-    #sidebar.collapsed {
-      width: 0;
-      padding: 0;
-      overflow: hidden;
-    }
-
-    #sidebar h2, #sidebar h3 {
-      margin-top: 10px;
-      font-size: 16px;
-      color: #ffd479;
-    }
-
+    #sidebar.collapsed { width: 0; padding: 0; overflow: hidden; }
+    #sidebar h2, #sidebar h3 { margin-top: 10px; font-size: 16px; color: #ffd479; }
     #searchBox, #resetBtn, #layerSelect {
-      width: 100%;
-      padding: 6px;
-      margin: 8px 0;
-      border-radius: 4px;
-      border: none;
-      font-size: 14px;
+      width: 100%; padding: 6px; margin: 8px 0;
+      border-radius: 4px; border: none; font-size: 14px;
     }
-
-    #resetBtn {
-      background: #444;
-      color: #fff;
-      cursor: pointer;
-    }
-
-    #resetBtn:hover {
-      background: #666;
-    }
-
-    #folderList, #locationList {
-      list-style: none;
-      padding-left: 0;
-    }
-
+    #resetBtn { background: #444; color: #fff; cursor: pointer; }
+    #resetBtn:hover { background: #666; }
+    #folderList, #locationList { list-style: none; padding-left: 0; }
     #folderList li, #locationList li {
-      margin: 4px 0;
-      padding: 4px 6px;
-      cursor: pointer;
-      background: #333;
-      border-radius: 4px;
+      margin: 4px 0; padding: 4px 6px; cursor: pointer;
+      background: #333; border-radius: 4px;
     }
-
-    #folderList li:hover, #locationList li:hover {
-      background: #555;
-    }
-
-    .active-match {
-      background: #0078d7 !important;
-      font-weight: bold;
-    }
-
-    .folder-toggle {
-      font-weight: bold;
-      cursor: pointer;
-      margin-right: 6px;
-      color: #ffd479;
-    }
-
+    #folderList li:hover, #locationList li:hover { background: #555; }
+    .active-match { background: #0078d7 !important; font-weight: bold; }
+    .folder-toggle { font-weight: bold; cursor: pointer; margin-right: 6px; color: #ffd479; }
     #cesiumContainer {
-      position: absolute;
-      top: 0;
-      left: 300px;
-      right: 0;
-      bottom: 0;
+      position: absolute; top: 0; left: 300px; right: 0; bottom: 0;
       transition: all 0.3s ease;
     }
-
-    #cesiumContainer.full {
-      left: 0;
-    }
-
+    #cesiumContainer.full { left: 0; }
     #toggleSidebarBtn {
-      position: absolute;
-      top: 10px;
-      left: 310px;
-      z-index: 10000;
-      background: rgba(30, 30, 30, 0.85);
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      padding: 8px 12px;
-      cursor: pointer;
-      font-size: 18px;
+      position: absolute; top: 10px; left: 310px; z-index: 10000;
+      background: rgba(30, 30, 30, 0.85); color: #fff; border: none;
+      border-radius: 6px; padding: 8px 12px; cursor: pointer; font-size: 18px;
     }
   </style>
 </head>
@@ -120,8 +58,9 @@
 
     <h3>Map Layers</h3>
     <select id="layerSelect">
-      <option value="esri">ESRI Satellite</option>
-      <option value="osm">OpenStreetMap</option>
+      <option value="world">Cesium World Imagery</option>
+      <option value="bing">Cesium Bing Aerial</option>
+      <option value="none">None (Blank Globe)</option>
     </select>
 
     <h3>Folder Structure</h3>
@@ -136,8 +75,8 @@
 
   <script>
     // --- CONFIG ---
+    Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3NmEwNjdiZi02Y2E3LTQwNzEtYWRkMy03MjU1MTU3YWZmNTciLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyNDUyMTN9.C_4ZYmFZ-ShXYbhckuorrIbc_OlB1pwsyuAAdmJK3Ww"; // 👈 replace with your Ion token
     const DEFAULT_KMZ_URL = "https://aquaaerth.github.io/AASI%20Installations.kmz";
-    const DEFAULT_ICON = "https://upload.wikimedia.org/wikipedia/commons/e/ec/RedDot.svg";
 
     // Viewer setup
     const viewer = new Cesium.Viewer("cesiumContainer", {
@@ -147,31 +86,31 @@
       animation: false,
     });
 
-    // Remove default Bing/Ion imagery
+    // Remove default Bing layer
     viewer.imageryLayers.removeAll();
 
-    // Imagery providers
-    const esriProvider = new Cesium.UrlTemplateImageryProvider({
-      url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-    });
-    const osmProvider = new Cesium.UrlTemplateImageryProvider({
-      url: "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png"
-    });
+    // Cesium imagery options
+    const worldImagery = Cesium.createWorldImagery();
+    const bingAerial = new Cesium.IonImageryProvider({ assetId: 2 }); // Bing Maps Aerial via Ion
 
-    let activeLayer = viewer.imageryLayers.addImageryProvider(esriProvider);
+    // Start with World Imagery
+    let activeLayer = viewer.imageryLayers.addImageryProvider(worldImagery);
 
+    // Layer switcher
     document.getElementById("layerSelect").addEventListener("change", function () {
-      viewer.imageryLayers.remove(activeLayer);
-      activeLayer = (this.value === "osm")
-        ? viewer.imageryLayers.addImageryProvider(osmProvider)
-        : viewer.imageryLayers.addImageryProvider(esriProvider);
+      if (activeLayer) viewer.imageryLayers.remove(activeLayer);
+      if (this.value === "world") {
+        activeLayer = viewer.imageryLayers.addImageryProvider(Cesium.createWorldImagery());
+      } else if (this.value === "bing") {
+        activeLayer = viewer.imageryLayers.addImageryProvider(bingAerial);
+      } else if (this.value === "none") {
+        activeLayer = null;
+      }
     });
 
     // Globals
-    let searchMatches = [];
-    let currentMatchIndex = -1;
-    let lastHighlightedEntity = null;
-    let loadedDataSource = null;
+    let searchMatches = [], currentMatchIndex = -1;
+    let lastHighlightedEntity = null, loadedDataSource = null;
 
     // Highlight entity
     function highlightEntity(entity) {
