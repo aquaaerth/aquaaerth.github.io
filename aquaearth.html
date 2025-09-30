@@ -139,8 +139,8 @@
     };
 
     // Viewer with ESRI World Imagery
-    const viewer = new Cesium.Viewer("cesiumContainer", {
-  terrainProvider: new Cesium.EllipsoidTerrainProvider(),
+   const viewer = new Cesium.Viewer("cesiumContainer", {
+  terrainProvider: new Cesium.EllipsoidTerrainProvider(), // flat globe, no Ion
   imageryProvider: new Cesium.UrlTemplateImageryProvider({
     url: "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
   }),
@@ -316,4 +316,5 @@
   </script>
 </body>
 </html>
+
 
