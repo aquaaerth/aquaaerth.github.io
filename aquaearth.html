@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>AquaEarth KMZ Viewer - ESRI Imagery</title>
+  <title>AquaEarth KMZ Viewer - ESRI/OSM Switcher</title>
   <script src="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/CesiumUnminified/Cesium.js"></script>
   <link href="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
 
@@ -31,13 +31,13 @@
       overflow: hidden;
     }
 
-    #sidebar h2 {
+    #sidebar h2, #sidebar h3 {
       margin-top: 0;
       font-size: 16px;
       color: #ffd479 !important;
     }
 
-    #searchBox, #resetBtn {
+    #searchBox, #resetBtn, #layerSelect {
       width: 100%;
       padding: 6px;
       margin: 8px 0;
@@ -119,6 +119,11 @@
     <h2>Locations</h2>
     <input type="text" id="searchBox" placeholder="Search..." />
     <button id="resetBtn">Reset Highlights</button>
+    <h3>Map Layers</h3>
+    <select id="layerSelect">
+      <option value="esri">ESRI Satellite</option>
+      <option value="osm">OpenStreetMap</option>
+    </select>
     <ul id="locationList"></ul>
   </div>
 
@@ -128,42 +133,39 @@
   <script>
     // --- CONFIG ---
     const DEFAULT_KMZ_URL = "https://aquaaerth.github.io/AASI%20Installations.kmz";
-   // Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJhMDM4YzlkOC1hYWM5LTRjY2ItODQ5Yy02M2IwMzZmMjFlNDEiLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyMzY3MjJ9.QkY283vgiPJpUzHpsMXPK-kPXum1ToOsMI1Cr_fgoYU";
     const DEFAULT_ICON = "https://upload.wikimedia.org/wikipedia/commons/e/ec/RedDot.svg";
 
-    // Suppress Cesium warnings
-    const originalWarn = console.warn;
-    console.warn = function (msg, ...rest) {
-      if (typeof msg === "string" && msg.includes("KML - Unsupported StyleMap")) return;
-      if (typeof msg === "string" && msg.includes("KML - <gx:altitudeMode>")) return;
-      originalWarn.apply(console, [msg, ...rest]);
-    };
+    // Viewer setup
+    const viewer = new Cesium.Viewer("cesiumContainer", {
+      terrainProvider: new Cesium.EllipsoidTerrainProvider(), // flat terrain, no token
+      baseLayerPicker: false,
+      timeline: false,
+      animation: false,
+    });
 
-    // Viewer with ESRI World Imagery
-const viewer = new Cesium.Viewer("cesiumContainer", {
-  imageryProvider: new Cesium.UrlTemplateImageryProvider({
-    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-  }),
-  terrainProvider: new Cesium.EllipsoidTerrainProvider(), // flat terrain
-  baseLayerPicker: false,
-  timeline: false,
-  animation: false,
-  infoBox: false,
-  sceneModePicker: false,
-  navigationHelpButton: false,
-  homeButton: false,
-  geocoder: false
-});
+    // Remove default imagery (Bing/Ion)
+    viewer.imageryLayers.removeAll();
 
-// Remove any default imagery layers that Cesium adds
-viewer.imageryLayers.removeAll();
-viewer.imageryLayers.addImageryProvider(
-  new Cesium.UrlTemplateImageryProvider({
-    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-  })
-);
+    // Define providers
+    const esriProvider = new Cesium.UrlTemplateImageryProvider({
+      url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+    });
+    const osmProvider = new Cesium.UrlTemplateImageryProvider({
+      url: "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png"
+    });
 
+    // Add ESRI as default
+    let activeLayer = viewer.imageryLayers.addImageryProvider(esriProvider);
 
+    // Layer switcher
+    document.getElementById("layerSelect").addEventListener("change", function () {
+      viewer.imageryLayers.remove(activeLayer);
+      if (this.value === "osm") {
+        activeLayer = viewer.imageryLayers.addImageryProvider(osmProvider);
+      } else {
+        activeLayer = viewer.imageryLayers.addImageryProvider(esriProvider);
+      }
+    });
 
     // Globals
     let searchMatches = [];
@@ -331,9 +333,3 @@ viewer.imageryLayers.addImageryProvider(
   </script>
 </body>
 </html>
-
-
-
-
-
-
