@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Google Earth Web App - KMZ Loader</title>
+  <title>AquaEarth KMZ Viewer</title>
   <script src="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/CesiumUnminified/Cesium.js"></script>
   <link href="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
 
@@ -12,12 +12,12 @@
       font-family: sans-serif;
     }
     #cesiumContainer {
-      width: calc(100% - 280px);
+      width: calc(100% - 300px);
       height: 100%;
       float: left;
     }
     #sidebar {
-      width: 280px;
+      width: 300px;
       height: 100%;
       float: right;
       background: #1e1e1e;
@@ -53,17 +53,19 @@
   </div>
 
   <script>
+    // --- CONFIG ---
     const DEFAULT_KMZ_URL = "https://aquaaerth.github.io/AASI%20Installations.kmz";
+    Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJhMDM4YzlkOC1hYWM5LTRjY2ItODQ5Yy02M2IwMzZmMjFlNDEiLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyMzY3MjJ9.QkY283vgiPJpUzHpsMXPK-kPXum1ToOsMI1Cr_fgoYU"; // replace with your real token
+    const DEFAULT_ICON = "https://upload.wikimedia.org/wikipedia/commons/e/ec/RedDot.svg"; // fallback pin
 
-    Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJhMDM4YzlkOC1hYWM5LTRjY2ItODQ5Yy02M2IwMzZmMjFlNDEiLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyMzY3MjJ9.QkY283vgiPJpUzHpsMXPK-kPXum1ToOsMI1Cr_fgoYU";
-
+    // Create viewer with terrain
     const viewer = new Cesium.Viewer("cesiumContainer", {
       terrain: Cesium.Terrain.fromWorldTerrain(),
       timeline: false,
       animation: false,
     });
 
-    // Load KMZ/KML and populate sidebar list
+    // Load KMZ/KML and build sidebar
     function loadKmlKmz(sourceUrl) {
       Cesium.KmlDataSource.load(sourceUrl, {
         camera: viewer.scene.camera,
@@ -77,21 +79,40 @@
         list.innerHTML = "";
 
         entities.forEach(entity => {
-          if (entity.name) {
+          if (entity.name && entity.position) {
+            // --- Ensure valid icon ---
+            if (Cesium.defined(entity.billboard) && entity.billboard.image) {
+              let url = entity.billboard.image._value;
+              if (url && url.startsWith("http://maps.google.com")) {
+                // force HTTPS
+                url = url.replace("http://", "https://");
+                entity.billboard.image = url;
+              }
+              // fallback if missing or broken
+              if (!url || url.includes("track.png")) {
+                entity.billboard.image = DEFAULT_ICON;
+              }
+            }
+
+            // --- Extract coordinates ---
+            const carto = Cesium.Cartographic.fromCartesian(
+              entity.position.getValue(Cesium.JulianDate.now())
+            );
+            const lat = Cesium.Math.toDegrees(carto.latitude).toFixed(5);
+            const lon = Cesium.Math.toDegrees(carto.longitude).toFixed(5);
+
+            // --- Add to sidebar ---
             const li = document.createElement("li");
-            li.textContent = entity.name;
-            li.addEventListener("click", () => {
-              viewer.flyTo(entity);
-            });
+            li.textContent = `${entity.name} (${lat}, ${lon})`;
+            li.addEventListener("click", () => viewer.flyTo(entity));
             list.appendChild(li);
           }
         });
       }).catch(err => console.error("Error loading KMZ/KML:", err));
     }
 
-    // Auto-load default KMZ
+    // --- Auto-load ---
     loadKmlKmz(DEFAULT_KMZ_URL);
   </script>
 </body>
 </html>
-
