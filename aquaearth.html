@@ -93,7 +93,10 @@
 
 
     // Cesium imagery options
-    const worldImagery = Cesium.createWorldImagery();
+    Cesium.createWorldImageryAsync().then(function (worldImagery) {
+  viewer.imageryLayers.addImageryProvider(worldImagery);
+});
+
     const bingAerial = new Cesium.IonImageryProvider({ assetId: 2 }); // Bing Maps Aerial via Ion
 
     // Start with World Imagery
@@ -278,4 +281,5 @@
   </script>
 </body>
 </html>
+
 
