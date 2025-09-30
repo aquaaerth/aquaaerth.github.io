@@ -7,67 +7,63 @@
   <link href="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
 
   <style>
-    html, body, #cesiumContainer {
+    html, body {
       width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden;
-    }
-    #toolbar {
-      position: absolute;
-      top: 10px; left: 10px;
-      background: rgba(42, 42, 42, 0.85);
-      padding: 12px;
-      border-radius: 8px;
-      z-index: 100;
       font-family: sans-serif;
-      color: white;
     }
-    input[type="text"], input[type="file"], button {
-      margin-top: 6px;
-      display: block;
-      width: 260px;
+    #cesiumContainer {
+      width: calc(100% - 280px);
+      height: 100%;
+      float: left;
+    }
+    #sidebar {
+      width: 280px;
+      height: 100%;
+      float: right;
+      background: #1e1e1e;
+      color: white;
+      overflow-y: auto;
+      padding: 10px;
+    }
+    #sidebar h2 {
+      margin-top: 0;
+      font-size: 16px;
+    }
+    #sidebar ul {
+      list-style: none;
+      padding: 0;
+    }
+    #sidebar li {
+      margin: 6px 0;
+      padding: 6px;
+      cursor: pointer;
+      background: #333;
+      border-radius: 4px;
+    }
+    #sidebar li:hover {
+      background: #555;
     }
   </style>
 </head>
 <body>
   <div id="cesiumContainer"></div>
-  <div id="toolbar">
-    <label>Load local KMZ/KML:</label>
-    <input type="file" id="kmzInput" accept=".kmz,.kml" />
-
-    <label>Load KMZ/KML from URL:</label>
-    <input type="text" id="urlInput" placeholder="https://example.com/map.kmz" />
-    <button id="loadUrlBtn">Load from URL</button>
-
-    <hr>
-    <button id="toggleTerrainBtn">Toggle Terrain</button>
+  <div id="sidebar">
+    <h2>Locations</h2>
+    <ul id="locationList"></ul>
   </div>
 
   <script>
-    // --- CONFIG: Set your default KMZ/KML URL here ---
     const DEFAULT_KMZ_URL = "https://aquaaerth.github.io/AASI%20Installations.kmz";
 
-    // ✅ Your Ion access token (keep it private if possible!)
-    Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJhMDM4YzlkOC1hYWM5LTRjY2ItODQ5Yy02M2IwMzZmMjFlNDEiLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyMzY3MjJ9.QkY283vgiPJpUzHpsMXPK-kPXum1ToOsMI1Cr_fgoYU';
+    Cesium.Ion.defaultAccessToken = "YOUR_TOKEN_HERE";
 
-    let viewer;
+    const viewer = new Cesium.Viewer("cesiumContainer", {
+      terrain: Cesium.Terrain.fromWorldTerrain(),
+      timeline: false,
+      animation: false,
+    });
 
-    try {
-      // ✅ NEW CesiumJS 1.119 way to enable terrain
-      viewer = new Cesium.Viewer("cesiumContainer", {
-        terrain: Cesium.Terrain.fromWorldTerrain(), // <-- Correct API
-        timeline: false,
-        animation: false,
-      });
-    } catch (e) {
-      console.warn("WorldTerrain not available, falling back to flat globe:", e);
-      // Fallback to flat earth
-      viewer = new Cesium.Viewer("cesiumContainer", {
-        terrainProvider: new Cesium.EllipsoidTerrainProvider(),
-        timeline: false,
-        animation: false,
-      });
-    }
-
-    // --- Function to load KMZ/KML ---
+    // Load KMZ/KML and populate sidebar list
     function loadKmlKmz(sourceUrl) {
       Cesium.KmlDataSource.load(sourceUrl, {
         camera: viewer.scene.camera,
@@ -75,48 +71,26 @@
       }).then(function (dataSource) {
         viewer.dataSources.add(dataSource);
         viewer.flyTo(dataSource);
+
+        const entities = dataSource.entities.values;
+        const list = document.getElementById("locationList");
+        list.innerHTML = "";
+
+        entities.forEach(entity => {
+          if (entity.name) {
+            const li = document.createElement("li");
+            li.textContent = entity.name;
+            li.addEventListener("click", () => {
+              viewer.flyTo(entity);
+            });
+            list.appendChild(li);
+          }
+        });
       }).catch(err => console.error("Error loading KMZ/KML:", err));
     }
 
-    // --- Auto-load default KMZ/KML ---
-    if (DEFAULT_KMZ_URL) {
-      loadKmlKmz(DEFAULT_KMZ_URL);
-    }
-
-    // --- Handle Local Upload ---
-    document.getElementById("kmzInput").addEventListener("change", function (event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function (e) {
-        const blob = new Blob([e.target.result], { type: file.type });
-        const url = URL.createObjectURL(blob);
-        loadKmlKmz(url);
-      };
-      reader.readAsArrayBuffer(file);
-    });
-
-    // --- Handle URL Input ---
-    document.getElementById("loadUrlBtn").addEventListener("click", function () {
-      const url = document.getElementById("urlInput").value.trim();
-      if (url) {
-        loadKmlKmz(url);
-      } else {
-        alert("Please enter a valid KMZ/KML URL");
-      }
-    });
-
-    // --- Toggle Terrain Button ---
-    document.getElementById("toggleTerrainBtn").addEventListener("click", function () {
-      if (viewer.terrainProvider instanceof Cesium.EllipsoidTerrainProvider) {
-        viewer.terrainProvider = Cesium.Terrain.fromWorldTerrain();
-        console.log("Switched to 3D World Terrain");
-      } else {
-        viewer.terrainProvider = new Cesium.EllipsoidTerrainProvider();
-        console.log("Switched to Flat Globe");
-      }
-    });
+    // Auto-load default KMZ
+    loadKmlKmz(DEFAULT_KMZ_URL);
   </script>
 </body>
 </html>
