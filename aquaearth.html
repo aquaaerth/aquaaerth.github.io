@@ -317,9 +317,15 @@
 
     // Hook Reset button
     document.getElementById("resetBtn").addEventListener("click", resetView);
+	var appBanners = document.getElementsByClassName('cesium-viewer-bottom');
+
+for (var i = 0; i < appBanners.length; i ++) {
+    appBanners[i].style.display = 'none';
+}
   </script>
 </body>
 </html>
+
 
 
 
