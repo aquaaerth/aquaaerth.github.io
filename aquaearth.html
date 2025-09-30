@@ -112,18 +112,19 @@
       destination: Cesium.Rectangle.fromDegrees(-125.0, 24.0, -66.0, 49.0)
     });
 
-    // 🔹 Define folder → color mapping
+    // 🔹 Folder → Color mapping (root included)
     const folderColorMap = {
+      "AASI Installations": Cesium.Color.YELLOW,   // root fallback
       "Biological Installations": Cesium.Color.GREEN,
       "Filter Installations": Cesium.Color.RED,
       "Tours": Cesium.Color.PURPLE
-      // ➕ add more folder → color mappings here
+      // ➕ add more mappings here
     };
 
     const pinBuilder = new Cesium.PinBuilder();
 
+    // Always return a pin for placemarks
     function getIconForEntity(entity) {
-      // Walk up ancestors to find folder color
       let parent = entity.parent;
       while (parent) {
         if (parent.name && folderColorMap[parent.name]) {
@@ -131,7 +132,10 @@
         }
         parent = parent.parent;
       }
-      // fallback: blue
+      // fallback to root folder color
+      if (folderColorMap["AASI Installations"]) {
+        return pinBuilder.fromColor(folderColorMap["AASI Installations"], 32).toDataURL();
+      }
       return pinBuilder.fromColor(Cesium.Color.BLUE, 32).toDataURL();
     }
 
@@ -140,13 +144,10 @@
       .then(function(dataSource) {
         viewer.dataSources.add(dataSource);
 
-        // 🔧 Replace broken Google icons with generated pins
+        // 🔧 Force icon for every placemark
         dataSource.entities.values.forEach(entity => {
-          if (entity.billboard && entity.billboard.image && typeof entity.billboard.image.getValue === "function") {
-            const imgVal = entity.billboard.image.getValue();
-            if (typeof imgVal === "string" && imgVal.includes("maps.google.com/mapfiles/kml")) {
-              entity.billboard.image = getIconForEntity(entity);
-            }
+          if (entity.billboard) {
+            entity.billboard.image = getIconForEntity(entity);
           }
         });
 
