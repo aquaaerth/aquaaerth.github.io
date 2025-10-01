@@ -249,8 +249,25 @@
 		  {
 			  // Reset camera + rebuild tree/legend only
         viewer.camera.flyTo({ destination: initialRectangle });
-        if (allEntities) buildUI();
-			  return;
+
+    // Collapse all folders except root
+    const folders = treeContainer.querySelectorAll(".folder");
+    folders.forEach((folder, idx) => {
+      if (idx === 0) {
+        folder.classList.add("expanded");
+        folder.classList.remove("collapsed");
+      } else {
+        folder.classList.add("collapsed");
+        folder.classList.remove("expanded");
+      }
+      folder.classList.remove("hidden");
+    });
+
+    // Show all placemarks again
+    const placemarks = treeContainer.querySelectorAll(".placemark");
+    placemarks.forEach(pm => pm.classList.remove("hidden"));
+
+    return;
 		  }
 
           allNodes.forEach(el => {
@@ -331,6 +348,7 @@ for (var i = 0; i < appBanners.length; i ++) {
   </script>
 </body>
 </html>
+
 
 
 
