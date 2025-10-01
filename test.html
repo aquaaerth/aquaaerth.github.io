@@ -52,6 +52,13 @@
       baseLayerPicker: false, timeline: false, animation: false
     });
 
+    // Fix sandbox permissions immediately
+const frame = viewer.infoBox.frame;
+frame.setAttribute(
+  "sandbox",
+  "allow-scripts allow-popups allow-popups-to-escape-sandbox allow-same-origin"
+);
+
     // allow popup links in infoBox
     viewer.infoBox.frame.addEventListener("load", () => {
       const f = viewer.infoBox.frame;
@@ -190,8 +197,8 @@
 
     function replace(entity,{address,lat,lon}){
       let html=entity.description?.getValue?.()??entity.description??"";
-      const gUrl=`https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
-      const link=`<a class="info-btn popup-link" data-url="${gUrl}">Get directions</a>`;
+      const gUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
+      const link = `<a class="info-btn popup-link" data-url="${gUrl}">Get directions</a>`;
       html=html.replace(/<span class="spinner"><\/span> Fetching address…/s, `${address}<br>${link}`);
       entity.description=new Cesium.ConstantProperty(html);
       wirePopup();
@@ -201,24 +208,25 @@
     function wirePopup(retries=10){
       const doc=viewer.infoBox.frame?.contentDocument;
       if(!doc){ if(retries>0) setTimeout(()=>wirePopup(retries-1),100); return; }
-      doc.querySelectorAll('.popup-link').forEach(a=>{
-        if(a.dataset.wired) return; a.dataset.wired="1";
-        a.addEventListener('click',ev=>{
-          ev.preventDefault();
-          const url=a.dataset.url;
-          window.parent.postMessage({ type:"openPopup", url }, "*");
-        });
-      });
+      doc.querySelectorAll('.popup-link').forEach(a => {
+  if (a.dataset.wired) return;
+  a.dataset.wired = "1";
+  a.addEventListener('click', ev => {
+    ev.preventDefault();
+    window.parent.postMessage({ type: "openPopup", url: a.dataset.url }, "*");
+  });
+});
     }
 
     // Parent listener opens popup
-    window.addEventListener("message",ev=>{
-      if(ev.data?.type==="openPopup"){
-        const url=ev.data.url;
-        const w=800,h=600,left=(screen.width-w)/2,top=(screen.height-h)/2;
-        window.open(url,"PopupWindow",`width=${w},height=${h},top=${top},left=${left},resizable=yes,scrollbars=yes`);
-      }
-    });
+   window.addEventListener("message", ev => {
+  if (ev.data?.type === "openPopup") {
+    const url = ev.data.url;
+    const w = 800, h = 600, left = (screen.width - w) / 2, top = (screen.height - h) / 2;
+    window.open(url, "PopupWindow", `width=${w},height=${h},top=${top},left=${left},resizable=yes,scrollbars=yes`);
+  }
+});
+
   </script>
 </body>
 </html>
