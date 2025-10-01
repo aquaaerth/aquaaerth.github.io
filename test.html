@@ -202,36 +202,30 @@
       }catch(e){ console.warn("geocode fail",e); }
     }
 
-    function replace(entity,{address,lat,lon}){
-      let html=entity.description?.getValue?.()??entity.description??"";
-      const gUrl=`https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
-      const link=`<a class="info-btn popup-link" data-url="${gUrl}" href="${gUrl}" target="_blank">Get directions</a>`;
-      html=html.replace(/<span class="spinner"><\/span> Fetching address…/s, `${address}<br>${link}`);
-      entity.description=new Cesium.ConstantProperty(html);
-      wirePopup();
-    }
+   function replace(entity,{address,lat,lon}){
+  let html=entity.description?.getValue?.()??entity.description??"";
+  const gUrl=`https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
+  // ⚠️ Remove href/target, just use data-url so browser doesn't open a tab
+  const link=`<a class="info-btn popup-link" data-url="${gUrl}">Get directions</a>`;
+  html=html.replace(/<span class="spinner"><\/span> Fetching address…/s, `${address}<br>${link}`);
+  entity.description=new Cesium.ConstantProperty(html);
+  wirePopup();
+}
 
-   function wirePopup(retries = 10) {
-  const frame = viewer.infoBox.frame;
-  const doc = frame?.contentDocument;
-  if (!doc) {
-    if (retries > 0) setTimeout(() => wirePopup(retries - 1), 100);
-    return;
-  }
 
-  doc.querySelectorAll('.popup-link').forEach(a => {
-    if (a.dataset.wired) return;
-    a.dataset.wired = "1";
-
-    a.addEventListener('click', ev => {
+  function wirePopup(retries=10){
+  const doc=viewer.infoBox.frame?.contentDocument;
+  if(!doc){ if(retries>0) setTimeout(()=>wirePopup(retries-1),100); return; }
+  doc.querySelectorAll('.popup-link').forEach(a=>{
+    if(a.dataset.wired) return; a.dataset.wired="1";
+    a.addEventListener('click',ev=>{
       ev.preventDefault();
-      const url = a.dataset.url || a.href;
-
-      // 🔹 Post a message to the parent page instead of calling window.open here
-      window.parent.postMessage({ type: "openPopup", url }, "*");
+      const url=a.dataset.url;
+      window.parent.postMessage({ type:"openPopup", url }, "*");
     });
   });
 }
+
 // Listen for popup requests from the infoBox iframe
 window.addEventListener("message", ev => {
   if (ev.data?.type === "openPopup") {
