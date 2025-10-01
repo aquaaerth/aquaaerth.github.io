@@ -245,7 +245,13 @@
           const allNodes = treeContainer.querySelectorAll("li, div.folder");
           allNodes.forEach(el => el.classList.remove("hidden"));
 
-          if (term === "") return;
+          if (term === "") 
+		  {
+			  // Reset camera + rebuild tree/legend only
+        viewer.camera.flyTo({ destination: initialRectangle });
+        if (allEntities) buildUI();
+			  return;
+		  }
 
           allNodes.forEach(el => {
             const text = el.textContent.toLowerCase();
@@ -325,6 +331,7 @@ for (var i = 0; i < appBanners.length; i ++) {
   </script>
 </body>
 </html>
+
 
 
 
