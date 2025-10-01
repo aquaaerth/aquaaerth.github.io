@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- vs: 295 -->
+<!-- vs: 296 -->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -58,7 +58,7 @@
   <div id="cesiumContainer"></div>
 
   <script>
-      Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3NmEwNjdiZi02Y2E3LTQwNzEtYWRkMy03MjU1MTU3YWZmNTciLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyNDUyMTN9.C_4ZYmFZ-ShXYbhckuorrIbc_OlB1pwsyuAAdmJK3Ww";
+    Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3NmEwNjdiZi02Y2E3LTQwNzEtYWRkMy03MjU1MTU3YWZmNTciLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyNDUyMTN9.C_4ZYmFZ-ShXYbhckuorrIbc_OlB1pwsyuAAdmJK3Ww";
 
     const viewer = new Cesium.Viewer("cesiumContainer", {
       baseLayerPicker:false, timeline:false, animation:false
@@ -124,13 +124,58 @@
       myRoot.textContent="AASI Installations"; myRoot.classList.add("folder","expanded");
       treeContainer.appendChild(myRoot);
       buildTree(myPlaces._children,myRoot);
+
+      /* === Search filter === */
+      document.getElementById("searchBox").addEventListener("input",function(){
+        const term=this.value.toLowerCase();
+        const allNodes=treeContainer.querySelectorAll("li,div.folder");
+        allNodes.forEach(el=>el.classList.remove("hidden"));
+        if(term===""){ 
+          viewer.camera.setView({destination:Cesium.Rectangle.fromDegrees(-125,24,-66,49)});
+          const folders=treeContainer.querySelectorAll(".folder");
+          folders.forEach((f,i)=>{ 
+            if(i===0){ f.classList.add("expanded"); f.classList.remove("collapsed"); }
+            else { f.classList.add("collapsed"); f.classList.remove("expanded"); }
+            f.classList.remove("hidden"); 
+          });
+          treeContainer.querySelectorAll(".placemark").forEach(pm=>pm.classList.remove("hidden"));
+          return;
+        }
+        allNodes.forEach(el=>{
+          const text=el.textContent.toLowerCase();
+          if(el.classList.contains("folder")){
+            if(text.includes(term)){ 
+              el.classList.add("expanded"); el.classList.remove("collapsed");
+              el.querySelectorAll("li,div").forEach(d=>d.classList.remove("hidden"));
+            } else {
+              let has=false; el.querySelectorAll("li,div").forEach(ch=>{ if(ch.textContent.toLowerCase().includes(term)) has=true; });
+              if(!has) el.classList.add("hidden");
+            }
+          }
+          if(el.classList.contains("placemark")){
+            if(text.includes(term)){
+              let p=el.parentElement; 
+              while(p&&p!==treeContainer){ 
+                if(p.classList.contains("folder")){ 
+                  p.classList.add("expanded"); 
+                  p.classList.remove("collapsed"); 
+                  p.classList.remove("hidden"); 
+                } 
+                p=p.parentElement; 
+              }
+            } else {
+              let pf=el.closest(".folder"); 
+              if(!pf||!pf.textContent.toLowerCase().includes(term)) el.classList.add("hidden");
+            }
+          }
+        });
+      });
     });
 
     document.getElementById("resetBtn").addEventListener("click",()=>location.reload());
     Array.from(document.getElementsByClassName('cesium-viewer-bottom')).forEach(b=>b.style.display='none');
 
     /* ==== Address + Google Directions ==== */
-
     const _addrCache=new Map();
     let _currentDirectionsUrl = "";
 
@@ -168,12 +213,10 @@
       let html=entity.description?.getValue?.()??entity.description??"";
       const gUrl=`https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
 
-      // Replace spinner text with address only (white text)
       const infoBoxLine = `<span class="directions-text">${address}<br>(<b>Get Directions</b> available via sidebar button)</span>`;
       html=html.replace(/<span class="spinner"><\/span> Fetching address…/s, infoBoxLine);
       entity.description=new Cesium.ConstantProperty(html);
 
-      // enable sidebar button
       _currentDirectionsUrl = gUrl;
       const btn=document.getElementById("popupBtn");
       btn.disabled=false;
