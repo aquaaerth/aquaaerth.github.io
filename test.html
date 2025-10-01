@@ -216,7 +216,7 @@
     // Global delegation: open popup on click
     window.addEventListener("click", ev=>{
       const a=ev.target.closest(".popup-link");
-      console.log(a);
+      console.log("a is: " + a);
       if(!a) return;
       ev.preventDefault();
       const url=a.dataset.url;
