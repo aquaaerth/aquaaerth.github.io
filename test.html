@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
-  v133
+  v135
 -->
 <html lang="en">
 <head>
@@ -211,19 +211,43 @@
       wirePopup();
     }
 
-    function wirePopup(retries=10){
-      const doc=viewer.infoBox.frame?.contentDocument;
-      if(!doc){ if(retries>0) setTimeout(()=>wirePopup(retries-1),100); return; }
-      doc.querySelectorAll('.popup-link').forEach(a=>{
-        if(a.dataset.wired) return; a.dataset.wired="1";
-        a.addEventListener('click',ev=>{
-          ev.preventDefault();
-          const url=a.dataset.url||a.href;
-          const w=800,h=600,left=(screen.width-w)/2,top=(screen.height-h)/2;
-          window.open(url,"PopupWindow",`width=${w},height=${h},top=${top},left=${left},resizable=yes,scrollbars=yes`);
-        });
-      });
-    }
+   function wirePopup(retries = 10) {
+  const frame = viewer.infoBox.frame;
+  const doc = frame?.contentDocument;
+  if (!doc) {
+    if (retries > 0) setTimeout(() => wirePopup(retries - 1), 100);
+    return;
+  }
+
+  doc.querySelectorAll('.popup-link').forEach(a => {
+    if (a.dataset.wired) return;
+    a.dataset.wired = "1";
+
+    a.addEventListener('click', ev => {
+      ev.preventDefault();
+      const url = a.dataset.url || a.href;
+
+      // 🔹 Post a message to the parent page instead of calling window.open here
+      window.parent.postMessage({ type: "openPopup", url }, "*");
+    });
+  });
+}
+// Listen for popup requests from the infoBox iframe
+window.addEventListener("message", ev => {
+  if (ev.data?.type === "openPopup") {
+    const url = ev.data.url;
+    const w = 800, h = 600;
+    const left = (screen.width - w) / 2;
+    const top = (screen.height - h) / 2;
+
+    window.open(
+      url,
+      "PopupWindow",
+      `width=${w},height=${h},top=${top},left=${left},resizable=yes,scrollbars=yes`
+    );
+  }
+});
+
   </script>
 </body>
 </html>
