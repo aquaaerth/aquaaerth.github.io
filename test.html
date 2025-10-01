@@ -351,7 +351,7 @@
         html = typeof val === "string" ? val : String(val);
       }
       if (html.includes("Address:")) return;
-      html += `<hr><div style="font:12px system-ui,Arial;color:#444"><b>Address:</b> ${address}</div>`;
+      html += `<hr><div style="font:12px system-ui,Arial;color:#fff"><b>Address:</b> ${address}</div>`;
       entity.description = new Cesium.ConstantProperty(html);
     }
   </script>
