@@ -1,13 +1,16 @@
 <!DOCTYPE html>
+<!--
+  Updates
+  v122: 10/1/2025 916am
+-->
 <html lang="en">
-    <!-- Updated 10012025 0854 -->
 <head>
   <meta charset="utf-8" />
   <title>AquaEarth KMZ Viewer</title>
   <script src="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Cesium.js"></script>
   <link href="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
 
-  <style>
+   <style>
     html, body {
       width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden;
       font-family: sans-serif;
@@ -22,57 +25,97 @@
       overflow-y: auto;
       box-sizing: border-box;
     }
-    #sidebar h1 { margin: 0; font-size: 20px; color: #4FC3F7; /* Aqua-blue */ }
-    #sidebar h2 { margin: 2px 0 12px 0; font-size: 12px; font-weight: normal; color: #bbb; }
+    #sidebar h1 {
+      margin: 0;
+      font-size: 20px;
+      color: #4FC3F7; /* Aqua-blue */
+    }
+    #sidebar h2 {
+      margin: 2px 0 12px 0;
+      font-size: 12px;
+      font-weight: normal;
+      color: #bbb;
+    }
     #resetBtn {
-      width: 100%; padding: 6px; margin-bottom: 10px; background: #444; border: none; border-radius: 4px; color: #fff; cursor: pointer;
+      width: 100%;
+      padding: 6px;
+      margin-bottom: 10px;
+      background: #444;
+      border: none;
+      border-radius: 4px;
+      color: #fff;
+      cursor: pointer;
     }
-    #resetBtn:hover { background: #666; }
-    #cesiumContainer { width: calc(100% - 300px); height: 100%; float: left; }
-    #searchBox { width: 100%; padding: 6px; margin-bottom: 10px; border: none; border-radius: 4px; font-size: 14px; }
-    .tree ul { list-style: none; padding-left: 18px; margin: 4px 0; }
-    .tree li { margin: 2px 0; cursor: pointer; }
-    .folder::before { content: "▶ "; display: inline-block; transition: transform 0.2s; }
-    .folder.expanded::before { transform: rotate(90deg); }
-    .collapsed > ul { display: none; }
-    .placemark::before { content: "• "; color: #00c3ff; }
-    .placemark:hover { text-decoration: underline; color: #a3d3ff; }
-    .hidden { display: none !important; }
-
+    #resetBtn:hover {
+      background: #666;
+    }
+    #cesiumContainer {
+      width: calc(100% - 300px);
+      height: 100%;
+      float: left;
+    }
+    #searchBox {
+      width: 100%;
+      padding: 6px;
+      margin-bottom: 10px;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    .tree ul {
+      list-style: none;
+      padding-left: 18px;
+      margin: 4px 0;
+    }
+    .tree li {
+      margin: 2px 0;
+      cursor: pointer;
+    }
+    .folder::before {
+      content: "▶ ";
+      display: inline-block;
+      transition: transform 0.2s;
+    }
+    .folder.expanded::before {
+      transform: rotate(90deg);
+    }
+    .collapsed > ul {
+      display: none;
+    }
+    .placemark::before {
+      content: "• ";
+      color: #00c3ff;
+    }
+    .placemark:hover {
+      text-decoration: underline;
+      color: #a3d3ff;
+    }
+    .hidden {
+      display: none !important;
+    }
     /* 🔹 Legend */
-    #legend { margin-top: 12px; padding: 8px; background: #2a2a2a; border-radius: 6px; font-size: 13px; }
-    #legend h4 { margin: 0 0 6px; font-size: 14px; color: #ddd; }
-    .legend-item { display: flex; align-items: center; margin: 4px 0; }
-    .legend-item img { width: 18px; height: 18px; margin-right: 6px; }
-
-    /* 🔹 Spinner + animations */
-    @keyframes spin { 0%{transform:rotate(0deg);} 100%{transform:rotate(360deg);} }
-    @keyframes fadeOut { 0%{opacity:1;} 80%{opacity:1;} 100%{opacity:0;} }
-
-    /* 🔹 Info buttons (used inside infoBox HTML) */
-    .info-btn {
-      background: #4FC3F7; color: #fff; border: none; border-radius: 4px; padding: 4px 8px; font-size: 12px;
-      margin: 4px 4px 0 0; cursor: pointer; text-decoration: none; display: inline-block; transition: background 0.2s;
+    #legend {
+      margin-top: 12px;
+      padding: 8px;
+      background: #2a2a2a;
+      border-radius: 6px;
+      font-size: 13px;
     }
-    .info-btn:hover { background: #0288D1; }
-    .info-btn:active { background: #0277BD; }
-
-    /* 🔹 Copied badge (shown inside infoBox) */
-    .copy-confirm {
-      display: inline-block; background: #4CAF50; color: #fff; font-size: 11px; padding: 2px 6px; border-radius: 12px;
-      margin-top: 6px; margin-left: 2px; animation: fadeOut 2s forwards;
+    #legend h4 {
+      margin: 0 0 6px;
+      font-size: 14px;
+      color: #ddd;
     }
-
-    /* 🔹 Toasts (outside, bottom-right) */
-    #toast-container {
-      position: fixed; bottom: 20px; right: 20px; z-index: 999999; display: flex; flex-direction: column; align-items: flex-end; gap: 6px;
+    .legend-item {
+      display: flex;
+      align-items: center;
+      margin: 4px 0;
     }
-    .toast {
-      background: #323232; color: #fff; padding: 8px 14px; border-radius: 6px; font-size: 13px; min-width: 160px; text-align: center;
-      opacity: 0; transform: translateY(20px); animation: slideIn 0.3s forwards, fadeOutToast 2s 1s forwards;
+    .legend-item img {
+      width: 18px;
+      height: 18px;
+      margin-right: 6px;
     }
-    @keyframes slideIn { from {opacity:0; transform:translateY(20px);} to {opacity:1; transform:translateY(0);} }
-    @keyframes fadeOutToast { to {opacity:0; transform:translateY(20px);} }
   </style>
 </head>
 <body>
@@ -89,8 +132,6 @@
     <div id="legend"></div>
   </div>
   <div id="cesiumContainer"></div>
-  <!-- Toasts -->
-  <div id="toast-container"></div>
 
   <script>
     Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3NmEwNjdiZi02Y2E3LTQwNzEtYWRkMy03MjU1MTU3YWZmNTciLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyNDUyMTN9.C_4ZYmFZ-ShXYbhckuorrIbc_OlB1pwsyuAAdmJK3Ww";
@@ -101,11 +142,14 @@
       animation: false
     });
 
-    // ✅ Allow user-initiated popups/scripts in infoBox iframe (still sandboxed)
+    // ✅ Allow popup links in infoBox iframe
     viewer.infoBox.frame.addEventListener("load", () => {
       const f = viewer.infoBox.frame;
       const current = (f.getAttribute("sandbox") || "").split(/\s+/).filter(Boolean);
-      const needed = ["allow-scripts","allow-popups","allow-popups-to-escape-sandbox","allow-same-origin","allow-top-navigation-by-user-activation"];
+      const needed = [
+        "allow-scripts","allow-popups","allow-popups-to-escape-sandbox",
+        "allow-same-origin","allow-top-navigation-by-user-activation"
+      ];
       const merged = Array.from(new Set([...current, ...needed]));
       f.setAttribute("sandbox", merged.join(" "));
     });
@@ -124,7 +168,6 @@
 
     const pinBuilder = new Cesium.PinBuilder();
 
-    // Always return a pin for placemarks
     function getIconForEntity(entity) {
       let parent = entity.parent;
       while (parent) {
@@ -133,11 +176,11 @@
         }
         parent = parent.parent;
       }
-      // fallback to root
       return pinBuilder.fromColor(folderColorMap["AASI Installations"], 32).toDataURL();
     }
 
-    const kmlUrl = "AASI Installations.kmz"; // 🔹 Replace with your KMZ/KML path
+    // ✅ Load KMZ
+    const kmlUrl = "AASI Installations.kmz";
     Cesium.KmlDataSource.load(kmlUrl, { camera: viewer.scene.camera, canvas: viewer.scene.canvas })
       .then(function(dataSource) {
         viewer.dataSources.add(dataSource);
@@ -153,9 +196,7 @@
         const treeContainer = document.getElementById("kmlTree");
         treeContainer.innerHTML = ""; // clear loading text
 
-        // 🔍 Find the "My Places" folder entity
         const myPlaces = allEntities.find(e => e.name && e.name.trim() === "My Places");
-
         if (!myPlaces || !myPlaces._children) {
           treeContainer.textContent = "Could not find 'My Places' folder in KMZ.";
           return;
@@ -167,65 +208,52 @@
           parentEl.appendChild(ul);
 
           entities.forEach(entity => {
-            // Skip hidden entities (visibility=0 in KMZ)
             if (entity.show === false) return;
-
             const li = document.createElement("li");
 
             if (entity._children && entity._children.length > 0) {
               li.textContent = entity.name || "Folder";
               li.classList.add("folder", "collapsed");
-
               li.onclick = function(e) {
                 e.stopPropagation();
                 li.classList.toggle("collapsed");
                 li.classList.toggle("expanded");
               };
-
               ul.appendChild(li);
               buildTree(entity._children, li);
             } else {
               li.textContent = entity.name || "Unnamed";
               li.classList.add("placemark");
-
               li.onclick = function(e) {
                 e.stopPropagation();
                 if (entity.position) {
                   viewer.flyTo(entity, { duration: 2.0 });
-                  // Select to open infoBox (needed for address logic)
-                  viewer.selectedEntity = entity;
+                  viewer.selectedEntity = entity; // ensure infoBox opens
                 }
               };
-
               ul.appendChild(li);
             }
           });
         }
 
-        // Build tree ONLY from "My Places", but rename root
+        // Root
         const myRoot = document.createElement("div");
         myRoot.textContent = "AASI Installations";
         myRoot.classList.add("folder", "expanded");
         treeContainer.appendChild(myRoot);
-
         buildTree(myPlaces._children, myRoot);
 
         // 🔎 Search filter
         const searchBox = document.getElementById("searchBox");
         searchBox.addEventListener("input", function() {
           const term = this.value.toLowerCase();
-
           const allNodes = treeContainer.querySelectorAll("li, div.folder");
           allNodes.forEach(el => el.classList.remove("hidden"));
 
-          if (term === "") 
-          {
-            // Reset camera + rebuild tree/legend only
+          if (term === "") {
             viewer.camera.setView({
               destination: Cesium.Rectangle.fromDegrees(-125.0, 24.0, -66.0, 49.0)
             });
-
-            // Collapse all folders except root
             const folders = treeContainer.querySelectorAll(".folder");
             folders.forEach((folder, idx) => {
               if (idx === 0) {
@@ -237,31 +265,23 @@
               }
               folder.classList.remove("hidden");
             });
-
-            // Show all placemarks again
-            const placemarks = treeContainer.querySelectorAll(".placemark");
-            placemarks.forEach(pm => pm.classList.remove("hidden"));
-
+            treeContainer.querySelectorAll(".placemark").forEach(pm => pm.classList.remove("hidden"));
             return;
           }
 
           allNodes.forEach(el => {
             const text = el.textContent.toLowerCase();
-
             if (el.classList.contains("folder")) {
               if (text.includes(term)) {
                 el.classList.add("expanded");
                 el.classList.remove("collapsed");
-                const descendants = el.querySelectorAll("li, div");
-                descendants.forEach(d => d.classList.remove("hidden"));
+                el.querySelectorAll("li, div").forEach(d => d.classList.remove("hidden"));
               } else {
-                let hasMatchingDescendant = false;
+                let hasMatch = false;
                 el.querySelectorAll("li, div").forEach(child => {
-                  if (child.textContent.toLowerCase().includes(term)) {
-                    hasMatchingDescendant = true;
-                  }
+                  if (child.textContent.toLowerCase().includes(term)) hasMatch = true;
                 });
-                if (!hasMatchingDescendant) {
+                if (!hasMatch) {
                   el.classList.add("hidden");
                 } else {
                   el.classList.add("expanded");
@@ -269,7 +289,6 @@
                 }
               }
             }
-
             if (el.classList.contains("placemark")) {
               if (text.includes(term)) {
                 let parent = el.parentElement;
@@ -291,7 +310,7 @@
           });
         });
 
-        // ✅ Build legend dynamically
+        // ✅ Build legend
         const legendContainer = document.getElementById("legend");
         legendContainer.innerHTML = "<h4>Legend</h4>";
         Object.keys(folderColorMap).forEach(folderName => {
@@ -303,206 +322,49 @@
           legendContainer.appendChild(div);
         });
       })
-      .catch(function(error) {
-        document.getElementById("kmlTree").textContent = "Error loading KMZ: " + error;
-        console.error(error);
+      .catch(err => {
+        document.getElementById("kmlTree").textContent = "Error loading KMZ: " + err;
       });
-	  
-    // 🔹 Reset function (reload page completely)
-    function resetView() { location.reload(); }
-    // Hook Reset button
-    document.getElementById("resetBtn").addEventListener("click", resetView);
 
-    var appBanners = document.getElementsByClassName('cesium-viewer-bottom');
-    for (var i = 0; i < appBanners.length; i ++) { appBanners[i].style.display = 'none'; }
+    // Reset
+    document.getElementById("resetBtn").addEventListener("click", () => location.reload());
+
+    // Hide Cesium credit
+    Array.from(document.getElementsByClassName('cesium-viewer-bottom')).forEach(el => el.style.display = 'none');
 
     /* =========================
-       Address-on-Select (lazy + sandbox-safe)
+       Wire popup links in infoBox
        ========================= */
-    const _addrCache = new Map();  // lat,lon -> {address,lat,lon}
-    let _queue = Promise.resolve(); // 1 rps queue for Nominatim
-
-    // When user selects an entity (tree or globe), lazy-load address
-    viewer.selectedEntityChanged.addEventListener((entity) => {
-      if (entity && entity.position) {
-        addAddressIfNeeded(entity);
-        // (re)wire buttons/links inside the infoBox
-        wireInfoBoxPopupLinks();
-      }
-    });
-
-    async function addAddressIfNeeded(entity) {
-      // Put "Fetching..." placeholder if not already present
-      let html = entity.description?.getValue?.() ?? entity.description ?? "";
-      if (typeof html !== "string") html = String(html);
-      if (html.includes("Address:") || html.includes("Fetching address…")) return;
-
-      html += `
-        <hr>
-        <div style="font:12px system-ui,Arial;color:#777;display:flex;align-items:center;gap:6px">
-          <b>Address:</b>
-          <span style="display:flex;align-items:center;gap:4px">
-            <span style="width:12px;height:12px;border:2px solid #ccc;border-top:2px solid #444;border-radius:50%;display:inline-block;animation:spin 1s linear infinite;"></span>
-            Fetching address…
-          </span>
-        </div>`;
-      entity.description = new Cesium.ConstantProperty(html);
-
-      // Compute lat/lon
-      const now = Cesium.JulianDate.now();
-      const cartesian = entity.position.getValue(now);
-      if (!cartesian) return;
-      const carto = Cesium.Cartographic.fromCartesian(cartesian);
-      const lon = Cesium.Math.toDegrees(carto.longitude);
-      const lat = Cesium.Math.toDegrees(carto.latitude);
-
-      const info = await reverseGeocodeQueued(lat, lon);
-      if (info) {
-        replacePlaceholderWithAddress(entity, info);
-        wireInfoBoxPopupLinks(); // wire links/buttons that were just added
-      }
-    }
-
-    async function reverseGeocodeQueued(lat, lon) {
-      const key = `${lat.toFixed(6)},${lon.toFixed(6)}`;
-      if (_addrCache.has(key)) return _addrCache.get(key);
-
-      _queue = _queue.then(() => new Promise(async (resolve) => {
-        try {
-          const addr = await reverseGeocodeNominatim(lat, lon);
-          const info = addr ? { address: addr, lat, lon } : null;
-          if (info) _addrCache.set(key, info);
-          resolve(info);
-        } catch (e) {
-          console.warn("Reverse geocode failed:", e);
-          resolve(null);
-        } finally {
-          // ~1.1s delay to respect Nominatim
-          setTimeout(() => {}, 1100);
-        }
-      }));
-      return _queue;
-    }
-
-    async function reverseGeocodeNominatim(lat, lon) {
-      const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`;
-      const resp = await fetch(url, { headers: { "Accept": "application/json" } });
-      if (!resp.ok) return null;
-      const data = await resp.json();
-      return data.display_name || null;
-    }
-
-    function replacePlaceholderWithAddress(entity, info) {
-      const { address, lat, lon } = info;
-      let html = entity.description?.getValue?.() ?? entity.description ?? "";
-      if (typeof html !== "string") html = String(html);
-
-      // Primary directions link (Google). Add OSM & Bing as fallbacks if you want:
-      const gUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
-      const osmUrl = `https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&route=${lat}%2C${lon}%3B${lat}%2C${lon}`;
-      const bingUrl = `https://www.bing.com/maps?rtp=~pos.${lat}_${lon}`;
-
-      const links = `
-          <a class="info-btn popup-link" data-url="${gUrl}" href="${gUrl}" target="_blank" rel="noopener" title="Open directions in a popup">Get directions</a>
-        <a class="info-btn popup-link" data-url="${osmUrl}" href="${osmUrl}" target="_blank" rel="noopener" title="OpenStreetMap directions">OpenStreetMap</a>
-        <a class="info-btn popup-link" data-url="${bingUrl}" href="${bingUrl}" target="_blank" rel="noopener" title="Bing Maps directions">Bing Maps</a>
-        <button class="info-btn copy-addr-btn" data-addr="${address.replace(/"/g,"&quot;")}" title="Copy this address to clipboard">Copy address</button>
-      `;
-
-      if (html.includes("Fetching address…")) {
-        html = html.replace(
-          /<b>Address:<\/b>.*?<\/div>/s,
-          `<b>Address:</b> ${address}<br><div>${links}</div></div>`
-        );
-      } else if (!html.includes("Address:")) {
-        html += `
-          <hr>
-          <div style="font:12px system-ui,Arial;color:#444">
-            <b>Address:</b> ${address}<br>
-            <div>${links}</div>
-          </div>`;
+    function wireInfoBoxPopupLinks(retries = 10) {
+      const frame = viewer.infoBox?.frame;
+      const doc = frame && (frame.contentDocument || frame.contentWindow?.document);
+      if (!doc) {
+        if (retries > 0) setTimeout(() => wireInfoBoxPopupLinks(retries - 1), 100);
+        return;
       }
 
-      entity.description = new Cesium.ConstantProperty(html);
+      doc.querySelectorAll('.popup-link').forEach(a => {
+        if (a.getAttribute('data-wired') === '1') return;
+        a.setAttribute('data-wired', '1');
+
+        a.addEventListener('click', (ev) => {
+          ev.preventDefault();
+          const url = a.getAttribute('data-url') || a.href;
+          const w = 800, h = 600;
+          const left = (screen.width/2) - (w/2);
+          const top  = (screen.height/2) - (h/2);
+
+          const win = window.open(
+            url,
+            "PopupWindow",
+            `width=${w},height=${h},top=${top},left=${left},resizable=yes,scrollbars=yes`
+          );
+          if (!win) alert("⚠ Popup blocked. Please allow popups.");
+        });
+      });
     }
 
-    // Wire popup links & copy buttons inside the infoBox iframe
-  function wireInfoBoxPopupLinks(retries = 10) {
-  const frame = viewer.infoBox?.frame;
-  const doc = frame && (frame.contentDocument || frame.contentWindow?.document);
-  if (!doc) {
-    if (retries > 0) setTimeout(() => wireInfoBoxPopupLinks(retries - 1), 100);
-    return;
-  }
-
-  doc.querySelectorAll('.popup-link').forEach(a => {
-    if (a.getAttribute('data-wired') === '1') return;
-    a.setAttribute('data-wired', '1');
-
-    // ✅ Left-click opens in 800x600 popup window
-    a.addEventListener('click', (ev) => {
-      ev.preventDefault(); // stop normal new-tab behavior
-
-      const url = a.getAttribute('data-url') || a.href;
-      const w = 800, h = 600;
-      const left = (screen.width / 2) - (w / 2);
-      const top  = (screen.height / 2) - (h / 2);
-
-      const win = window.open(
-        url,
-        "PopupWindow",
-        `width=${w},height=${h},top=${top},left=${left},resizable=yes,scrollbars=yes`
-      );
-
-      if (!win) {
-        try { parent.showToast?.("⚠ Popup blocked. Allow popups in your browser."); } catch {}
-      }
-    });
-  });
-
-  // Copy address buttons still work
-  doc.querySelectorAll('.copy-addr-btn').forEach(btn => {
-    if (btn.getAttribute('data-wired') === '1') return;
-    btn.setAttribute('data-wired', '1');
-    btn.addEventListener('click', (ev) => {
-      ev.preventDefault();
-      const addr = btn.getAttribute('data-addr') || '';
-      try { parent.copyAddress?.(addr); } catch {}
-    });
-  });
-}
-
-
-
-    // Actions (run in parent context)
-    function copyAddress(addr) {
-      navigator.clipboard.writeText(addr).then(() => {
-        showToast("✓ Address copied to clipboard!");
-        // also show a small badge inside the infoBox
-        const frame = viewer.infoBox?.frame;
-        const doc = frame && (frame.contentDocument || frame.contentWindow?.document);
-        const container = doc && doc.querySelector(".cesium-infoBox-description");
-        if (container) {
-          let msg = container.querySelector(".copy-confirm");
-          if (msg) msg.remove();
-          msg = doc.createElement("div");
-          msg.className = "copy-confirm";
-          msg.textContent = "✓ Copied!";
-          container.appendChild(msg);
-          setTimeout(() => { msg && msg.remove && msg.remove(); }, 2000);
-        }
-      }).catch(() => showToast("⚠ Copy failed", true));
-    }
-
-    function showToast(message, isError = false) {
-      const container = document.getElementById("toast-container");
-      const toast = document.createElement("div");
-      toast.className = "toast";
-      toast.textContent = message;
-      if (isError) toast.style.background = "#d32f2f";
-      container.appendChild(toast);
-      setTimeout(() => { if (toast && toast.parentNode) container.removeChild(toast); }, 3000);
-    }
+    viewer.selectedEntityChanged.addEventListener(() => wireInfoBoxPopupLinks());
   </script>
 </body>
 </html>
