@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- vs: 285 -->
+<!-- vs: 295 -->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -58,7 +58,7 @@
   <div id="cesiumContainer"></div>
 
   <script>
-    Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3NmEwNjdiZi02Y2E3LTQwNzEtYWRkMy03MjU1MTU3YWZmNTciLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyNDUyMTN9.C_4ZYmFZ-ShXYbhckuorrIbc_OlB1pwsyuAAdmJK3Ww";
+      Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3NmEwNjdiZi02Y2E3LTQwNzEtYWRkMy03MjU1MTU3YWZmNTciLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyNDUyMTN9.C_4ZYmFZ-ShXYbhckuorrIbc_OlB1pwsyuAAdmJK3Ww";
 
     const viewer = new Cesium.Viewer("cesiumContainer", {
       baseLayerPicker:false, timeline:false, animation:false
@@ -144,13 +144,9 @@
       if(typeof html!=="string") html=String(html);
       if(html.includes("Address:")||html.includes("Fetching address")) return;
 
-       const btns = `
-         <button id="popupBtn">Get directions (popup)</button>`;
-
       html+=`
         <hr><div style="font:12px system-ui;color:#bbb">
-          <b>Address:</b> <span class="spinner"></span> Fetching address…<br>
-           ${btns}
+          <b>Address:</b> <span class="spinner"></span> Fetching address…
         </div>`;
       entity.description=new Cesium.ConstantProperty(html);
 
