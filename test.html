@@ -169,7 +169,7 @@
       const gUrl=`https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
 
       // Replace spinner text with address only (white text)
-      const infoBoxLine = `<span class="directions-text">${address}<br>Directions available via sidebar button</span>`;
+      const infoBoxLine = `<span class="directions-text">${address}<br>(<b>Get Directions</b> available via sidebar button)</span>`;
       html=html.replace(/<span class="spinner"><\/span> Fetching address…/s, infoBoxLine);
       entity.description=new Cesium.ConstantProperty(html);
 
