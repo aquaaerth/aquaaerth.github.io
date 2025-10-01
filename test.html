@@ -1,14 +1,10 @@
 <!DOCTYPE html>
-<!--
-  v135
--->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <title>AquaEarth KMZ Viewer</title>
   <script src="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Cesium.js"></script>
   <link href="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
-
   <style>
     html, body { width:100%; height:100%; margin:0; padding:0; overflow:hidden; font-family:sans-serif; }
     #sidebar { width:300px; height:100%; float:left; background:#1e1e1e; color:#fff; padding:10px; overflow-y:auto; box-sizing:border-box; }
@@ -30,18 +26,9 @@
     #legend h4 { margin:0 0 6px; font-size:14px; color:#ddd; }
     .legend-item { display:flex; align-items:center; margin:4px 0; }
     .legend-item img { width:18px; height:18px; margin-right:6px; }
-
-    /* Spinner */
     @keyframes spin { 0%{transform:rotate(0deg);} 100%{transform:rotate(360deg);} }
-    .spinner {
-      width:12px; height:12px; border:2px solid #ccc; border-top:2px solid #444;
-      border-radius:50%; display:inline-block; animation:spin 1s linear infinite;
-    }
-
-    .info-btn {
-      background:#4FC3F7; color:#fff; border:none; border-radius:4px; padding:4px 8px;
-      font-size:12px; margin:4px 0 0 0; cursor:pointer; text-decoration:none; display:inline-block;
-    }
+    .spinner { width:12px; height:12px; border:2px solid #ccc; border-top:2px solid #444; border-radius:50%; display:inline-block; animation:spin 1s linear infinite; }
+    .info-btn { background:#4FC3F7; color:#fff; border:none; border-radius:4px; padding:4px 8px; font-size:12px; margin:4px 0 0 0; cursor:pointer; text-decoration:none; display:inline-block; }
     .info-btn:hover { background:#0288D1; }
     .info-btn:active { background:#0277BD; }
   </style>
@@ -59,7 +46,7 @@
   <div id="cesiumContainer"></div>
 
   <script>
-     Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3NmEwNjdiZi02Y2E3LTQwNzEtYWRkMy03MjU1MTU3YWZmNTciLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyNDUyMTN9.C_4ZYmFZ-ShXYbhckuorrIbc_OlB1pwsyuAAdmJK3Ww";
+    Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3NmEwNjdiZi02Y2E3LTQwNzEtYWRkMy03MjU1MTU3YWZmNTciLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyNDUyMTN9.C_4ZYmFZ-ShXYbhckuorrIbc_OlB1pwsyuAAdmJK3Ww";
 
     const viewer = new Cesium.Viewer("cesiumContainer", {
       baseLayerPicker: false, timeline: false, animation: false
@@ -68,7 +55,7 @@
     // allow popup links in infoBox
     viewer.infoBox.frame.addEventListener("load", () => {
       const f = viewer.infoBox.frame;
-      const needed = ["allow-scripts","allow-popups","allow-popups-to-escape-sandbox","allow-same-origin","allow-top-navigation-by-user-activation"];
+      const needed = ["allow-scripts","allow-popups","allow-popups-to-escape-sandbox","allow-same-origin"];
       f.setAttribute("sandbox", needed.join(" "));
     });
 
@@ -182,10 +169,9 @@
       let html=entity.description?.getValue?.()??entity.description??"";
       if(typeof html!=="string") html=String(html);
       if(html.includes("Address:")||html.includes("Fetching address")) return;
-      html+=`
-        <hr><div style="font:12px system-ui;color:#777">
-          <b>Address:</b> <span class="spinner"></span> Fetching address…
-        </div>`;
+      html+=`<hr><div style="font:12px system-ui;color:#777">
+        <b>Address:</b> <span class="spinner"></span> Fetching address…
+      </div>`;
       entity.description=new Cesium.ConstantProperty(html);
 
       const carto=Cesium.Cartographic.fromCartesian(entity.position.getValue(Cesium.JulianDate.now()));
@@ -202,46 +188,37 @@
       }catch(e){ console.warn("geocode fail",e); }
     }
 
-   function replace(entity,{address,lat,lon}){
-  let html=entity.description?.getValue?.()??entity.description??"";
-  const gUrl=`https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
-  // ⚠️ Remove href/target, just use data-url so browser doesn't open a tab
-  const link=`<a class="info-btn popup-link" data-url="${gUrl}">Get directions</a>`;
-  html=html.replace(/<span class="spinner"><\/span> Fetching address…/s, `${address}<br>${link}`);
-  entity.description=new Cesium.ConstantProperty(html);
-  wirePopup();
-}
+    function replace(entity,{address,lat,lon}){
+      let html=entity.description?.getValue?.()??entity.description??"";
+      const gUrl=`https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
+      const link=`<a class="info-btn popup-link" data-url="${gUrl}">Get directions</a>`;
+      html=html.replace(/<span class="spinner"><\/span> Fetching address…/s, `${address}<br>${link}`);
+      entity.description=new Cesium.ConstantProperty(html);
+      wirePopup();
+    }
 
+    // Wire clicks inside sandbox iframe → send to parent
+    function wirePopup(retries=10){
+      const doc=viewer.infoBox.frame?.contentDocument;
+      if(!doc){ if(retries>0) setTimeout(()=>wirePopup(retries-1),100); return; }
+      doc.querySelectorAll('.popup-link').forEach(a=>{
+        if(a.dataset.wired) return; a.dataset.wired="1";
+        a.addEventListener('click',ev=>{
+          ev.preventDefault();
+          const url=a.dataset.url;
+          window.parent.postMessage({ type:"openPopup", url }, "*");
+        });
+      });
+    }
 
-  function wirePopup(retries=10){
-  const doc=viewer.infoBox.frame?.contentDocument;
-  if(!doc){ if(retries>0) setTimeout(()=>wirePopup(retries-1),100); return; }
-  doc.querySelectorAll('.popup-link').forEach(a=>{
-    if(a.dataset.wired) return; a.dataset.wired="1";
-    a.addEventListener('click',ev=>{
-      ev.preventDefault();
-      const url=a.dataset.url;
-      window.parent.postMessage({ type:"openPopup", url }, "*");
+    // Parent listener opens popup
+    window.addEventListener("message",ev=>{
+      if(ev.data?.type==="openPopup"){
+        const url=ev.data.url;
+        const w=800,h=600,left=(screen.width-w)/2,top=(screen.height-h)/2;
+        window.open(url,"PopupWindow",`width=${w},height=${h},top=${top},left=${left},resizable=yes,scrollbars=yes`);
+      }
     });
-  });
-}
-
-// Listen for popup requests from the infoBox iframe
-window.addEventListener("message", ev => {
-  if (ev.data?.type === "openPopup") {
-    const url = ev.data.url;
-    const w = 800, h = 600;
-    const left = (screen.width - w) / 2;
-    const top = (screen.height - h) / 2;
-
-    window.open(
-      url,
-      "PopupWindow",
-      `width=${w},height=${h},top=${top},left=${left},resizable=yes,scrollbars=yes`
-    );
-  }
-});
-
   </script>
 </body>
 </html>
