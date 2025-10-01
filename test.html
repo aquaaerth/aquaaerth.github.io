@@ -1,7 +1,5 @@
 <!DOCTYPE html>
-<!--
-  vs: 230
--->
+<!-- vs: 255 -->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -14,8 +12,11 @@
     #sidebar { width:300px; height:100%; float:left; background:#1e1e1e; color:#fff; padding:10px; overflow-y:auto; box-sizing:border-box; }
     #sidebar h1 { margin:0; font-size:20px; color:#4FC3F7; }
     #sidebar h2 { margin:2px 0 12px 0; font-size:12px; font-weight:normal; color:#bbb; }
-    #resetBtn { width:100%; padding:6px; margin-bottom:10px; background:#444; border:none; border-radius:4px; color:#fff; cursor:pointer; }
-    #resetBtn:hover { background:#666; }
+    #resetBtn, #popupBtn {
+      width:100%; padding:6px; margin-bottom:10px; background:#444; border:none; border-radius:4px; color:#fff; cursor:pointer;
+    }
+    #resetBtn:hover, #popupBtn:hover { background:#666; }
+    #popupBtn:disabled { opacity:0.5; cursor:not-allowed; }
     #cesiumContainer { width:calc(100% - 300px); height:100%; float:left; }
     #searchBox { width:100%; padding:6px; margin-bottom:10px; border:none; border-radius:4px; font-size:14px; }
     .tree ul { list-style:none; padding-left:18px; margin:4px 0; }
@@ -48,10 +49,13 @@
 </head>
 <body>
   <div id="sidebar">
-    <img src="https://aquavisitorsystem.github.io/aqua.png" width="280px" style="background-color:white;">
+    <img src="https://aquavisitorsystem.github.io/aqua.png" width="280" style="background-color:white;">
     <h1>AquaEarth</h1>
     <h2>Protecting the World’s Water</h2>
+
     <button id="resetBtn">Reset</button>
+    <button id="popupBtn" disabled>Get directions (popup)</button>
+
     <input type="text" id="searchBox" placeholder="Search folders & placemarks...">
     <div class="tree" id="kmlTree">Loading KMZ structure...</div>
     <div id="legend"></div>
@@ -65,10 +69,10 @@
       baseLayerPicker:false, timeline:false, animation:false
     });
 
-    // ✅ Allow popups in infoBox iframe
+    // Keep iframe sandbox safe; do NOT enable scripts inside.
     viewer.infoBox.frame.addEventListener("load", () => {
       const f = viewer.infoBox.frame;
-      const needed=["allow-same-origin","allow-popups","allow-top-navigation-by-user-activation","allow-scripts"];
+      const needed = ["allow-same-origin","allow-popups","allow-top-navigation-by-user-activation"];
       f.setAttribute("sandbox", needed.join(" "));
     });
 
@@ -79,19 +83,19 @@
       "Filter Installations": Cesium.Color.ORANGE,
       "Tours": Cesium.Color.BLUE
     };
-    const pinBuilder=new Cesium.PinBuilder();
+    const pinBuilder = new Cesium.PinBuilder();
     function getIconForEntity(entity){
-      let parent=entity.parent;
+      let parent = entity.parent;
       while(parent){
         if(parent.name && folderColorMap[parent.name]){
           return pinBuilder.fromColor(folderColorMap[parent.name],32).toDataURL();
         }
-        parent=parent.parent;
+        parent = parent.parent;
       }
       return pinBuilder.fromColor(folderColorMap["AASI Installations"],32).toDataURL();
     }
 
-    const kmlUrl="AASI Installations.kmz";
+    const kmlUrl = "AASI Installations.kmz";
     Cesium.KmlDataSource.load(kmlUrl,{camera:viewer.scene.camera,canvas:viewer.scene.canvas}).then(ds=>{
       viewer.dataSources.add(ds);
       ds.entities.values.forEach(e=>{ if(e.billboard) e.billboard.image=getIconForEntity(e); });
@@ -172,18 +176,38 @@
     Array.from(document.getElementsByClassName('cesium-viewer-bottom')).forEach(b=>b.style.display='none');
 
     /* ==== Address + Google Directions ==== */
+
     const _addrCache=new Map();
-    viewer.selectedEntityChanged.addEventListener(entity=>{ if(entity&&entity.position) addAddress(entity); });
+    let _currentDirectionsUrl = "";   // used by the sidebar popup button
+
+    function sanitizeHtml(str){
+      return String(str)
+        .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi,"")
+        .replace(/on\w+="[^"]*"/gi,"");
+    }
+
+    // When selection changes, sanitize description (to avoid sandbox errors) then add address.
+    viewer.selectedEntityChanged.addEventListener(entity=>{
+      if(!entity || !entity.position) return;
+      // sanitize any KML-provided HTML first
+      const raw = entity.description?.getValue?.() ?? entity.description ?? "";
+      const clean = sanitizeHtml(raw);
+      if (clean !== raw) {
+        entity.description = new Cesium.ConstantProperty(clean);
+      }
+      addAddress(entity);
+    });
 
     async function addAddress(entity){
       let html=entity.description?.getValue?.()??entity.description??"";
       if(typeof html!=="string") html=String(html);
       if(html.includes("Address:")||html.includes("Fetching address")) return;
+
       html+=`
         <hr><div style="font:12px system-ui;color:#777">
           <b>Address:</b> <span class="spinner"></span> Fetching address…
         </div>`;
-      entity.description=new Cesium.ConstantProperty(html);
+      entity.description=new Cesium.ConstantProperty(sanitizeHtml(html));
 
       const carto=Cesium.Cartographic.fromCartesian(entity.position.getValue(Cesium.JulianDate.now()));
       const lat=Cesium.Math.toDegrees(carto.latitude), lon=Cesium.Math.toDegrees(carto.longitude);
@@ -202,28 +226,23 @@
     function replace(entity,{address,lat,lon}){
       let html=entity.description?.getValue?.()??entity.description??"";
       const gUrl=`https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
-      const link=`<a class="info-btn popup-link" data-url="${gUrl}">Get directions</a>`;
-      html=html.replace(/<span class="spinner"><\/span> Fetching address…/s, `${address}<br>${link}`);
-      entity.description=new Cesium.ConstantProperty(html);
 
-      // rewire popup links inside the infoBox iframe
-      wirePopupLinks();
-    }
+      // 1) Keep a real link in the infoBox (so right/middle click work)
+      const infoBoxLink = `<a class="info-btn" href="${gUrl}" target="_blank" rel="noopener">Get directions (new tab)</a>`;
+      html=html.replace(/<span class="spinner"><\/span> Fetching address…/s, `${address}<br>${infoBoxLink}`);
+      entity.description=new Cesium.ConstantProperty(sanitizeHtml(html));
 
-    function wirePopupLinks(retries=10){
-      const frame=viewer.infoBox.frame;
-      const doc=frame && (frame.contentDocument || frame.contentWindow?.document);
-      if(!doc){ if(retries>0) setTimeout(()=>wirePopupLinks(retries-1),100); return; }
-      doc.querySelectorAll('.popup-link').forEach(a=>{
-        if(a.dataset.wired) return;
-        a.dataset.wired="1";
-        a.addEventListener("click",ev=>{
-          ev.preventDefault();
-          const url=a.dataset.url||a.href;
-          const w=800,h=600,left=(screen.width-w)/2,top=(screen.height-h)/2;
-          window.open(url,"PopupWindow",`width=${w},height=${h},top=${top},left=${left},resizable=yes,scrollbars=yes`);
-        });
-      });
+      // 2) Also enable the sidebar popup button
+      _currentDirectionsUrl = gUrl;
+      const btn = document.getElementById("popupBtn");
+      btn.disabled = false;
+      btn.onclick = () => {
+        if(!_currentDirectionsUrl) return;
+        const proxy = `gmaps-popup.html?to=${encodeURIComponent(_currentDirectionsUrl)}`;
+        const w=800,h=600,left=(screen.width-w)/2,top=(screen.height-h)/2;
+        const win = window.open(proxy,"DirectionsPopup",`width=${w},height=${h},top=${top},left=${left},resizable=yes,scrollbars=yes`);
+        if(!win){ alert("Popup was blocked. Please allow popups for this site."); }
+      };
     }
   </script>
 </body>
