@@ -403,7 +403,7 @@
       const bingUrl = `https://www.bing.com/maps?rtp=~pos.${lat}_${lon}`;
 
       const links = `
-        <a class="info-btn popup-link" data-url="${gUrl}" href="${gUrl}" target="_blank" rel="noopener" title="Open directions in a popup">Get directions</a>
+          <a class="info-btn popup-link" data-url="${gUrl}" href="${gUrl}" target="_blank" rel="noopener" title="Open directions in a popup">Get directions</a>
         <a class="info-btn popup-link" data-url="${osmUrl}" href="${osmUrl}" target="_blank" rel="noopener" title="OpenStreetMap directions">OpenStreetMap</a>
         <a class="info-btn popup-link" data-url="${bingUrl}" href="${bingUrl}" target="_blank" rel="noopener" title="Bing Maps directions">Bing Maps</a>
         <button class="info-btn copy-addr-btn" data-addr="${address.replace(/"/g,"&quot;")}" title="Copy this address to clipboard">Copy address</button>
@@ -427,47 +427,38 @@
     }
 
     // Wire popup links & copy buttons inside the infoBox iframe
-    function wireInfoBoxPopupLinks(retries = 10) {
-      const frame = viewer.infoBox?.frame;
-      const doc = frame && (frame.contentDocument || frame.contentWindow?.document);
-      if (!doc) {
-        if (retries > 0) setTimeout(() => wireInfoBoxPopupLinks(retries - 1), 100);
-        return;
-      }
+   function wireInfoBoxPopupLinks(retries = 10) {
+  const frame = viewer.infoBox?.frame;
+  const doc = frame && (frame.contentDocument || frame.contentWindow?.document);
+  if (!doc) {
+    if (retries > 0) setTimeout(() => wireInfoBoxPopupLinks(retries - 1), 100);
+    return;
+  }
 
-      // Sized popup for links marked .popup-link on left click
-      doc.querySelectorAll('.popup-link').forEach(a => {
-        if (a.getAttribute('data-wired') === '1') return;
-        a.setAttribute('data-wired', '1');
-        a.addEventListener('click', (ev) => {
-          // Left click only (let middle/right behave normally)
-          if (ev.button !== 0 || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey) return;
+  doc.querySelectorAll('.popup-link').forEach(a => {
+    if (a.getAttribute('data-wired') === '1') return;
+    a.setAttribute('data-wired', '1');
 
-          ev.preventDefault();
-          const url = a.getAttribute('data-url') || a.href;
-          const w = 800, h = 600;
-          const left = (screen.width/2) - (w/2);
-          const top  = (screen.height/2) - (h/2);
-          const win = window.open(url, "Directions", `width=${w},height=${h},top=${top},left=${left},resizable=yes,scrollbars=yes`);
-          if (!win) {
-            try { parent.showToast?.("Popup blocked by browser. Try right-click → Open link in new window."); } catch {}
-          } else {
-            try { parent.showToast?.("🌍 Opening directions…"); } catch {}
-          }
-        });
-      });
+    // 🔹 Left click acts like "right-click → open in new tab"
+    a.addEventListener('click', (ev) => {
+      ev.preventDefault(); // stop normal Cesium iframe behavior
+      const url = a.getAttribute('data-url') || a.href;
+      window.open(url, "_blank"); // open in new tab
+    });
+  });
 
-      // Copy address button
-      doc.querySelectorAll('.copy-addr-btn').forEach(btn => {
-        if (btn.getAttribute('data-wired') === '1') return;
-        btn.setAttribute('data-wired', '1');
-        btn.addEventListener('click', (ev) => {
-          ev.preventDefault();
-          const addr = btn.getAttribute('data-addr') || '';
-          try { parent.copyAddress?.(addr); } catch {}
-        });
-      });
-    }
+  // Copy address button stays unchanged
+  doc.querySelectorAll('.copy-addr-btn').forEach(btn => {
+    if (btn.getAttribute('data-wired') === '1') return;
+    btn.setAttribute('data-wired', '1');
+    btn.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      const addr = btn.getAttribute('data-addr') || '';
+      try { parent.copyAddress?.(addr); } catch {}
+    });
+  });
+}
+
 
     // Actions (run in parent context)
     function copyAddress(addr) {
