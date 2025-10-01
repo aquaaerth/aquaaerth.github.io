@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- vs: 310-->
+<!-- vs: 311 -->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -94,10 +94,9 @@
   window.addEventListener("load", () => {
     const menuToggle=document.getElementById("menuToggle");
     const sidebar=document.getElementById("sidebar");
-
     menuToggle.addEventListener("click",()=>sidebar.classList.toggle("open"));
 
-   Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3NmEwNjdiZi02Y2E3LTQwNzEtYWRkMy03MjU1MTU3YWZmNTciLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyNDUyMTN9.C_4ZYmFZ-ShXYbhckuorrIbc_OlB1pwsyuAAdmJK3Ww";
+    Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3NmEwNjdiZi02Y2E3LTQwNzEtYWRkMy03MjU1MTU3YWZmNTciLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyNDUyMTN9.C_4ZYmFZ-ShXYbhckuorrIbc_OlB1pwsyuAAdmJK3Ww";
 
     const viewer=new Cesium.Viewer("cesiumContainer",{baseLayerPicker:false,timeline:false,animation:false});
     viewer.infoBox.frame.addEventListener("load",()=>{const f=viewer.infoBox.frame;f.setAttribute("sandbox","allow-same-origin allow-popups allow-top-navigation-by-user-activation");});
@@ -113,7 +112,7 @@
         }
         parent=parent.parent;
       }
-      return pinBuilder.fromColor(folderColorMap["AASI Installations"],32).toDataURL();
+      return pinBuilder.fromColor(Cesium.Color.CYAN,32).toDataURL();
     }
 
     const kmlUrl="AASI Installations.kmz";
@@ -145,7 +144,6 @@
                 viewer.flyTo(entity,{duration:2});
                 viewer.selectedEntity=entity;
               }
-              // ✅ Auto-close sidebar on mobile when a placemark is clicked
               if(window.innerWidth<=768){ sidebar.classList.remove("open"); }
             };
             ul.appendChild(li);
@@ -157,7 +155,51 @@
       treeContainer.appendChild(myRoot);
       buildTree(myPlaces._children,myRoot);
 
-      // Search filter remains unchanged...
+      /* === Search filter === */
+      document.getElementById("searchBox").addEventListener("input",function(){
+        const term=this.value.toLowerCase();
+        const allNodes=treeContainer.querySelectorAll("li,div.folder");
+        allNodes.forEach(el=>el.classList.remove("hidden"));
+        if(term===""){ 
+          viewer.camera.setView({destination:Cesium.Rectangle.fromDegrees(-125,24,-66,49)});
+          const folders=treeContainer.querySelectorAll(".folder");
+          folders.forEach((f,i)=>{ 
+            if(i===0){ f.classList.add("expanded"); f.classList.remove("collapsed"); }
+            else { f.classList.add("collapsed"); f.classList.remove("expanded"); }
+            f.classList.remove("hidden"); 
+          });
+          treeContainer.querySelectorAll(".placemark").forEach(pm=>pm.classList.remove("hidden"));
+          return;
+        }
+        allNodes.forEach(el=>{
+          const text=el.textContent.toLowerCase();
+          if(el.classList.contains("folder")){
+            if(text.includes(term)){ 
+              el.classList.add("expanded"); el.classList.remove("collapsed");
+              el.querySelectorAll("li,div").forEach(d=>d.classList.remove("hidden"));
+            } else {
+              let has=false; el.querySelectorAll("li,div").forEach(ch=>{ if(ch.textContent.toLowerCase().includes(term)) has=true; });
+              if(!has) el.classList.add("hidden");
+            }
+          }
+          if(el.classList.contains("placemark")){
+            if(text.includes(term)){
+              let p=el.parentElement; 
+              while(p&&p!==treeContainer){ 
+                if(p.classList.contains("folder")){ 
+                  p.classList.add("expanded"); 
+                  p.classList.remove("collapsed"); 
+                  p.classList.remove("hidden"); 
+                } 
+                p=p.parentElement; 
+              }
+            } else {
+              let pf=el.closest(".folder"); 
+              if(!pf||!pf.textContent.toLowerCase().includes(term)) el.classList.add("hidden");
+            }
+          }
+        });
+      });
     });
 
     document.getElementById("resetBtn").addEventListener("click",()=>location.reload());
