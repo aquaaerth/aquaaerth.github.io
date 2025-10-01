@@ -77,9 +77,6 @@
     .legend-item { display: flex; align-items: center; margin: 4px 0; }
     .legend-item img { width: 18px; height: 18px; margin-right: 6px; }
 
-    /* 🔹 Spinner */
-    @keyframes spin { 0%{transform:rotate(0deg);}100%{transform:rotate(360deg);} }
-
     /* 🔹 Info buttons */
     .info-btn {
       background: #4FC3F7;
@@ -155,7 +152,7 @@
   <div id="toast-container"></div>
 
   <script>
-      Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3NmEwNjdiZi02Y2E3LTQwNzEtYWRkMy03MjU1MTU3YWZmNTciLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyNDUyMTN9.C_4ZYmFZ-ShXYbhckuorrIbc_OlB1pwsyuAAdmJK3Ww";
+    Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3NmEwNjdiZi02Y2E3LTQwNzEtYWRkMy03MjU1MTU3YWZmNTciLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyNDUyMTN9.C_4ZYmFZ-ShXYbhckuorrIbc_OlB1pwsyuAAdmJK3Ww";
 
     const viewer = new Cesium.Viewer("cesiumContainer", {
       baseLayerPicker: false,
@@ -163,9 +160,18 @@
       animation: false
     });
 
-    
-    // ✅ add this immediately after creating viewer
-    viewer.infoBox.frame.sandbox.add("allow-scripts");
+    // ✅ safe event delegation for infoBox buttons
+    document.addEventListener("click", function(e) {
+      if (e.target.classList.contains("get-dir-btn")) {
+        const lat = parseFloat(e.target.dataset.lat);
+        const lon = parseFloat(e.target.dataset.lon);
+        openDirections(lat, lon);
+      }
+      if (e.target.classList.contains("copy-addr-btn")) {
+        const addr = e.target.dataset.addr;
+        copyAddress(addr);
+      }
+    });
 
     viewer.camera.setView({
       destination: Cesium.Rectangle.fromDegrees(-125.0, 24.0, -66.0, 49.0)
@@ -231,7 +237,7 @@
                 e.stopPropagation();
                 if (entity.position) {
                   viewer.flyTo(entity, { duration: 2.0 });
-                  viewer.selectedEntity = entity; // trigger infoBox
+                  viewer.selectedEntity = entity;
                 }
               };
               ul.appendChild(li);
@@ -244,150 +250,17 @@
         myRoot.classList.add("folder", "expanded");
         treeContainer.appendChild(myRoot);
         buildTree(myPlaces._children, myRoot);
-
-        const searchBox = document.getElementById("searchBox");
-        searchBox.addEventListener("input", function() {
-          const term = this.value.toLowerCase();
-          const allNodes = treeContainer.querySelectorAll("li, div.folder");
-          allNodes.forEach(el => el.classList.remove("hidden"));
-          if (term === "") {
-            viewer.camera.setView({
-              destination: Cesium.Rectangle.fromDegrees(-125.0, 24.0, -66.0, 49.0)
-            });
-            const folders = treeContainer.querySelectorAll(".folder");
-            folders.forEach((folder, idx) => {
-              if (idx === 0) { folder.classList.add("expanded"); folder.classList.remove("collapsed"); }
-              else { folder.classList.add("collapsed"); folder.classList.remove("expanded"); }
-              folder.classList.remove("hidden");
-            });
-            treeContainer.querySelectorAll(".placemark").forEach(pm => pm.classList.remove("hidden"));
-            return;
-          }
-          allNodes.forEach(el => {
-            const text = el.textContent.toLowerCase();
-            if (el.classList.contains("folder")) {
-              if (text.includes(term)) {
-                el.classList.add("expanded"); el.classList.remove("collapsed");
-                el.querySelectorAll("li, div").forEach(d => d.classList.remove("hidden"));
-              } else {
-                let hasMatch = false;
-                el.querySelectorAll("li, div").forEach(child => {
-                  if (child.textContent.toLowerCase().includes(term)) hasMatch = true;
-                });
-                if (!hasMatch) el.classList.add("hidden");
-                else { el.classList.add("expanded"); el.classList.remove("collapsed"); }
-              }
-            }
-            if (el.classList.contains("placemark")) {
-              if (text.includes(term)) {
-                let parent = el.parentElement;
-                while (parent && parent !== treeContainer) {
-                  if (parent.classList.contains("folder")) {
-                    parent.classList.add("expanded");
-                    parent.classList.remove("collapsed");
-                    parent.classList.remove("hidden");
-                  }
-                  parent = parent.parentElement;
-                }
-              } else {
-                let parentFolder = el.closest(".folder");
-                if (!parentFolder || !parentFolder.textContent.toLowerCase().includes(term)) el.classList.add("hidden");
-              }
-            }
-          });
-        });
-
-        const legendContainer = document.getElementById("legend");
-        legendContainer.innerHTML = "<h4>Legend</h4>";
-        Object.keys(folderColorMap).forEach(folderName => {
-          const color = folderColorMap[folderName] || Cesium.Color.BLUE;
-          const pinUrl = pinBuilder.fromColor(color, 24).toDataURL();
-          const div = document.createElement("div");
-          div.classList.add("legend-item");
-          div.innerHTML = `<img src="${pinUrl}"> ${folderName}`;
-          legendContainer.appendChild(div);
-        });
-      })
-      .catch(err => {
-        document.getElementById("kmlTree").textContent = "Error loading KMZ: " + err;
-        console.error(err);
       });
 
-    function resetView() { location.reload(); }
-    document.getElementById("resetBtn").addEventListener("click", resetView);
-    document.querySelectorAll('.cesium-viewer-bottom').forEach(el => el.style.display='none');
-
-    // 🔹 Address enrichment
-    const _addressCache = new Map();
-    let _queue = Promise.resolve();
-
-    viewer.selectedEntityChanged.addEventListener(entity => {
-      if (entity && entity.position) addAddressIfNeeded(entity);
-    });
-
-    async function addAddressIfNeeded(entity) {
-      let currentHtml = entity.description?.getValue?.() ?? entity.description ?? "";
-      if (typeof currentHtml !== "string") currentHtml = String(currentHtml);
-      if (currentHtml.includes("Address:") || currentHtml.includes("Fetching address…")) return;
-
-      // spinner placeholder
-      currentHtml += `
-        <hr>
-        <div style="font:12px system-ui,Arial;color:#777;display:flex;align-items:center;gap:6px">
-          <b>Address:</b> 
-          <span style="display:flex;align-items:center;gap:4px">
-            <span style="width:12px;height:12px;border:2px solid #ccc;border-top:2px solid #444;
-              border-radius:50%;display:inline-block;animation:spin 1s linear infinite;"></span>
-            Fetching address…
-          </span>
-        </div>`;
-      entity.description = new Cesium.ConstantProperty(currentHtml);
-
-      const now = Cesium.JulianDate.now();
-      const cartesian = entity.position.getValue(now);
-      if (!cartesian) return;
-      const carto = Cesium.Cartographic.fromCartesian(cartesian);
-      const lon = Cesium.Math.toDegrees(carto.longitude);
-      const lat = Cesium.Math.toDegrees(carto.latitude);
-
-      const info = await reverseGeocodeQueued(lat, lon);
-      if (info) replacePlaceholderWithAddress(entity, info);
-    }
-
-    async function reverseGeocodeQueued(lat, lon) {
-      const key = `${lat.toFixed(6)},${lon.toFixed(6)}`;
-      if (_addressCache.has(key)) return _addressCache.get(key);
-      _queue = _queue.then(() => new Promise(async (resolve) => {
-        try {
-          const addr = await reverseGeocodeNominatim(lat, lon);
-          if (addr) {
-            const info = { address: addr, lat, lon };
-            _addressCache.set(key, info);
-            resolve(info);
-          } else resolve(null);
-        } catch { resolve(null); }
-        finally { setTimeout(()=>{},1100); }
-      }));
-      return _queue;
-    }
-
-    async function reverseGeocodeNominatim(lat, lon) {
-      const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`;
-      const resp = await fetch(url, { headers: { "Accept": "application/json" } });
-      if (!resp.ok) return null;
-      const data = await resp.json();
-      return data.display_name || null;
-    }
-
+    // 🔹 Replace placeholder with buttons using data attributes
     function replacePlaceholderWithAddress(entity, info) {
       const { address, lat, lon } = info;
       let html = entity.description?.getValue?.() ?? entity.description ?? "";
       if (typeof html !== "string") html = String(html);
 
-      const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
       const btns = `
-        <button class="info-btn" title="Open in Google Maps" onclick="openDirections(${lat},${lon});return false;">Get directions</button>
-        <button class="info-btn" title="Copy this address to clipboard" onclick="copyAddress('${address.replace(/'/g,"&#39;")}');return false;">Copy address</button>`;
+        <button class="info-btn get-dir-btn" data-lat="${lat}" data-lon="${lon}">Get directions</button>
+        <button class="info-btn copy-addr-btn" data-addr="${address.replace(/"/g,"&quot;")}">Copy address</button>`;
 
       if (html.includes("Fetching address…")) {
         html = html.replace(/<b>Address:<\/b>.*?<\/div>/s, `<b>Address:</b> ${address}<br>${btns}</div>`);
@@ -397,6 +270,7 @@
       entity.description = new Cesium.ConstantProperty(html);
     }
 
+    // 🔹 Global functions
     function openDirections(lat, lon) {
       const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
       const w=800,h=600,left=(screen.width/2)-(w/2),top=(screen.height/2)-(h/2);
@@ -431,4 +305,4 @@
     }
   </script>
 </body>
-</html
+</html>
