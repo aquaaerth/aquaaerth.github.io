@@ -1,8 +1,9 @@
-<!DOCTYPE html>
 <!--
   Updates
   v122: 10/1/2025 916am
+  v123: 10/1/2025 922am
 -->
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -10,7 +11,7 @@
   <script src="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Cesium.js"></script>
   <link href="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
 
-   <style>
+  <style>
     html, body {
       width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden;
       font-family: sans-serif;
@@ -25,107 +26,42 @@
       overflow-y: auto;
       box-sizing: border-box;
     }
-    #sidebar h1 {
-      margin: 0;
-      font-size: 20px;
-      color: #4FC3F7; /* Aqua-blue */
-    }
-    #sidebar h2 {
-      margin: 2px 0 12px 0;
-      font-size: 12px;
-      font-weight: normal;
-      color: #bbb;
-    }
+    #sidebar h1 { margin: 0; font-size: 20px; color: #4FC3F7; }
+    #sidebar h2 { margin: 2px 0 12px 0; font-size: 12px; font-weight: normal; color: #bbb; }
     #resetBtn {
-      width: 100%;
-      padding: 6px;
-      margin-bottom: 10px;
-      background: #444;
-      border: none;
-      border-radius: 4px;
-      color: #fff;
-      cursor: pointer;
+      width: 100%; padding: 6px; margin-bottom: 10px; background: #444; border: none;
+      border-radius: 4px; color: #fff; cursor: pointer;
     }
-    #resetBtn:hover {
-      background: #666;
-    }
-    #cesiumContainer {
-      width: calc(100% - 300px);
-      height: 100%;
-      float: left;
-    }
-    #searchBox {
-      width: 100%;
-      padding: 6px;
-      margin-bottom: 10px;
-      border: none;
-      border-radius: 4px;
-      font-size: 14px;
-    }
-    .tree ul {
-      list-style: none;
-      padding-left: 18px;
-      margin: 4px 0;
-    }
-    .tree li {
-      margin: 2px 0;
-      cursor: pointer;
-    }
-    .folder::before {
-      content: "▶ ";
-      display: inline-block;
-      transition: transform 0.2s;
-    }
-    .folder.expanded::before {
-      transform: rotate(90deg);
-    }
-    .collapsed > ul {
-      display: none;
-    }
-    .placemark::before {
-      content: "• ";
-      color: #00c3ff;
-    }
-    .placemark:hover {
-      text-decoration: underline;
-      color: #a3d3ff;
-    }
-    .hidden {
-      display: none !important;
-    }
-    /* 🔹 Legend */
-    #legend {
-      margin-top: 12px;
-      padding: 8px;
-      background: #2a2a2a;
-      border-radius: 6px;
-      font-size: 13px;
-    }
-    #legend h4 {
-      margin: 0 0 6px;
-      font-size: 14px;
-      color: #ddd;
-    }
-    .legend-item {
-      display: flex;
-      align-items: center;
-      margin: 4px 0;
-    }
-    .legend-item img {
-      width: 18px;
-      height: 18px;
-      margin-right: 6px;
-    }
+    #resetBtn:hover { background: #666; }
+    #cesiumContainer { width: calc(100% - 300px); height: 100%; float: left; }
+    #searchBox { width: 100%; padding: 6px; margin-bottom: 10px; border: none; border-radius: 4px; font-size: 14px; }
+    .tree ul { list-style: none; padding-left: 18px; margin: 4px 0; }
+    .tree li { margin: 2px 0; cursor: pointer; }
+    .folder::before { content: "▶ "; display: inline-block; transition: transform 0.2s; }
+    .folder.expanded::before { transform: rotate(90deg); }
+    .collapsed > ul { display: none; }
+    .placemark::before { content: "• "; color: #00c3ff; }
+    .placemark:hover { text-decoration: underline; color: #a3d3ff; }
+    .hidden { display: none !important; }
+    #legend { margin-top: 12px; padding: 8px; background: #2a2a2a; border-radius: 6px; font-size: 13px; }
+    #legend h4 { margin: 0 0 6px; font-size: 14px; color: #ddd; }
+    .legend-item { display: flex; align-items: center; margin: 4px 0; }
+    .legend-item img { width: 18px; height: 18px; margin-right: 6px; }
+    /* Info buttons */
+    .info-btn { background: #4FC3F7; color: #fff; border: none; border-radius: 4px; padding: 4px 8px;
+      font-size: 12px; margin: 4px 4px 0 0; cursor: pointer; text-decoration: none; display: inline-block; }
+    .info-btn:hover { background: #0288D1; }
+    .info-btn:active { background: #0277BD; }
+    .copy-confirm { display: inline-block; background: #4CAF50; color: #fff; font-size: 11px; padding: 2px 6px; border-radius: 12px;
+      margin-top: 6px; margin-left: 2px; animation: fadeOut 2s forwards; }
+    @keyframes fadeOut { 0%{opacity:1;} 80%{opacity:1;} 100%{opacity:0;} }
   </style>
 </head>
 <body>
   <div id="sidebar">
-    <!-- 🔹 Title and Subtitle -->
-    <img src="https://aquavisitorsystem.github.io/aqua.png" width="250px" style="background-color: white;width: 280px;">
+    <img src="https://aquavisitorsystem.github.io/aqua.png" width="280px" style="background-color:white;">
     <h1>AquaEarth</h1>
     <h2>Protecting the World’s Water</h2>
-
-    <!-- 🔹 Reset Button -->
     <button id="resetBtn">Reset</button>
     <input type="text" id="searchBox" placeholder="Search folders & placemarks...">
     <div class="tree" id="kmlTree">Loading KMZ structure...</div>
@@ -134,7 +70,7 @@
   <div id="cesiumContainer"></div>
 
   <script>
-    Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3NmEwNjdiZi02Y2E3LTQwNzEtYWRkMy03MjU1MTU3YWZmNTciLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyNDUyMTN9.C_4ZYmFZ-ShXYbhckuorrIbc_OlB1pwsyuAAdmJK3Ww";
+  Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3NmEwNjdiZi02Y2E3LTQwNzEtYWRkMy03MjU1MTU3YWZmNTciLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyNDUyMTN9.C_4ZYmFZ-ShXYbhckuorrIbc_OlB1pwsyuAAdmJK3Ww";
 
     const viewer = new Cesium.Viewer("cesiumContainer", {
       baseLayerPicker: false,
@@ -142,24 +78,17 @@
       animation: false
     });
 
-    // ✅ Allow popup links in infoBox iframe
+    // allow links inside infoBox
     viewer.infoBox.frame.addEventListener("load", () => {
       const f = viewer.infoBox.frame;
-      const current = (f.getAttribute("sandbox") || "").split(/\s+/).filter(Boolean);
-      const needed = [
-        "allow-scripts","allow-popups","allow-popups-to-escape-sandbox",
-        "allow-same-origin","allow-top-navigation-by-user-activation"
-      ];
-      const merged = Array.from(new Set([...current, ...needed]));
-      f.setAttribute("sandbox", merged.join(" "));
+      const needed = ["allow-scripts","allow-popups","allow-popups-to-escape-sandbox","allow-same-origin"];
+      f.setAttribute("sandbox", needed.join(" "));
     });
 
-    // ✅ Default view to continental United States
     viewer.camera.setView({
       destination: Cesium.Rectangle.fromDegrees(-125.0, 24.0, -66.0, 49.0)
     });
 
-    // 🔹 Fixed folder → color mapping
     const folderColorMap = {
       "Biological Installations": Cesium.Color.GREEN,
       "Filter Installations": Cesium.Color.ORANGE,
@@ -167,7 +96,6 @@
     };
 
     const pinBuilder = new Cesium.PinBuilder();
-
     function getIconForEntity(entity) {
       let parent = entity.parent;
       while (parent) {
@@ -179,192 +107,128 @@
       return pinBuilder.fromColor(folderColorMap["AASI Installations"], 32).toDataURL();
     }
 
-    // ✅ Load KMZ
     const kmlUrl = "AASI Installations.kmz";
     Cesium.KmlDataSource.load(kmlUrl, { camera: viewer.scene.camera, canvas: viewer.scene.canvas })
-      .then(function(dataSource) {
-        viewer.dataSources.add(dataSource);
+      .then(ds => {
+        viewer.dataSources.add(ds);
+        ds.entities.values.forEach(e => { if (e.billboard) e.billboard.image = getIconForEntity(e); });
 
-        // 🔧 Force icon for every placemark
-        dataSource.entities.values.forEach(entity => {
-          if (entity.billboard) {
-            entity.billboard.image = getIconForEntity(entity);
-          }
-        });
-
-        const allEntities = dataSource.entities.values;
+        const allEntities = ds.entities.values;
         const treeContainer = document.getElementById("kmlTree");
-        treeContainer.innerHTML = ""; // clear loading text
+        treeContainer.innerHTML = "";
 
         const myPlaces = allEntities.find(e => e.name && e.name.trim() === "My Places");
-        if (!myPlaces || !myPlaces._children) {
-          treeContainer.textContent = "Could not find 'My Places' folder in KMZ.";
-          return;
-        }
+        if (!myPlaces || !myPlaces._children) { treeContainer.textContent = "No 'My Places' found."; return; }
 
-        // Recursive tree builder
         function buildTree(entities, parentEl) {
-          const ul = document.createElement("ul");
-          parentEl.appendChild(ul);
-
+          const ul = document.createElement("ul"); parentEl.appendChild(ul);
           entities.forEach(entity => {
             if (entity.show === false) return;
             const li = document.createElement("li");
-
             if (entity._children && entity._children.length > 0) {
-              li.textContent = entity.name || "Folder";
-              li.classList.add("folder", "collapsed");
-              li.onclick = function(e) {
-                e.stopPropagation();
-                li.classList.toggle("collapsed");
-                li.classList.toggle("expanded");
-              };
-              ul.appendChild(li);
-              buildTree(entity._children, li);
+              li.textContent = entity.name || "Folder"; li.classList.add("folder","collapsed");
+              li.onclick = e => { e.stopPropagation(); li.classList.toggle("collapsed"); li.classList.toggle("expanded"); };
+              ul.appendChild(li); buildTree(entity._children, li);
             } else {
-              li.textContent = entity.name || "Unnamed";
-              li.classList.add("placemark");
-              li.onclick = function(e) {
-                e.stopPropagation();
-                if (entity.position) {
-                  viewer.flyTo(entity, { duration: 2.0 });
-                  viewer.selectedEntity = entity; // ensure infoBox opens
-                }
-              };
+              li.textContent = entity.name || "Unnamed"; li.classList.add("placemark");
+              li.onclick = e => { e.stopPropagation(); if (entity.position) { viewer.flyTo(entity); viewer.selectedEntity = entity; } };
               ul.appendChild(li);
             }
           });
         }
 
-        // Root
         const myRoot = document.createElement("div");
-        myRoot.textContent = "AASI Installations";
-        myRoot.classList.add("folder", "expanded");
+        myRoot.textContent = "AASI Installations"; myRoot.classList.add("folder","expanded");
         treeContainer.appendChild(myRoot);
         buildTree(myPlaces._children, myRoot);
 
-        // 🔎 Search filter
-        const searchBox = document.getElementById("searchBox");
-        searchBox.addEventListener("input", function() {
-          const term = this.value.toLowerCase();
-          const allNodes = treeContainer.querySelectorAll("li, div.folder");
-          allNodes.forEach(el => el.classList.remove("hidden"));
-
-          if (term === "") {
-            viewer.camera.setView({
-              destination: Cesium.Rectangle.fromDegrees(-125.0, 24.0, -66.0, 49.0)
-            });
-            const folders = treeContainer.querySelectorAll(".folder");
-            folders.forEach((folder, idx) => {
-              if (idx === 0) {
-                folder.classList.add("expanded");
-                folder.classList.remove("collapsed");
-              } else {
-                folder.classList.add("collapsed");
-                folder.classList.remove("expanded");
-              }
-              folder.classList.remove("hidden");
-            });
-            treeContainer.querySelectorAll(".placemark").forEach(pm => pm.classList.remove("hidden"));
-            return;
-          }
-
-          allNodes.forEach(el => {
-            const text = el.textContent.toLowerCase();
-            if (el.classList.contains("folder")) {
-              if (text.includes(term)) {
-                el.classList.add("expanded");
-                el.classList.remove("collapsed");
-                el.querySelectorAll("li, div").forEach(d => d.classList.remove("hidden"));
-              } else {
-                let hasMatch = false;
-                el.querySelectorAll("li, div").forEach(child => {
-                  if (child.textContent.toLowerCase().includes(term)) hasMatch = true;
-                });
-                if (!hasMatch) {
-                  el.classList.add("hidden");
-                } else {
-                  el.classList.add("expanded");
-                  el.classList.remove("collapsed");
-                }
-              }
-            }
-            if (el.classList.contains("placemark")) {
-              if (text.includes(term)) {
-                let parent = el.parentElement;
-                while (parent && parent !== treeContainer) {
-                  if (parent.classList.contains("folder")) {
-                    parent.classList.add("expanded");
-                    parent.classList.remove("collapsed");
-                    parent.classList.remove("hidden");
-                  }
-                  parent = parent.parentElement;
-                }
-              } else {
-                let parentFolder = el.closest(".folder");
-                if (!parentFolder || !parentFolder.textContent.toLowerCase().includes(term)) {
-                  el.classList.add("hidden");
-                }
-              }
-            }
-          });
+        // Legend
+        const legend = document.getElementById("legend");
+        legend.innerHTML = "<h4>Legend</h4>";
+        Object.keys(folderColorMap).forEach(name => {
+          const pinUrl = pinBuilder.fromColor(folderColorMap[name], 24).toDataURL();
+          legend.innerHTML += `<div class="legend-item"><img src="${pinUrl}"> ${name}</div>`;
         });
-
-        // ✅ Build legend
-        const legendContainer = document.getElementById("legend");
-        legendContainer.innerHTML = "<h4>Legend</h4>";
-        Object.keys(folderColorMap).forEach(folderName => {
-          const color = folderColorMap[folderName] || Cesium.Color.BLUE;
-          const pinUrl = pinBuilder.fromColor(color, 24).toDataURL();
-          const div = document.createElement("div");
-          div.classList.add("legend-item");
-          div.innerHTML = `<img src="${pinUrl}"> ${folderName}`;
-          legendContainer.appendChild(div);
-        });
-      })
-      .catch(err => {
-        document.getElementById("kmlTree").textContent = "Error loading KMZ: " + err;
       });
 
-    // Reset
     document.getElementById("resetBtn").addEventListener("click", () => location.reload());
 
-    // Hide Cesium credit
-    Array.from(document.getElementsByClassName('cesium-viewer-bottom')).forEach(el => el.style.display = 'none');
-
     /* =========================
-       Wire popup links in infoBox
+       Address + Directions
        ========================= */
-    function wireInfoBoxPopupLinks(retries = 10) {
-      const frame = viewer.infoBox?.frame;
-      const doc = frame && (frame.contentDocument || frame.contentWindow?.document);
-      if (!doc) {
-        if (retries > 0) setTimeout(() => wireInfoBoxPopupLinks(retries - 1), 100);
-        return;
+    const _addrCache = new Map();
+    let _queue = Promise.resolve();
+
+    viewer.selectedEntityChanged.addEventListener((entity) => {
+      if (entity && entity.position) {
+        addAddress(entity);
+        wireInfoBoxPopupLinks();
       }
+    });
 
-      doc.querySelectorAll('.popup-link').forEach(a => {
-        if (a.getAttribute('data-wired') === '1') return;
-        a.setAttribute('data-wired', '1');
+    async function addAddress(entity) {
+      let html = entity.description?.getValue?.() ?? entity.description ?? "";
+      if (typeof html !== "string") html = String(html);
+      if (html.includes("Address:") || html.includes("Fetching address")) return;
 
-        a.addEventListener('click', (ev) => {
-          ev.preventDefault();
-          const url = a.getAttribute('data-url') || a.href;
-          const w = 800, h = 600;
-          const left = (screen.width/2) - (w/2);
-          const top  = (screen.height/2) - (h/2);
+      html += `<hr><div style="font:12px system-ui;color:#777">
+                 <b>Address:</b> <span>Fetching address…</span></div>`;
+      entity.description = new Cesium.ConstantProperty(html);
 
-          const win = window.open(
-            url,
-            "PopupWindow",
-            `width=${w},height=${h},top=${top},left=${left},resizable=yes,scrollbars=yes`
-          );
-          if (!win) alert("⚠ Popup blocked. Please allow popups.");
-        });
-      });
+      const carto = Cesium.Cartographic.fromCartesian(entity.position.getValue(Cesium.JulianDate.now()));
+      const lat = Cesium.Math.toDegrees(carto.latitude), lon = Cesium.Math.toDegrees(carto.longitude);
+      const info = await reverseGeocode(lat, lon);
+      if (info) replaceWithAddress(entity, info);
     }
 
-    viewer.selectedEntityChanged.addEventListener(() => wireInfoBoxPopupLinks());
+    async function reverseGeocode(lat, lon) {
+      const key = `${lat.toFixed(6)},${lon.toFixed(6)}`;
+      if (_addrCache.has(key)) return _addrCache.get(key);
+      const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`);
+      if (!resp.ok) return null;
+      const data = await resp.json();
+      const info = { address: data.display_name, lat, lon };
+      _addrCache.set(key, info);
+      return info;
+    }
+
+    function replaceWithAddress(entity, {address,lat,lon}) {
+      let html = entity.description?.getValue?.() ?? entity.description ?? "";
+      const gUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
+      const oUrl = `https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&route=${lat},${lon};${lat},${lon}`;
+      const bUrl = `https://www.bing.com/maps?rtp=~pos.${lat}_${lon}`;
+      const links = `
+        <a class="info-btn popup-link" data-url="${gUrl}" href="${gUrl}" target="_blank">Get directions</a>
+        <a class="info-btn popup-link" data-url="${oUrl}" href="${oUrl}" target="_blank">OpenStreetMap</a>
+        <a class="info-btn popup-link" data-url="${bUrl}" href="${bUrl}" target="_blank">Bing Maps</a>
+        <button class="info-btn copy-addr-btn" data-addr="${address.replace(/"/g,"&quot;")}">Copy address</button>`;
+      html = html.replace(/Fetching address…/, `${address}<br>${links}`);
+      entity.description = new Cesium.ConstantProperty(html);
+      wireInfoBoxPopupLinks();
+    }
+
+    /* =========================
+       Popup + Copy Buttons
+       ========================= */
+    function wireInfoBoxPopupLinks(retries=10) {
+      const doc = viewer.infoBox.frame.contentDocument;
+      if (!doc) { if (retries>0) setTimeout(()=>wireInfoBoxPopupLinks(retries-1),100); return; }
+
+      doc.querySelectorAll('.popup-link').forEach(a => {
+        if (a.dataset.wired) return; a.dataset.wired="1";
+        a.addEventListener('click', ev => {
+          ev.preventDefault();
+          const url = a.dataset.url || a.href;
+          const w=800,h=600,left=(screen.width-w)/2,top=(screen.height-h)/2;
+          window.open(url,"PopupWindow",`width=${w},height=${h},top=${top},left=${left},resizable=yes,scrollbars=yes`);
+        });
+      });
+
+      doc.querySelectorAll('.copy-addr-btn').forEach(btn=>{
+        if (btn.dataset.wired) return; btn.dataset.wired="1";
+        btn.addEventListener('click',()=>navigator.clipboard.writeText(btn.dataset.addr));
+      });
+    }
   </script>
 </body>
 </html>
