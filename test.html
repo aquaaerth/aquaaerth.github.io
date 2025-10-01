@@ -1,7 +1,6 @@
 <!DOCTYPE html>
-
 <!--
-  vs: 224
+  vs: 230
 -->
 <html lang="en">
 <head>
@@ -66,10 +65,10 @@
       baseLayerPicker:false, timeline:false, animation:false
     });
 
-    // Ensure iframe sandbox allows navigation/popups (but no scripts inside)
+    // ✅ Allow popups in infoBox iframe
     viewer.infoBox.frame.addEventListener("load", () => {
       const f = viewer.infoBox.frame;
-      const needed=["allow-same-origin","allow-popups","allow-top-navigation-by-user-activation"];
+      const needed=["allow-same-origin","allow-popups","allow-top-navigation-by-user-activation","allow-scripts"];
       f.setAttribute("sandbox", needed.join(" "));
     });
 
@@ -176,11 +175,6 @@
     const _addrCache=new Map();
     viewer.selectedEntityChanged.addEventListener(entity=>{ if(entity&&entity.position) addAddress(entity); });
 
-    function sanitizeHtml(str){
-      return str.replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi,"")
-                .replace(/on\w+="[^"]*"/gi,"");
-    }
-
     async function addAddress(entity){
       let html=entity.description?.getValue?.()??entity.description??"";
       if(typeof html!=="string") html=String(html);
@@ -189,7 +183,7 @@
         <hr><div style="font:12px system-ui;color:#777">
           <b>Address:</b> <span class="spinner"></span> Fetching address…
         </div>`;
-      entity.description=new Cesium.ConstantProperty(sanitizeHtml(html));
+      entity.description=new Cesium.ConstantProperty(html);
 
       const carto=Cesium.Cartographic.fromCartesian(entity.position.getValue(Cesium.JulianDate.now()));
       const lat=Cesium.Math.toDegrees(carto.latitude), lon=Cesium.Math.toDegrees(carto.longitude);
@@ -210,20 +204,27 @@
       const gUrl=`https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
       const link=`<a class="info-btn popup-link" data-url="${gUrl}">Get directions</a>`;
       html=html.replace(/<span class="spinner"><\/span> Fetching address…/s, `${address}<br>${link}`);
-      entity.description=new Cesium.ConstantProperty(sanitizeHtml(html));
+      entity.description=new Cesium.ConstantProperty(html);
+
+      // rewire popup links inside the infoBox iframe
+      wirePopupLinks();
     }
 
-    // Global delegation: open popup on click
-    window.addEventListener("click", ev=>{
-      const a=ev.target.closest(".popup-link");
-      console.log("a is: " + a);
-      if(!a) return;
-      ev.preventDefault();
-       console.log("a is again: " + a);
-      const url=a.dataset.url;
-      const w=800,h=600,left=(screen.width-w)/2,top=(screen.height-h)/2;
-      window.open(url,"PopupWindow",`width=${w},height=${h},top=${top},left=${left},resizable=yes,scrollbars=yes`);
-    });
+    function wirePopupLinks(retries=10){
+      const frame=viewer.infoBox.frame;
+      const doc=frame && (frame.contentDocument || frame.contentWindow?.document);
+      if(!doc){ if(retries>0) setTimeout(()=>wirePopupLinks(retries-1),100); return; }
+      doc.querySelectorAll('.popup-link').forEach(a=>{
+        if(a.dataset.wired) return;
+        a.dataset.wired="1";
+        a.addEventListener("click",ev=>{
+          ev.preventDefault();
+          const url=a.dataset.url||a.href;
+          const w=800,h=600,left=(screen.width-w)/2,top=(screen.height-h)/2;
+          window.open(url,"PopupWindow",`width=${w},height=${h},top=${top},left=${left},resizable=yes,scrollbars=yes`);
+        });
+      });
+    }
   </script>
 </body>
 </html>
