@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- vs: 299 -->
+<!-- vs: 300  -->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -214,7 +214,7 @@
       let html=entity.description?.getValue?.()??entity.description??"";
       const gUrl=`https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
 
-      const infoBoxLine = `<span class="directions-text">${address}<br>(<b>Get Directions</b> available via sidebar button)</span>`;
+      const infoBoxLine = `<span class="directions-text">${address}<br><br>(<b>Get Directions</b> is available via sidebar button)</span>`;
       html = html.replace('<span class="spinner"></span> Fetching address...', infoBoxLine);
       entity.description=new Cesium.ConstantProperty(html);
 
