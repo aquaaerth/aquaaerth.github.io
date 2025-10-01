@@ -219,6 +219,7 @@
       console.log("a is: " + a);
       if(!a) return;
       ev.preventDefault();
+       console.log("a is again: " + a);
       const url=a.dataset.url;
       const w=800,h=600,left=(screen.width-w)/2,top=(screen.height-h)/2;
       window.open(url,"PopupWindow",`width=${w},height=${h},top=${top},left=${left},resizable=yes,scrollbars=yes`);
