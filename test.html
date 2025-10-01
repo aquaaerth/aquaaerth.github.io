@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- vs: 296 -->
+<!-- vs: 299 -->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -58,6 +58,7 @@
   <div id="cesiumContainer"></div>
 
   <script>
+  window.addEventListener("load", () => {
     Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3NmEwNjdiZi02Y2E3LTQwNzEtYWRkMy03MjU1MTU3YWZmNTciLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyNDUyMTN9.C_4ZYmFZ-ShXYbhckuorrIbc_OlB1pwsyuAAdmJK3Ww";
 
     const viewer = new Cesium.Viewer("cesiumContainer", {
@@ -191,7 +192,7 @@
 
       html+=`
         <hr><div style="font:12px system-ui;color:#bbb">
-          <b>Address:</b> <span class="spinner"></span> Fetching address…
+          <b>Address:</b> <span class="spinner"></span> Fetching address...
         </div>`;
       entity.description=new Cesium.ConstantProperty(html);
 
@@ -214,7 +215,7 @@
       const gUrl=`https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
 
       const infoBoxLine = `<span class="directions-text">${address}<br>(<b>Get Directions</b> available via sidebar button)</span>`;
-      html=html.replace(/<span class="spinner"><\/span> Fetching address…/s, infoBoxLine);
+      html = html.replace('<span class="spinner"></span> Fetching address...', infoBoxLine);
       entity.description=new Cesium.ConstantProperty(html);
 
       _currentDirectionsUrl = gUrl;
@@ -228,6 +229,7 @@
         if(!win){ alert("Popup was blocked. Please allow popups for this site."); }
       };
     }
+  }); // end window.load
   </script>
 </body>
 </html>
