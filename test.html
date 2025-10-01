@@ -427,7 +427,7 @@
     }
 
     // Wire popup links & copy buttons inside the infoBox iframe
-   function wireInfoBoxPopupLinks(retries = 10) {
+  function wireInfoBoxPopupLinks(retries = 10) {
   const frame = viewer.infoBox?.frame;
   const doc = frame && (frame.contentDocument || frame.contentWindow?.document);
   if (!doc) {
@@ -439,15 +439,28 @@
     if (a.getAttribute('data-wired') === '1') return;
     a.setAttribute('data-wired', '1');
 
-    // 🔹 Left click acts like "right-click → open in new tab"
+    // ✅ Left-click opens in 800x600 popup window
     a.addEventListener('click', (ev) => {
-      ev.preventDefault(); // stop normal Cesium iframe behavior
+      ev.preventDefault(); // stop normal new-tab behavior
+
       const url = a.getAttribute('data-url') || a.href;
-      window.open(url, "_blank"); // open in new tab
+      const w = 800, h = 600;
+      const left = (screen.width / 2) - (w / 2);
+      const top  = (screen.height / 2) - (h / 2);
+
+      const win = window.open(
+        url,
+        "PopupWindow",
+        `width=${w},height=${h},top=${top},left=${left},resizable=yes,scrollbars=yes`
+      );
+
+      if (!win) {
+        try { parent.showToast?.("⚠ Popup blocked. Allow popups in your browser."); } catch {}
+      }
     });
   });
 
-  // Copy address button stays unchanged
+  // Copy address buttons still work
   doc.querySelectorAll('.copy-addr-btn').forEach(btn => {
     if (btn.getAttribute('data-wired') === '1') return;
     btn.setAttribute('data-wired', '1');
@@ -458,6 +471,7 @@
     });
   });
 }
+
 
 
     // Actions (run in parent context)
