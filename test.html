@@ -6,7 +6,7 @@
   <script src="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Cesium.js"></script>
   <link href="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
 
-  <style>
+   <style>
     html, body {
       width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden;
       font-family: sans-serif;
@@ -24,7 +24,7 @@
     #sidebar h1 {
       margin: 0;
       font-size: 20px;
-      color: #4FC3F7;
+      color: #4FC3F7; /* Aqua-blue */
     }
     #sidebar h2 {
       margin: 2px 0 12px 0;
@@ -42,7 +42,9 @@
       color: #fff;
       cursor: pointer;
     }
-    #resetBtn:hover { background: #666; }
+    #resetBtn:hover {
+      background: #666;
+    }
     #cesiumContainer {
       width: calc(100% - 300px);
       height: 100%;
@@ -56,15 +58,37 @@
       border-radius: 4px;
       font-size: 14px;
     }
-    .tree ul { list-style: none; padding-left: 18px; margin: 4px 0; }
-    .tree li { margin: 2px 0; cursor: pointer; }
-    .folder::before { content: "▶ "; display: inline-block; transition: transform 0.2s; }
-    .folder.expanded::before { transform: rotate(90deg); }
-    .collapsed > ul { display: none; }
-    .placemark::before { content: "• "; color: #00c3ff; }
-    .placemark:hover { text-decoration: underline; color: #a3d3ff; }
-    .hidden { display: none !important; }
-
+    .tree ul {
+      list-style: none;
+      padding-left: 18px;
+      margin: 4px 0;
+    }
+    .tree li {
+      margin: 2px 0;
+      cursor: pointer;
+    }
+    .folder::before {
+      content: "▶ ";
+      display: inline-block;
+      transition: transform 0.2s;
+    }
+    .folder.expanded::before {
+      transform: rotate(90deg);
+    }
+    .collapsed > ul {
+      display: none;
+    }
+    .placemark::before {
+      content: "• ";
+      color: #00c3ff;
+    }
+    .placemark:hover {
+      text-decoration: underline;
+      color: #a3d3ff;
+    }
+    .hidden {
+      display: none !important;
+    }
     /* 🔹 Legend */
     #legend {
       margin-top: 12px;
@@ -73,20 +97,30 @@
       border-radius: 6px;
       font-size: 13px;
     }
-    #legend h4 { margin: 0 0 6px; font-size: 14px; color: #ddd; }
-    .legend-item { display: flex; align-items: center; margin: 4px 0; }
-    .legend-item img { width: 18px; height: 18px; margin-right: 6px; }
+    #legend h4 {
+      margin: 0 0 6px;
+      font-size: 14px;
+      color: #ddd;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      margin: 4px 0;
+    }
+    .legend-item img {
+      width: 18px;
+      height: 18px;
+      margin-right: 6px;
+    }
+
+    /* 🔹 Spinner + animations */
+    @keyframes spin { 0%{transform:rotate(0deg);}100%{transform:rotate(360deg);} }
+    @keyframes fadeOut { 0%{opacity:1;}80%{opacity:1;}100%{opacity:0;} }
 
     /* 🔹 Info buttons */
     .info-btn {
-      background: #4FC3F7;
-      color: #fff;
-      border: none;
-      border-radius: 4px;
-      padding: 4px 8px;
-      font-size: 12px;
-      margin: 4px 4px 0 0;
-      cursor: pointer;
+      background: #4FC3F7; color: #fff; border: none; border-radius: 4px;
+      padding: 4px 8px; font-size: 12px; margin: 4px 4px 0 0; cursor: pointer;
       transition: background 0.2s;
     }
     .info-btn:hover { background: #0288D1; }
@@ -94,64 +128,41 @@
 
     /* 🔹 Copied badge */
     .copy-confirm {
-      display: inline-block;
-      background: #4CAF50;
-      color: #fff;
-      font-size: 11px;
-      padding: 2px 6px;
-      border-radius: 12px;
-      margin-top: 6px;
-      margin-left: 2px;
+      display: inline-block; background: #4CAF50; color: #fff; font-size: 11px;
+      padding: 2px 6px; border-radius: 12px; margin-top: 6px; margin-left: 2px;
       animation: fadeOut 2s forwards;
     }
-    @keyframes fadeOut { 0%{opacity:1;}80%{opacity:1;}100%{opacity:0;} }
 
-    /* 🔹 Spinner */
-    @keyframes spin { 0%{transform:rotate(0deg);}100%{transform:rotate(360deg);} }
-
-    /* 🔹 Toast system */
+    /* 🔹 Toasts */
     #toast-container {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      z-index: 999999;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 6px;
+      position: fixed; bottom: 20px; right: 20px; z-index: 999999;
+      display: flex; flex-direction: column; align-items: flex-end; gap: 6px;
     }
     .toast {
-      background: #323232;
-      color: #fff;
-      padding: 8px 14px;
-      border-radius: 6px;
-      font-size: 13px;
-      min-width: 160px;
-      text-align: center;
-      opacity: 0;
+      background: #323232; color: #fff; padding: 8px 14px; border-radius: 6px;
+      font-size: 13px; min-width: 160px; text-align: center; opacity: 0;
       transform: translateY(20px);
       animation: slideIn 0.3s forwards, fadeOutToast 2s 1s forwards;
     }
-    @keyframes slideIn {
-      from { opacity:0; transform:translateY(20px); }
-      to   { opacity:1; transform:translateY(0); }
-    }
-    @keyframes fadeOutToast {
-      to { opacity:0; transform:translateY(20px); }
-    }
+    @keyframes slideIn { from {opacity:0; transform:translateY(20px);} to {opacity:1; transform:translateY(0);} }
+    @keyframes fadeOutToast { to {opacity:0; transform:translateY(20px);} }
   </style>
 </head>
 <body>
   <div id="sidebar">
-    <img src="https://aquavisitorsystem.github.io/aqua.png" width="250px" style="background-color:white;width:280px;">
+  <!-- 🔹 Title and Subtitle -->
+	<img src="https://aquavisitorsystem.github.io/aqua.png" width="250px" style="background-color: white;width: 280px;">
     <h1>AquaEarth</h1>
     <h2>Protecting the World’s Water</h2>
+
+    <!-- 🔹 Reset Button -->
     <button id="resetBtn">Reset</button>
     <input type="text" id="searchBox" placeholder="Search folders & placemarks...">
     <div class="tree" id="kmlTree">Loading KMZ structure...</div>
     <div id="legend"></div>
   </div>
   <div id="cesiumContainer"></div>
+  <!-- 🔹 Toast container -->
   <div id="toast-container"></div>
 
   <script>
@@ -163,25 +174,12 @@
       animation: false
     });
 
-    // ✅ Event delegation for infoBox buttons
-    document.addEventListener("click", function(e) {
-      if (e.target.classList.contains("get-dir-btn")) {
-        const lat = parseFloat(e.target.dataset.lat);
-        const lon = parseFloat(e.target.dataset.lon);
-        openDirections(lat, lon);
-      }
-      if (e.target.classList.contains("copy-addr-btn")) {
-        const addr = e.target.dataset.addr;
-        copyAddress(addr);
-      }
-    });
-
-    // Default camera
+    // ✅ Default view to continental United States
     viewer.camera.setView({
       destination: Cesium.Rectangle.fromDegrees(-125.0, 24.0, -66.0, 49.0)
     });
 
-    // Color map
+    // 🔹 Fixed folder → color mapping
     const folderColorMap = {
       "Biological Installations": Cesium.Color.GREEN,
       "Filter Installations": Cesium.Color.ORANGE,
@@ -190,6 +188,7 @@
 
     const pinBuilder = new Cesium.PinBuilder();
 
+    // Always return a pin for placemarks
     function getIconForEntity(entity) {
       let parent = entity.parent;
       while (parent) {
@@ -198,48 +197,228 @@
         }
         parent = parent.parent;
       }
+      // fallback to root
       return pinBuilder.fromColor(folderColorMap["AASI Installations"], 32).toDataURL();
     }
 
-    const kmlUrl = "AASI Installations.kmz";
+    const kmlUrl = "AASI Installations.kmz"; // 🔹 Replace with your KMZ/KML path
     Cesium.KmlDataSource.load(kmlUrl, { camera: viewer.scene.camera, canvas: viewer.scene.canvas })
       .then(function(dataSource) {
         viewer.dataSources.add(dataSource);
+
+        // 🔧 Force icon for every placemark
         dataSource.entities.values.forEach(entity => {
-          if (entity.billboard) entity.billboard.image = getIconForEntity(entity);
+          if (entity.billboard) {
+            entity.billboard.image = getIconForEntity(entity);
+          }
         });
 
-        // Tree building skipped here for brevity… (your existing tree logic stays)
+        const allEntities = dataSource.entities.values;
+        const treeContainer = document.getElementById("kmlTree");
+        treeContainer.innerHTML = ""; // clear loading text
 
+        // 🔍 Find the "My Places" folder entity
+        const myPlaces = allEntities.find(e => e.name && e.name.trim() === "My Places");
+
+        if (!myPlaces || !myPlaces._children) {
+          treeContainer.textContent = "Could not find 'My Places' folder in KMZ.";
+          return;
+        }
+
+        // Recursive tree builder
+        function buildTree(entities, parentEl) {
+          const ul = document.createElement("ul");
+          parentEl.appendChild(ul);
+
+          entities.forEach(entity => {
+            // Skip hidden entities (visibility=0 in KMZ)
+            if (entity.show === false) return;
+
+            const li = document.createElement("li");
+
+            if (entity._children && entity._children.length > 0) {
+              li.textContent = entity.name || "Folder";
+              li.classList.add("folder", "collapsed");
+
+              li.onclick = function(e) {
+                e.stopPropagation();
+                li.classList.toggle("collapsed");
+                li.classList.toggle("expanded");
+              };
+
+              ul.appendChild(li);
+              buildTree(entity._children, li);
+            } else {
+              li.textContent = entity.name || "Unnamed";
+              li.classList.add("placemark");
+
+              li.onclick = function(e) {
+                e.stopPropagation();
+                if (entity.position) {
+                  viewer.flyTo(entity, { duration: 2.0 });
+                  // 🔹 Select to open infoBox (needed for address logic)
+                  viewer.selectedEntity = entity;
+                }
+              };
+
+              ul.appendChild(li);
+            }
+          });
+        }
+
+        // Build tree ONLY from "My Places", but rename root
+        const myRoot = document.createElement("div");
+        myRoot.textContent = "AASI Installations";
+        myRoot.classList.add("folder", "expanded");
+        treeContainer.appendChild(myRoot);
+
+        buildTree(myPlaces._children, myRoot);
+
+        // 🔎 Search filter
+        const searchBox = document.getElementById("searchBox");
+        searchBox.addEventListener("input", function() {
+          const term = this.value.toLowerCase();
+
+          const allNodes = treeContainer.querySelectorAll("li, div.folder");
+          allNodes.forEach(el => el.classList.remove("hidden"));
+
+          if (term === "") 
+          {
+            // Reset camera + rebuild tree/legend only
+            viewer.camera.setView({
+              destination: Cesium.Rectangle.fromDegrees(-125.0, 24.0, -66.0, 49.0)
+            });
+
+            // Collapse all folders except root
+            const folders = treeContainer.querySelectorAll(".folder");
+            folders.forEach((folder, idx) => {
+              if (idx === 0) {
+                folder.classList.add("expanded");
+                folder.classList.remove("collapsed");
+              } else {
+                folder.classList.add("collapsed");
+                folder.classList.remove("expanded");
+              }
+              folder.classList.remove("hidden");
+            });
+
+            // Show all placemarks again
+            const placemarks = treeContainer.querySelectorAll(".placemark");
+            placemarks.forEach(pm => pm.classList.remove("hidden"));
+
+            return;
+          }
+
+          allNodes.forEach(el => {
+            const text = el.textContent.toLowerCase();
+
+            if (el.classList.contains("folder")) {
+              if (text.includes(term)) {
+                el.classList.add("expanded");
+                el.classList.remove("collapsed");
+                const descendants = el.querySelectorAll("li, div");
+                descendants.forEach(d => d.classList.remove("hidden"));
+              } else {
+                let hasMatchingDescendant = false;
+                el.querySelectorAll("li, div").forEach(child => {
+                  if (child.textContent.toLowerCase().includes(term)) {
+                    hasMatchingDescendant = true;
+                  }
+                });
+                if (!hasMatchingDescendant) {
+                  el.classList.add("hidden");
+                } else {
+                  el.classList.add("expanded");
+                  el.classList.remove("collapsed");
+                }
+              }
+            }
+
+            if (el.classList.contains("placemark")) {
+              if (text.includes(term)) {
+                let parent = el.parentElement;
+                while (parent && parent !== treeContainer) {
+                  if (parent.classList.contains("folder")) {
+                    parent.classList.add("expanded");
+                    parent.classList.remove("collapsed");
+                    parent.classList.remove("hidden");
+                  }
+                  parent = parent.parentElement;
+                }
+              } else {
+                let parentFolder = el.closest(".folder");
+                if (!parentFolder || !parentFolder.textContent.toLowerCase().includes(term)) {
+                  el.classList.add("hidden");
+                }
+              }
+            }
+          });
+        });
+
+        // ✅ Build legend dynamically
+        const legendContainer = document.getElementById("legend");
+        legendContainer.innerHTML = "<h4>Legend</h4>";
+        Object.keys(folderColorMap).forEach(folderName => {
+          const color = folderColorMap[folderName] || Cesium.Color.BLUE;
+          const pinUrl = pinBuilder.fromColor(color, 24).toDataURL();
+          const div = document.createElement("div");
+          div.classList.add("legend-item");
+          div.innerHTML = `<img src="${pinUrl}"> ${folderName}`;
+          legendContainer.appendChild(div);
+        });
+      })
+      .catch(function(error) {
+        document.getElementById("kmlTree").textContent = "Error loading KMZ: " + error;
+        console.error(error);
       });
+	  
+	   // 🔹 Reset function (reload page completely)
+    function resetView() {
+      location.reload();
+    }
 
-    // 🔹 Reverse geocode logic
-    const _addressCache = new Map();
+    // Hook Reset button
+    document.getElementById("resetBtn").addEventListener("click", resetView);
+
+    var appBanners = document.getElementsByClassName('cesium-viewer-bottom');
+    for (var i = 0; i < appBanners.length; i ++) {
+      appBanners[i].style.display = 'none';
+    }
+
+    /* =========================
+       Address-on-Select (sandbox-safe)
+       ========================= */
+
+    // Cache + 1 rps queue
+    const _addrCache = new Map();
     let _queue = Promise.resolve();
 
-    viewer.selectedEntityChanged.addEventListener(entity => {
+    // When user selects an entity (tree or globe), lazy-load address
+    viewer.selectedEntityChanged.addEventListener((entity) => {
       if (entity && entity.position) addAddressIfNeeded(entity);
     });
 
     async function addAddressIfNeeded(entity) {
-      let currentHtml = entity.description?.getValue?.() ?? entity.description ?? "";
-      if (typeof currentHtml !== "string") currentHtml = String(currentHtml);
+      // Put "Fetching..." placeholder if not already present
+      let html = entity.description?.getValue?.() ?? entity.description ?? "";
+      if (typeof html !== "string") html = String(html);
+      if (html.includes("Address:") || html.includes("Fetching address…")) {
+        attachInfoBoxHandlers(); // ensure buttons (if already present) get wired
+        return;
+      }
 
-      if (currentHtml.includes("Address:") || currentHtml.includes("Fetching address…")) return;
-
-      // Spinner placeholder
-      currentHtml += `
+      html += `
         <hr>
         <div style="font:12px system-ui,Arial;color:#777;display:flex;align-items:center;gap:6px">
           <b>Address:</b>
           <span style="display:flex;align-items:center;gap:4px">
-            <span style="width:12px;height:12px;border:2px solid #ccc;border-top:2px solid #444;
-              border-radius:50%;display:inline-block;animation:spin 1s linear infinite;"></span>
+            <span style="width:12px;height:12px;border:2px solid #ccc;border-top:2px solid #444;border-radius:50%;display:inline-block;animation:spin 1s linear infinite;"></span>
             Fetching address…
           </span>
         </div>`;
-      entity.description = new Cesium.ConstantProperty(currentHtml);
+      entity.description = new Cesium.ConstantProperty(html);
 
+      // Compute lat/lon
       const now = Cesium.JulianDate.now();
       const cartesian = entity.position.getValue(now);
       if (!cartesian) return;
@@ -248,23 +427,31 @@
       const lat = Cesium.Math.toDegrees(carto.latitude);
 
       const info = await reverseGeocodeQueued(lat, lon);
-      if (info) replacePlaceholderWithAddress(entity, info);
+      if (info) {
+        replacePlaceholderWithAddress(entity, info);
+        attachInfoBoxHandlers(); // wire buttons after insertion
+      }
     }
 
     async function reverseGeocodeQueued(lat, lon) {
       const key = `${lat.toFixed(6)},${lon.toFixed(6)}`;
-      if (_addressCache.has(key)) return _addressCache.get(key);
+      if (_addrCache.has(key)) return _addrCache.get(key);
+
       _queue = _queue.then(() => new Promise(async (resolve) => {
         try {
           const addr = await reverseGeocodeNominatim(lat, lon);
-          if (addr) {
-            const info = { address: addr, lat, lon };
-            _addressCache.set(key, info);
-            resolve(info);
-          } else resolve(null);
-        } catch { resolve(null); }
-        finally { setTimeout(()=>{},1100); }
+          const info = addr ? { address: addr, lat, lon } : null;
+          if (info) _addrCache.set(key, info);
+          resolve(info);
+        } catch (e) {
+          console.warn("Reverse geocode failed:", e);
+          resolve(null);
+        } finally {
+          // ~1.1s delay to respect Nominatim
+          setTimeout(() => {}, 1100);
+        }
       }));
+
       return _queue;
     }
 
@@ -282,22 +469,61 @@
       if (typeof html !== "string") html = String(html);
 
       const btns = `
-        <button class="info-btn get-dir-btn" data-lat="${lat}" data-lon="${lon}">Get directions</button>
-        <button class="info-btn copy-addr-btn" data-addr="${address.replace(/"/g,"&quot;")}">Copy address</button>`;
+        <button class="info-btn get-dir-btn" data-lat="${lat}" data-lon="${lon}" title="Open in Google Maps">Get directions</button>
+        <button class="info-btn copy-addr-btn" data-addr="${address.replace(/"/g,"&quot;")}" title="Copy this address to clipboard">Copy address</button>`;
 
       if (html.includes("Fetching address…")) {
-        html = html.replace(/<b>Address:<\/b>.*?<\/div>/s,
-          `<b>Address:</b> ${address}<br>${btns}</div>`);
+        html = html.replace(
+          /<b>Address:<\/b>.*?<\/div>/s,
+          `<b>Address:</b> ${address}<br>${btns}</div>`
+        );
       } else if (!html.includes("Address:")) {
-        html += `<hr><div style="font:12px system-ui,Arial;color:#444"><b>Address:</b> ${address}<br>${btns}</div>`;
+        html += `
+          <hr>
+          <div style="font:12px system-ui,Arial;color:#444">
+            <b>Address:</b> ${address}<br>
+            ${btns}
+          </div>`;
       }
+
       entity.description = new Cesium.ConstantProperty(html);
     }
 
-    // 🔹 Action functions
+    // Attach click handlers to buttons inside the infoBox iframe (no inline JS)
+    function attachInfoBoxHandlers(retries = 10) {
+      const frame = viewer.infoBox?.frame;
+      const doc = frame && (frame.contentDocument || frame.contentWindow?.document);
+      if (!doc) {
+        if (retries > 0) setTimeout(() => attachInfoBoxHandlers(retries - 1), 100);
+        return;
+      }
+      const wire = (selector, handler) => {
+        doc.querySelectorAll(selector).forEach(el => {
+          if (el.getAttribute('data-wired') === '1') return;
+          el.setAttribute('data-wired', '1');
+          el.addEventListener('click', (e) => {
+            e.preventDefault();
+            handler(el);
+          });
+        });
+      };
+
+      wire('.get-dir-btn', (el) => {
+        const lat = parseFloat(el.getAttribute('data-lat'));
+        const lon = parseFloat(el.getAttribute('data-lon'));
+        openDirections(lat, lon);
+      });
+
+      wire('.copy-addr-btn', (el) => {
+        const addr = el.getAttribute('data-addr') || '';
+        copyAddress(addr);
+      });
+    }
+
+    // Actions (run in parent context)
     function openDirections(lat, lon) {
       const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
-      const w=800,h=600,left=(screen.width/2)-(w/2),top=(screen.height/2)-(h/2);
+      const w=800, h=600, left=(screen.width/2)-(w/2), top=(screen.height/2)-(h/2);
       showToast("🌍 Opening Google Maps…");
       window.open(mapsUrl,"Directions",`width=${w},height=${h},top=${top},left=${left},resizable=yes,scrollbars=yes`);
     }
@@ -305,27 +531,29 @@
     function copyAddress(addr) {
       navigator.clipboard.writeText(addr).then(() => {
         showToast("✓ Address copied to clipboard!");
-        const infoBox = document.querySelector(".cesium-infoBox-description");
-        if (infoBox) {
-          let msg = infoBox.querySelector(".copy-confirm");
+        const frame = viewer.infoBox?.frame;
+        const doc = frame && (frame.contentDocument || frame.contentWindow?.document);
+        const container = doc && doc.querySelector(".cesium-infoBox-description");
+        if (container) {
+          let msg = container.querySelector(".copy-confirm");
           if (msg) msg.remove();
-          msg = document.createElement("div");
-          msg.className="copy-confirm";
-          msg.textContent="✓ Copied!";
-          infoBox.appendChild(msg);
-          setTimeout(()=>{ if(msg&&msg.parentNode) msg.remove(); },2000);
+          msg = doc.createElement("div");
+          msg.className = "copy-confirm";
+          msg.textContent = "✓ Copied!";
+          container.appendChild(msg);
+          setTimeout(() => { msg && msg.remove && msg.remove(); }, 2000);
         }
-      }).catch(()=>showToast("⚠ Copy failed",true));
+      }).catch(() => showToast("⚠ Copy failed", true));
     }
 
-    function showToast(message,isError=false) {
-      const container=document.getElementById("toast-container");
-      const toast=document.createElement("div");
-      toast.className="toast";
-      toast.textContent=message;
-      if(isError) toast.style.background="#d32f2f";
+    function showToast(message, isError = false) {
+      const container = document.getElementById("toast-container");
+      const toast = document.createElement("div");
+      toast.className = "toast";
+      toast.textContent = message;
+      if (isError) toast.style.background = "#d32f2f";
       container.appendChild(toast);
-      setTimeout(()=>{ if(toast&&toast.parentNode) container.removeChild(toast); },3000);
+      setTimeout(() => { if (toast && toast.parentNode) container.removeChild(toast); }, 3000);
     }
   </script>
 </body>
