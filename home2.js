@@ -67,7 +67,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     <html>
     <head>
       <meta charset="UTF-8">
-      <meta http-equiv="refresh" content="1;url=${redirectUrl}">
+      <meta http-equiv="refresh" content="5;url=${redirectUrl}">
       <title>Loading AquaEarth…</title>
       <style>
         body { font-family: Arial, sans-serif; text-align: center; padding: 3rem; }
