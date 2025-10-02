@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- vs: 551 -->
+<!-- vs: 553 -->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -31,12 +31,11 @@
     }
     #sidebarHeader h1 { margin:0; font-size:20px; color:#4FC3F7; }
     #sidebarHeader h2 { margin:2px 0 12px 0; font-size:12px; font-weight:normal; color:#bbb; }
-    #resetBtn, #popupBtn {
+    #resetBtn {
       width:100%; padding:10px; margin-bottom:10px; background:#444;
       border:none; border-radius:6px; color:#fff; cursor:pointer; font-size:14px;
     }
-    #resetBtn:hover, #popupBtn:hover { background:#666; }
-    #popupBtn:disabled { opacity:0.5; cursor:not-allowed; }
+    #resetBtn:hover { background:#666; }
     #searchBox { width:100%; padding:8px; margin-bottom:10px; border:none; border-radius:6px; font-size:14px; }
 
     #sidebarContent {
@@ -124,8 +123,6 @@
         <h2>Protecting the World’s Water</h2>
 
         <button id="resetBtn">Reset</button>
-        <button id="popupBtn" disabled>Get directions</button>
-
         <input type="text" id="searchBox" placeholder="Search folders & placemarks...">
       </div>
 
@@ -140,16 +137,32 @@
 
   <script>
   window.addEventListener("load", () => {
-    console.log("AquaEarth KMZ Viewer v551"); // ✅ version stamp in console
+    console.log("AquaEarth KMZ Viewer v553"); // ✅ version stamp in console
 
     const menuToggle=document.getElementById("menuToggle");
     const sidebar=document.getElementById("sidebar");
     menuToggle.addEventListener("click",()=>sidebar.classList.toggle("open"));
 
-    Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3NmEwNjdiZi02Y2E3LTQwNzEtYWRkMy03MjU1MTU3YWZmNTciLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyNDUyMTN9.C_4ZYmFZ-ShXYbhckuorrIbc_OlB1pwsyuAAdmJK3Ww";
-
+        Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3NmEwNjdiZi02Y2E3LTQwNzEtYWRkMy03MjU1MTU3YWZmNTciLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyNDUyMTN9.C_4ZYmFZ-ShXYbhckuorrIbc_OlB1pwsyuAAdmJK3Ww";
 
     const viewer=new Cesium.Viewer("cesiumContainer",{baseLayerPicker:false,timeline:false,animation:false});
+
+    // --- shared openDirections function ---
+    function openDirections() {
+      if (!_currentDirectionsUrl) return;
+      const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+      if (isMobile) {
+        // 📱 Mobile: direct link
+        window.location.href = _currentDirectionsUrl;
+      } else {
+        // 💻 Desktop: popup window
+        const proxy = `gmaps-popup.html?to=${encodeURIComponent(_currentDirectionsUrl)}`;
+        const w = 800, h = 600, left = (screen.width - w) / 2, top = (screen.height - h) / 2;
+        const win = window.open(proxy,"DirectionsPopup",
+          `width=${w},height=${h},top=${top},left=${left},resizable=yes,scrollbars=yes`);
+        if (!win) alert("Popup was blocked. Please allow popups for this site.");
+      }
+    }
 
     // Hook into InfoBox iframe
     viewer.infoBox.frame.addEventListener("load", () => {
@@ -158,7 +171,7 @@
 
       const doc = f.contentDocument || f.contentWindow.document;
 
-      // --- Auto-resize InfoBox (min 230px, max 70% window height) ---
+      // --- Auto-resize InfoBox ---
       const resizeInfoBox = () => {
         const box = document.querySelector(".cesium-infoBox.cesium-infoBox-visible");
         if (box) {
@@ -174,7 +187,6 @@
 
       // --- Inject popupBtn2 inside iframe ---
       if (!doc.getElementById("popupBtn2")) {
-        // Inject style
         const style = doc.createElement("style");
         style.textContent = `
           #popupBtn2 {
@@ -196,21 +208,13 @@
         `;
         doc.head.appendChild(style);
 
-        // Create button
         const btn2 = doc.createElement("button");
         btn2.id = "popupBtn2";
         btn2.textContent = "Get directions";
         btn2.disabled = true;
         doc.body.appendChild(btn2);
 
-        btn2.addEventListener("click", () => {
-          if (!_currentDirectionsUrl) return;
-          const proxy = `gmaps-popup.html?to=${encodeURIComponent(_currentDirectionsUrl)}`;
-          const w = 800, h = 600, left = (screen.width - w) / 2, top = (screen.height - h) / 2;
-          const win = window.open(proxy,"DirectionsPopup",
-            `width=${w},height=${h},top=${top},left=${left},resizable=yes,scrollbars=yes`);
-          if (!win) alert("Popup was blocked. Please allow popups for this site.");
-        });
+        btn2.addEventListener("click", openDirections);
       }
     });
 
@@ -363,11 +367,7 @@
 
       _currentDirectionsUrl=gUrl;
 
-      // Sidebar button
-      const btn=document.getElementById("popupBtn");
-      btn.disabled=false;
-
-      // InfoBox button inside iframe
+      // Enable InfoBox button
       const doc = viewer.infoBox.frame.contentDocument || viewer.infoBox.frame.contentWindow.document;
       const btn2 = doc.getElementById("popupBtn2");
       if (btn2) btn2.disabled = false;
@@ -380,38 +380,11 @@
 <!-- 
 📜 AquaEarth KMZ Viewer – Version Changelog
 
-v500 → v501
-- Changed InfoBox max height from fixed 400px to 70% of window height.
-- Allowed dynamic, content-driven sizing.
-
-v501 → v502
-- Added min height (280px) + max height (70%) to InfoBox.
-- Ensured content-driven resizing still applies.
-
-v502 → v503
-- Applied the same min/max height rules to `.cesium-infoBox-description`.
-
-v503 → v505
-- Added popupBtn2 inside the InfoBox iframe.
-- Initially full-width, then adjusted margin spacing (20px).
-
-v505 → v506
-- Changed popupBtn2 spacing to 8px inset from the left/right.
-
-v506 → v507
-- Centered popupBtn2 horizontally (auto width, min 160px).
-
-v507 → v508
-- Fixed iframe CSS injection for popupBtn2.
-- Button now styles correctly despite Cesium iframe isolation.
-
-v508 → v550
-- Adjusted InfoBox min height from 280px → 230px.
-- Updated injected popupBtn2 CSS (margin 15px top, padding refined).
-- InfoBox description text updated to show: 
-  (<b>Get Directions:</b> via sidebar & below)
-- Cleaned up sidebar scrollable layout.
-- Confirmed both sidebar + InfoBox buttons unlock properly after reverse geocode.
-
-v550 → v551
-- Added console log version
+v552 → v553
+- Removed sidebar Get Directions button.
+- Kept only InfoBox Get Directions button (popupBtn2).
+- Centered popupBtn2 in InfoBox.
+- Added mobile-aware openDirections():
+  📱 Mobile → opens Google Maps directly.
+  💻 Desktop → opens popup window.
+-->
