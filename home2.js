@@ -1,9 +1,10 @@
 /**
  * AquaEarth Secure Login (Firestore HTML Loader with Agreement)
  *
- * v2.1
- * - Added legal confirmation prompt after successful login.
- * - If user does NOT agree, HTML is not loaded.
+ * v2.2
+ * - Added support for Firestore "app" field being a URL or raw HTML.
+ * - If string looks like a URL (starts with http/https), redirect instead of writing HTML.
+ * - Preserves legal agreement prompt.
  */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -35,7 +36,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
       const storedCode = userSnap.data().accessCode;
       if (storedCode === accessCode) {
         
-        // ✅ Capitalize first letter
+        // ✅ Capitalize first letter for logs
         const formattedUser = username.charAt(0).toUpperCase() + username.slice(1);
 
         // ✅ Log successful login
@@ -53,14 +54,19 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
           userAgent: navigator.userAgent
         });
 
-        // ✅ Legal prompt before loading app HTML
+        // ✅ Legal prompt before loading app
         const ok = confirm("By clicking 'OK', you agree not to share this program or any of its files with anyone outside of Aqua-Aerobic Systems, Inc.");
         if (ok) {
           const appHtml = userSnap.data().app;
           if (appHtml) {
-            document.open();
-            document.write(appHtml);
-            document.close();
+            // 🔍 Check if it's a URL
+            if (/^https?:\\/\\//i.test(appHtml.trim())) {
+              window.location.href = appHtml.trim(); // redirect to URL
+            } else {
+              document.open();
+              document.write(appHtml);
+              document.close();
+            }
 
             // Update log to reflect acceptance
             await setDoc(doc(db, "login_logs", docId), {
