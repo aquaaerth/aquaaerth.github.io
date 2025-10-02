@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- vs: 509 -->
+<!-- vs: 550 -->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -177,7 +177,7 @@
         style.textContent = `
           #popupBtn2 {
             display: block;
-            margin: 20px auto 0 auto;
+            margin: 15px auto 0 auto;
             padding: 8px 8px;
             background: #444;
             border: none;
@@ -355,7 +355,7 @@
       let html=entity.description?.getValue?.()??entity.description??"";
       const gUrl=`https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
 
-      const infoBoxLine=`<span class="directions-text">${address}<br><br>(<b>Get Directions:</b>via sidebar & below)</span>`;
+      const infoBoxLine=`<span class="directions-text">${address}<br><br><center>(<b>Get Directions:</b>via sidebar & below)</center></span>`;
       html=html.replace('<span class="spinner"></span> Fetching address...',infoBoxLine);
       entity.description=new Cesium.ConstantProperty(html);
 
