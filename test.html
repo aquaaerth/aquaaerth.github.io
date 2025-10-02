@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- vs: 502 -->
+<!-- vs: 503 -->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -102,13 +102,20 @@
     #popupBtn2:hover { background:#666; }
     #popupBtn2:disabled { opacity:0.5; cursor:not-allowed; }
 
-    /* Make InfoBox auto-fit content height with min & max */
+    /* InfoBox container min/max */
     .cesium-infoBox.cesium-infoBox-visible {
       height: auto !important;
       min-height: 280px !important;
       max-height: 70vh !important;
     }
     .cesium-infoBox-body {
+      max-height: 70vh !important;
+      overflow-y: auto !important;
+    }
+
+    /* InfoBox description min/max */
+    .cesium-infoBox-description {
+      min-height: 280px !important;
       max-height: 70vh !important;
       overflow-y: auto !important;
     }
@@ -146,6 +153,7 @@
     menuToggle.addEventListener("click",()=>sidebar.classList.toggle("open"));
 
      Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3NmEwNjdiZi02Y2E3LTQwNzEtYWRkMy03MjU1MTU3YWZmNTciLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyNDUyMTN9.C_4ZYmFZ-ShXYbhckuorrIbc_OlB1pwsyuAAdmJK3Ww";
+
 
     const viewer=new Cesium.Viewer("cesiumContainer",{baseLayerPicker:false,timeline:false,animation:false});
 
