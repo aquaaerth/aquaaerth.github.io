@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="description" content="Aqua Earth">
+  <meta name="author" content="Chuck Konkol">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>AquaEarth - Secure Login</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 2rem;
+      background: #f5f7fa;
+      color: #2c3e50;
+      text-align: center;
+    }
+    input {
+      font-size: 18px;
+      background-color: lightyellow;
+      width: 350px;
+      margin-bottom: 1rem;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      text-align: left;
+    }
+    button {
+      font-size: 18px;
+      padding: 10px 20px;
+      background: #0077b6;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #005f8c;
+    }
+  </style>
+</head>
+<body>
+  <img src="https://aquavisitorsystem.github.io/aqua.png" width="200px"><br>
+  <h1>AquaEarth Secure Login</h1>
+  
+  <form id="loginForm">
+    <label for="username">Login:</label><br>
+    <input type="text" id="username" placeholder="example: ckonkol" required><br>
+    <label for="accessCode">Access Code:</label><br>
+    <input type="password" id="accessCode" placeholder="enter passcode" required><br>
+    <button type="submit">Login</button>
+  </form>
+
+  <p style="margin-top:1rem;font-size:14px;">* See Chuck Konkol to request access, ext. 4574</p>
+
+  <!-- Login logic -->
+  <script type="module" src="home2.js"></script>
+</body>
+</html>
