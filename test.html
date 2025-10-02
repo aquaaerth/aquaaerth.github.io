@@ -267,8 +267,7 @@
       let html=entity.description?.getValue?.()??entity.description??"";
       const gUrl=`https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
 
-      const infoBoxLine=`<span class="directions-text">${address}<br><br>(<b>Get Directions</b> is available via sidebar button)</span>
-      <br><button id="popupBtn" disabled>Get directions (popup)</button>`;
+      const infoBoxLine=`<span class="directions-text">${address}<br><br>(<b>Get Directions</b> is available via sidebar button)</span>`;
       html=html.replace('<span class="spinner"></span> Fetching address...',infoBoxLine);
       entity.description=new Cesium.ConstantProperty(html);
 
