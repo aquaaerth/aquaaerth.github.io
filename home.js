@@ -13,6 +13,12 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
+const script = document.createElement("script");
+script.src = "https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Cesium.js";
+script.async = false; // preserves execution order if needed
+document.head.appendChild(script);
+
+
 
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
