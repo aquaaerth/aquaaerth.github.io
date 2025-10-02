@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- vs: 500 -->
+<!-- vs: 501 -->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -102,13 +102,13 @@
     #popupBtn2:hover { background:#666; }
     #popupBtn2:disabled { opacity:0.5; cursor:not-allowed; }
 
-    /* Make InfoBox auto-fit content height with max cap */
+    /* Make InfoBox auto-fit content height with 70% cap */
     .cesium-infoBox.cesium-infoBox-visible {
       height: auto !important;
-      max-height: 400px !important;
+      max-height: 70vh !important; /* 70% of viewport height */
     }
     .cesium-infoBox-body {
-      max-height: 400px !important;
+      max-height: 70vh !important;
       overflow-y: auto !important;
     }
   </style>
@@ -144,7 +144,7 @@
     const sidebar=document.getElementById("sidebar");
     menuToggle.addEventListener("click",()=>sidebar.classList.toggle("open"));
 
-    Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3NmEwNjdiZi02Y2E3LTQwNzEtYWRkMy03MjU1MTU3YWZmNTciLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyNDUyMTN9.C_4ZYmFZ-ShXYbhckuorrIbc_OlB1pwsyuAAdmJK3Ww";
+     Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3NmEwNjdiZi02Y2E3LTQwNzEtYWRkMy03MjU1MTU3YWZmNTciLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyNDUyMTN9.C_4ZYmFZ-ShXYbhckuorrIbc_OlB1pwsyuAAdmJK3Ww";
 
 
     const viewer=new Cesium.Viewer("cesiumContainer",{baseLayerPicker:false,timeline:false,animation:false});
@@ -156,12 +156,12 @@
 
       const doc = f.contentDocument || f.contentWindow.document;
 
-      // --- Auto-resize InfoBox to fit content (capped at 400px) ---
+      // --- Auto-resize InfoBox to fit content (capped at 70% window height) ---
       const resizeInfoBox = () => {
         const box = document.querySelector(".cesium-infoBox.cesium-infoBox-visible");
         if (box) {
           const innerHeight = doc.body.scrollHeight;
-          const capped = Math.min(innerHeight, 400);
+          const capped = Math.min(innerHeight, window.innerHeight * 0.7);
           box.style.height = capped + "px";
         }
       };
