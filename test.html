@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- vs: 553 -->
+<!-- vs: 554 -->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -137,13 +137,13 @@
 
   <script>
   window.addEventListener("load", () => {
-    console.log("AquaEarth KMZ Viewer v553"); // ✅ version stamp in console
+    console.log("AquaEarth KMZ Viewer v554"); // ✅ version stamp in console
 
     const menuToggle=document.getElementById("menuToggle");
     const sidebar=document.getElementById("sidebar");
     menuToggle.addEventListener("click",()=>sidebar.classList.toggle("open"));
 
-        Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3NmEwNjdiZi02Y2E3LTQwNzEtYWRkMy03MjU1MTU3YWZmNTciLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyNDUyMTN9.C_4ZYmFZ-ShXYbhckuorrIbc_OlB1pwsyuAAdmJK3Ww";
+    Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3NmEwNjdiZi02Y2E3LTQwNzEtYWRkMy03MjU1MTU3YWZmNTciLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyNDUyMTN9.C_4ZYmFZ-ShXYbhckuorrIbc_OlB1pwsyuAAdmJK3Ww";
 
     const viewer=new Cesium.Viewer("cesiumContainer",{baseLayerPicker:false,timeline:false,animation:false});
 
@@ -151,6 +151,10 @@
     function openDirections() {
       if (!_currentDirectionsUrl) return;
       const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+      if (isMobile) {
+        // 📱 Mobile: direct link
+        window.location.href = _currentDirectionsUrl;
+      } else {
         // 💻 Desktop: popup window
         const proxy = `gmaps-popup.html?to=${encodeURIComponent(_currentDirectionsUrl)}`;
         const w = 800, h = 600, left = (screen.width - w) / 2, top = (screen.height - h) / 2;
@@ -158,6 +162,14 @@
           `width=${w},height=${h},top=${top},left=${left},resizable=yes,scrollbars=yes`);
         if (!win) alert("Popup was blocked. Please allow popups for this site.");
       }
+    }
+
+    // Listen for messages from InfoBox iframe
+    window.addEventListener("message", (event) => {
+      if (event.data && event.data.action === "openDirections") {
+        openDirections();
+      }
+    });
 
     // Hook into InfoBox iframe
     viewer.infoBox.frame.addEventListener("load", () => {
@@ -209,7 +221,10 @@
         btn2.disabled = true;
         doc.body.appendChild(btn2);
 
-        btn2.addEventListener("click", openDirections);
+        // Instead of calling openDirections directly → send message to parent
+        btn2.addEventListener("click", () => {
+          window.parent.postMessage({ action: "openDirections" }, "*");
+        });
       }
     });
 
@@ -375,11 +390,8 @@
 <!-- 
 📜 AquaEarth KMZ Viewer – Version Changelog
 
-v552 → v553
-- Removed sidebar Get Directions button.
-- Kept only InfoBox Get Directions button (popupBtn2).
-- Centered popupBtn2 in InfoBox.
-- Added mobile-aware openDirections():
-  📱 Mobile → opens Google Maps directly.
-  💻 Desktop → opens popup window.
+v553 → v554
+- Fixed mobile issue: InfoBox button now sends postMessage to parent.
+- Parent window runs openDirections(), restoring mobile reliability.
+- Keeps popup behavior on desktop, direct open on mobile.
 -->
