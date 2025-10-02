@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- vs: 559 -->
+<!-- vs: 560 -->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -81,7 +81,7 @@
       #sidebar.open { transform:translateX(0); }
       #menuToggle { display:block; }
       #cesiumContainer { width:100%; }
-      #popupBtnMobile { display:block; }
+      #popupBtnMobile { display:none; } /* hidden on mobile now */
     }
     @media (min-width:769px) {
       #popupBtnMobile { display:none; }
@@ -94,16 +94,17 @@
       top:10px; left:50%;
       transform:translateX(-50%);
       z-index:2000;
-      padding:10px 14px;
-      background:#444;
+      padding:10px 16px;
+      background:linear-gradient(135deg, #00c6ff, #0072ff);
       color:#fff;
       border:none;
-      border-radius:6px;
-      font-size:14px;
+      border-radius:8px;
+      font-size:15px;
       font-weight:bold;
       cursor:pointer;
+      box-shadow:0 4px 10px rgba(0,0,0,0.3);
     }
-    #floatingDirections:hover { background:#666; }
+    #floatingDirections:hover { background:linear-gradient(135deg, #0072ff, #0055cc); }
     #floatingDirections:disabled { opacity:0.5; cursor:not-allowed; }
     @media (min-width:769px) {
       #floatingDirections { display:none !important; }
@@ -144,11 +145,11 @@
   </div>
 
   <!-- Floating button (mobile only) -->
-  <button id="floatingDirections" disabled>Get directions</button>
+  <button id="floatingDirections" disabled>Get Directions</button>
 
   <script>
   window.addEventListener("load", () => {
-    console.log("AquaEarth KMZ Viewer v559");
+    console.log("AquaEarth KMZ Viewer v560");
 
     const menuToggle=document.getElementById("menuToggle");
     const sidebar=document.getElementById("sidebar");
@@ -195,12 +196,7 @@
         doc.body.appendChild(slot);
 
         const isMobile = /Mobi|Android/i.test(navigator.userAgent);
-        if (isMobile) {
-          const note=doc.createElement("div");
-          note.textContent="(Use the floating button or sidebar for directions)";
-          note.style.cssText="margin-top:10px; font-size:12px; color:#bbb; text-align:center;";
-          slot.appendChild(note);
-        } else {
+        if (!isMobile) {
           const btnReal=document.createElement("button");
           btnReal.id="popupBtn2";
           btnReal.textContent="Get directions";
@@ -363,14 +359,12 @@
       entity.description=new Cesium.ConstantProperty(html);
       _currentDirectionsUrl=gUrl;
 
-      // Enable buttons
+      // Enable desktop button
       const doc=viewer.infoBox.frame.contentDocument||viewer.infoBox.frame.contentWindow.document;
       const btn2=doc.getElementById("popupBtn2");
       if(btn2) btn2.disabled=false;
-      const btnMobile=document.getElementById("popupBtnMobile");
-      btnMobile.disabled=false;
-      btnMobile.onclick=openDirections;
 
+      // Show floating button on mobile
       if (/Mobi|Android/i.test(navigator.userAgent)) {
         floatingBtn.style.display="block";
         floatingBtn.disabled=false;
@@ -384,8 +378,34 @@
 <!-- 
 📜 AquaEarth KMZ Viewer – Version Changelog
 
+v500 → v501
+- Changed InfoBox max height from fixed 400px to 70% of window height.
+- Allowed dynamic, content-driven sizing.
+
+v501 → v502
+- Added min height (280px) + max height (70%) to InfoBox.
+
+v502 → v503
+- Applied same min/max height rules to `.cesium-infoBox-description`.
+
+v503 → v553
+- Added Get Directions button (popupBtn2) inside InfoBox.
+- Sidebar button removed.
+- Directions logic: popup on desktop, direct open on mobile.
+
+v553 → v557
+- Reintroduced sidebar button (mobile only).
+- InfoBox shows button on desktop only; mobile shows a note.
+
+v557 → v558
+- Unified openDirections() to always use popup window for both desktop and mobile.
+
 v558 → v559
-- Added floating "Get Directions" button (top center) for mobile.
-- Button only appears after placemark selection when directions URL is available.
-- Uses same openDirections() logic as sidebar/mobile button.
+- Added floating “Get Directions” button for mobile, top center, appears only when a destination is available.
+
+v559 → v560
+- Hid sidebar button on mobile.
+- Styled floating button with gradient and shadow for visibility.
+- Removed mobile InfoBox note.
+- Updated changelog to include all version history.
 -->
