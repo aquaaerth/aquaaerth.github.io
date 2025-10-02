@@ -1,53 +1,82 @@
-<html><head>
+<!DOCTYPE html>
+<html>
+<head>
   <meta charset="UTF-8">
-  <meta name="description" content="Aqua Earth" "="">
+  <meta name="description" content="Aqua Earth">
   <meta name="keywords" content="Aqua Earth">
   <meta name="author" content="Chuck Konkol">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-    <script src="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Cesium.js"></script>
+
+  <!-- Cesium -->
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Cesium.js"></script>
   <link href="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
- <title>AquaEarth - Web/Mobile App Version</title>
+
+  <title>AquaEarth - Web/Mobile App Version</title>
+
   <style>
-    /* Initial styling */
-    html {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      transform: scale(1);
-      transform-origin: top left;
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding-top: 2rem;
     }
-    /* Media query for smaller screens */
-    @media (max-width: 767px) {
-      html {
-        transform: scale(0.8);
-      }
+    img {
+      margin-bottom: 1rem;
+    }
+    h1 {
+      font-size: 30px;
+      margin-bottom: 1rem;
+    }
+    form {
+      display: inline-block;
+      text-align: left;
+    }
+    label {
+      font-size: 20px;
+    }
+    input, button {
+      font-size: 20px;
+      background-color: lightyellow;
+      width: 300px;              /* ✅ fixed width */
+      text-align: left;
+      margin-bottom: 1rem;
+      padding: 6px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    input[type="text"], input[type="password"] {
+      text-transform: lowercase; /* ✅ force lowercase */
+    }
+    button {
+      background-color: #4FC3F7;
+      color: #07263a;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0288d1;
+      color: white;
     }
   </style>
-    <!-- Firebase Modular SDK Scripts in HEAD -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-    window.onload = function () {
-      const input = document.getElementById("username");
-      if (input) {
-        input.focus();
-      }
-    };
-  </script>
 </head>
 <body>
   <img src="https://aquavisitorsystem.github.io/aqua.png" width="250px"><br>
-  <h1 style="font-size: 30px;">AquaEarth Secure Login</h1>
+  <h1>AquaEarth Secure Login</h1>
+  
   <form id="loginForm">
-  <label style="font-size: 20px;" for="username">Login:</label><br>
-    <input style="font-size: 20px;background-color: lightyellow; width: 350px; text-transform: lowercase; text-align: left;" value="" placeholder="enter aqua userid | example:ckonkol" type="text" id="username" required><br><br>
-    <label style="font-size: 20px;" for="accessCode">Access Code:</label><br>
-    <input style="font-size: 20px;background-color: lightyellow; width: 350px; text-align: left;" value="" placeholder="enter passcode" type="password" id="accessCode" required><br><br>
-    <button style="font-size: 20px;" id="submit" type="submit">Login</button>
+    <label for="username">Login:</label><br>
+    <input value="" placeholder="enter aqua userid | example: ckonkol" type="text" id="username" required autofocus><br> <!-- ✅ auto-focus -->
+
+    <label for="accessCode">Access Code:</label><br>
+    <input value="" placeholder="enter passcode" type="password" id="accessCode" required><br>
+
+    <button id="submit" type="submit">Login</button>
   </form>
-<br>
-* See Chuck Konkol to request access, ext. 4574
+
+  <br><br>
+  <p style="font-size: 14px; color: grey;">
+    * See Chuck Konkol to request access, ext. 4574
+  </p>
+
   <!-- External JavaScript Module -->
-  <script type="module" src="home.js"></script>
+  <script type="module" src="home2.js"></script>
 </body>
 </html>
