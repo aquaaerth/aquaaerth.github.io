@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<!-- vs: 314 -->
+<!-- vs: 315 -->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>AquaEarth AASI Installations</title>
+  <title>AquaEarth KMZ Viewer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script src="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Cesium.js"></script>
   <link href="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
@@ -86,6 +86,21 @@
       #menuToggle { display:block; }
       #cesiumContainer { width:100%; }
     }
+
+    /* Popup button inside InfoBox */
+    #popupBtn2 {
+      width: 100%;
+      padding: 8px;
+      margin-top: 8px;
+      background: #444;
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    #popupBtn2:hover { background:#666; }
+    #popupBtn2:disabled { opacity:0.5; cursor:not-allowed; }
   </style>
 </head>
 <body>
@@ -119,11 +134,37 @@
     const sidebar=document.getElementById("sidebar");
     menuToggle.addEventListener("click",()=>sidebar.classList.toggle("open"));
 
-    Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3NmEwNjdiZi02Y2E3LTQwNzEtYWRkMy03MjU1MTU3YWZmNTciLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyNDUyMTN9.C_4ZYmFZ-ShXYbhckuorrIbc_OlB1pwsyuAAdmJK3Ww";
+      Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3NmEwNjdiZi02Y2E3LTQwNzEtYWRkMy03MjU1MTU3YWZmNTciLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyNDUyMTN9.C_4ZYmFZ-ShXYbhckuorrIbc_OlB1pwsyuAAdmJK3Ww";
 
 
     const viewer=new Cesium.Viewer("cesiumContainer",{baseLayerPicker:false,timeline:false,animation:false});
-    viewer.infoBox.frame.addEventListener("load",()=>{const f=viewer.infoBox.frame;f.setAttribute("sandbox","allow-same-origin allow-popups allow-top-navigation-by-user-activation");});
+
+    // Hook into InfoBox iframe
+    viewer.infoBox.frame.addEventListener("load", () => {
+      const f = viewer.infoBox.frame;
+      f.setAttribute("sandbox","allow-same-origin allow-popups allow-top-navigation-by-user-activation");
+
+      const doc = f.contentDocument || f.contentWindow.document;
+
+      // Inject popupBtn2 if not already added
+      if (!doc.getElementById("popupBtn2")) {
+        const btn2 = doc.createElement("button");
+        btn2.id = "popupBtn2";
+        btn2.textContent = "Get directions (popup)";
+        btn2.disabled = true;
+        doc.body.appendChild(btn2);
+
+        btn2.addEventListener("click", () => {
+          if (!_currentDirectionsUrl) return;
+          const proxy = `gmaps-popup.html?to=${encodeURIComponent(_currentDirectionsUrl)}`;
+          const w = 800, h = 600, left = (screen.width - w) / 2, top = (screen.height - h) / 2;
+          const win = window.open(proxy,"DirectionsPopup",
+            `width=${w},height=${h},top=${top},left=${left},resizable=yes,scrollbars=yes`);
+          if (!win) alert("Popup was blocked. Please allow popups for this site.");
+        });
+      }
+    });
+
     viewer.camera.setView({destination:Cesium.Rectangle.fromDegrees(-125,24,-66,49)});
 
     const folderColorMap={"Biological Installations":Cesium.Color.GREEN,"Filter Installations":Cesium.Color.ORANGE,"Tours":Cesium.Color.BLUE};
@@ -267,20 +308,20 @@
       let html=entity.description?.getValue?.()??entity.description??"";
       const gUrl=`https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
 
-      const infoBoxLine=`<span class="directions-text">${address}<br><br>(<b>Get Directions</b> is available via sidebar button)</span>`;
+      const infoBoxLine=`<span class="directions-text">${address}<br><br>(<b>Get Directions</b> is also available via sidebar or infoBox button)</span>`;
       html=html.replace('<span class="spinner"></span> Fetching address...',infoBoxLine);
       entity.description=new Cesium.ConstantProperty(html);
 
       _currentDirectionsUrl=gUrl;
+
+      // Sidebar button
       const btn=document.getElementById("popupBtn");
       btn.disabled=false;
-      btn.onclick=()=>{
-        if(!_currentDirectionsUrl) return;
-        const proxy=`gmaps-popup.html?to=${encodeURIComponent(_currentDirectionsUrl)}`;
-        const w=800,h=600,left=(screen.width-w)/2,top=(screen.height-h)/2;
-        const win=window.open(proxy,"DirectionsPopup",`width=${w},height=${h},top=${top},left=${left},resizable=yes,scrollbars=yes`);
-        if(!win){ alert("Popup was blocked. Please allow popups for this site."); }
-      };
+
+      // InfoBox button inside iframe
+      const doc = viewer.infoBox.frame.contentDocument || viewer.infoBox.frame.contentWindow.document;
+      const btn2 = doc.getElementById("popupBtn2");
+      if (btn2) btn2.disabled = false;
     }
   });
   </script>
