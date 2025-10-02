@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- vs: 507 -->
+<!-- vs: 530 -->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -87,28 +87,10 @@
       #cesiumContainer { width:100%; }
     }
 
-    /* Popup button inside InfoBox (centered) */
-    #popupBtn2 {
-      display: block;
-      margin: 20px auto 0 auto;  /* centered horizontally with top space */
-      padding: 8px 16px;
-      background: #444;
-      border: none;
-      border-radius: 6px;
-      color: #fff;
-      cursor: pointer;
-      font-size: 14px;
-      width: auto;
-      min-width: 160px;   /* keeps button from being too tiny */
-      text-align: center;
-    }
-    #popupBtn2:hover { background:#666; }
-    #popupBtn2:disabled { opacity:0.5; cursor:not-allowed; }
-
     /* InfoBox container min/max */
     .cesium-infoBox.cesium-infoBox-visible {
       height: auto !important;
-      min-height: 280px !important;
+      min-height: 210px !important;
       max-height: 70vh !important;
     }
     .cesium-infoBox-body {
@@ -118,14 +100,14 @@
 
     /* InfoBox description min/max */
     .cesium-infoBox-description {
-      min-height: 280px !important;
+      min-height: 210px !important;
       max-height: 70vh !important;
       overflow-y: auto !important;
     }
 
     /* InfoBox iframe min/max */
     .cesium-infoBox-iframe {
-      min-height: 280px !important;
+      min-height: 210px !important;
       max-height: 70vh !important;
       overflow-y: auto !important;
     }
@@ -162,7 +144,7 @@
     const sidebar=document.getElementById("sidebar");
     menuToggle.addEventListener("click",()=>sidebar.classList.toggle("open"));
 
-     Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3NmEwNjdiZi02Y2E3LTQwNzEtYWRkMy03MjU1MTU3YWZmNTciLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyNDUyMTN9.C_4ZYmFZ-ShXYbhckuorrIbc_OlB1pwsyuAAdmJK3Ww";
+    Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3NmEwNjdiZi02Y2E3LTQwNzEtYWRkMy03MjU1MTU3YWZmNTciLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyNDUyMTN9.C_4ZYmFZ-ShXYbhckuorrIbc_OlB1pwsyuAAdmJK3Ww";
 
 
     const viewer=new Cesium.Viewer("cesiumContainer",{baseLayerPicker:false,timeline:false,animation:false});
@@ -174,13 +156,13 @@
 
       const doc = f.contentDocument || f.contentWindow.document;
 
-      // --- Auto-resize InfoBox to fit content (min 280px, max 70% window height) ---
+      // --- Auto-resize InfoBox to fit content (min 210px, max 70% window height) ---
       const resizeInfoBox = () => {
         const box = document.querySelector(".cesium-infoBox.cesium-infoBox-visible");
         if (box) {
           const innerHeight = doc.body.scrollHeight;
           const capped = Math.min(innerHeight, window.innerHeight * 0.7);
-          const finalHeight = Math.max(capped, 280);
+          const finalHeight = Math.max(capped, 210);
           box.style.height = finalHeight + "px";
         }
       };
@@ -188,8 +170,31 @@
       const mo = new MutationObserver(resizeInfoBox);
       mo.observe(doc.body, { childList: true, subtree: true, characterData: true });
 
-      // --- Inject popupBtn2 ---
+      // --- Inject popupBtn2 with its own CSS inside iframe ---
       if (!doc.getElementById("popupBtn2")) {
+        // Inject style
+        const style = doc.createElement("style");
+        style.textContent = `
+          #popupBtn2 {
+            display: block;
+            margin: 20px auto 0 auto;
+            padding: 8px 16px;
+            background: #444;
+            border: none;
+            border-radius: 6px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 14px;
+            width: auto;
+            min-width: 160px;
+            text-align: center;
+          }
+          #popupBtn2:hover { background:#666; }
+          #popupBtn2:disabled { opacity:0.5; cursor:not-allowed; }
+        `;
+        doc.head.appendChild(style);
+
+        // Create button
         const btn2 = doc.createElement("button");
         btn2.id = "popupBtn2";
         btn2.textContent = "Get directions (popup)";
