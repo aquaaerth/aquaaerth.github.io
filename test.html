@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- vs: 557 -->
+<!-- vs: 558 -->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -123,7 +123,7 @@
 
   <script>
   window.addEventListener("load", () => {
-    console.log("AquaEarth KMZ Viewer v557");
+    console.log("AquaEarth KMZ Viewer v558");
 
     const menuToggle=document.getElementById("menuToggle");
     const sidebar=document.getElementById("sidebar");
@@ -135,20 +135,11 @@
 
     function openDirections() {
       if (!_currentDirectionsUrl) return;
-      const isMobile = /Mobi|Android/i.test(navigator.userAgent);
-      if (isMobile) {
-        const proxy = `gmaps-popup.html?to=${encodeURIComponent(_currentDirectionsUrl)}`;
-        const w=800,h=600,left=(screen.width-w)/2,top=(screen.height-h)/2;
-        const win=window.open(proxy,"DirectionsPopup",
-          `width=${w},height=${h},top=${top},left=${left},resizable=yes,scrollbars=yes`);
-        if (!win) alert("Popup was blocked. Please allow popups for this site.");
-      } else {
-        const proxy = `gmaps-popup.html?to=${encodeURIComponent(_currentDirectionsUrl)}`;
-        const w=800,h=600,left=(screen.width-w)/2,top=(screen.height-h)/2;
-        const win=window.open(proxy,"DirectionsPopup",
-          `width=${w},height=${h},top=${top},left=${left},resizable=yes,scrollbars=yes`);
-        if (!win) alert("Popup was blocked. Please allow popups for this site.");
-      }
+      const proxy = `gmaps-popup.html?to=${encodeURIComponent(_currentDirectionsUrl)}`;
+      const w=800,h=600,left=(screen.width-w)/2,top=(screen.height-h)/2;
+      const win=window.open(proxy,"DirectionsPopup",
+        `width=${w},height=${h},top=${top},left=${left},resizable=yes,scrollbars=yes`);
+      if (!win) alert("Popup was blocked. Please allow popups for this site.");
     }
 
     // Hook into InfoBox iframe
@@ -175,7 +166,6 @@
         slot.id="directionsSlot";
         doc.body.appendChild(slot);
 
-        // InfoBox note + button
         const isMobile = /Mobi|Android/i.test(navigator.userAgent);
         if (isMobile) {
           const note=doc.createElement("div");
@@ -365,4 +355,8 @@ v556 → v557
 - Added note in InfoBox for mobile: "Use the sidebar button for directions".
 - Sidebar button (#popupBtnMobile) is now mobile-only.
 - Desktop still shows InfoBox button.
+
+v557 → v558
+- Updated openDirections() so both desktop and mobile now consistently use popup window (gmaps-popup.html).
+- Ensured InfoBox still injects a clickable button on desktop only, while mobile users rely on the sidebar button.
 -->
