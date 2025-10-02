@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- vs: 554 -->
+<!-- vs: 556 -->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -31,18 +31,15 @@
     }
     #sidebarHeader h1 { margin:0; font-size:20px; color:#4FC3F7; }
     #sidebarHeader h2 { margin:2px 0 12px 0; font-size:12px; font-weight:normal; color:#bbb; }
-    #resetBtn {
+    #resetBtn, #popupBtnMobile {
       width:100%; padding:10px; margin-bottom:10px; background:#444;
       border:none; border-radius:6px; color:#fff; cursor:pointer; font-size:14px;
     }
-    #resetBtn:hover { background:#666; }
+    #resetBtn:hover, #popupBtnMobile:hover { background:#666; }
+    #popupBtnMobile:disabled { opacity:0.5; cursor:not-allowed; }
     #searchBox { width:100%; padding:8px; margin-bottom:10px; border:none; border-radius:6px; font-size:14px; }
 
-    #sidebarContent {
-      flex:1;
-      overflow-y:auto;
-      padding:10px;
-    }
+    #sidebarContent { flex:1; overflow-y:auto; padding:10px; }
 
     /* Tree */
     .tree ul { list-style:none; padding-left:18px; margin:4px 0; }
@@ -84,32 +81,21 @@
       #sidebar.open { transform:translateX(0); }
       #menuToggle { display:block; }
       #cesiumContainer { width:100%; }
+      #popupBtnMobile { display:block; }
+    }
+    @media (min-width:769px) {
+      #popupBtnMobile { display:none; }
     }
 
     /* InfoBox container min/max */
     .cesium-infoBox.cesium-infoBox-visible {
-      height: auto !important;
-      min-height: 230px !important;
-      max-height: 70vh !important;
+      height:auto !important;
+      min-height:230px !important;
+      max-height:70vh !important;
     }
-    .cesium-infoBox-body {
-      max-height: 70vh !important;
-      overflow-y: auto !important;
-    }
-
-    /* InfoBox description min/max */
-    .cesium-infoBox-description {
-      min-height: 230px !important;
-      max-height: 70vh !important;
-      overflow-y: auto !important;
-    }
-
-    /* InfoBox iframe min/max */
-    .cesium-infoBox-iframe {
-      min-height: 230px !important;
-      max-height: 70vh !important;
-      overflow-y: auto !important;
-    }
+    .cesium-infoBox-body { max-height:70vh !important; overflow-y:auto !important; }
+    .cesium-infoBox-description { min-height:230px !important; max-height:70vh !important; overflow-y:auto !important; }
+    .cesium-infoBox-iframe { min-height:230px !important; max-height:70vh !important; overflow-y:auto !important; }
   </style>
 </head>
 <body>
@@ -121,8 +107,8 @@
         <img src="https://aquavisitorsystem.github.io/aqua.png" width="100%" style="background-color:white; border-radius:4px;">
         <h1>AquaEarth</h1>
         <h2>Protecting the World’s Water</h2>
-
         <button id="resetBtn">Reset</button>
+        <button id="popupBtnMobile" disabled>Get directions</button>
         <input type="text" id="searchBox" placeholder="Search folders & placemarks...">
       </div>
 
@@ -137,98 +123,70 @@
 
   <script>
   window.addEventListener("load", () => {
-    console.log("AquaEarth KMZ Viewer v554"); // ✅ version stamp in console
+    console.log("AquaEarth KMZ Viewer v556");
 
     const menuToggle=document.getElementById("menuToggle");
     const sidebar=document.getElementById("sidebar");
     menuToggle.addEventListener("click",()=>sidebar.classList.toggle("open"));
 
-    Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3NmEwNjdiZi02Y2E3LTQwNzEtYWRkMy03MjU1MTU3YWZmNTciLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyNDUyMTN9.C_4ZYmFZ-ShXYbhckuorrIbc_OlB1pwsyuAAdmJK3Ww";
+    Cesium.Ion.defaultAccessToken = "YOUR_CESIUM_TOKEN";
 
     const viewer=new Cesium.Viewer("cesiumContainer",{baseLayerPicker:false,timeline:false,animation:false});
 
-    // --- shared openDirections function ---
+    // Define openDirections
     function openDirections() {
       if (!_currentDirectionsUrl) return;
       const isMobile = /Mobi|Android/i.test(navigator.userAgent);
       if (isMobile) {
-        // 📱 Mobile: direct link
-          const proxy = `gmaps-popup.html?to=${encodeURIComponent(_currentDirectionsUrl)}`;
-        const w = 800, h = 600, left = (screen.width - w) / 2, top = (screen.height - h) / 2;
-        const win = window.open(proxy,"DirectionsPopup",
-          `width=${w},height=${h},top=${top},left=${left},resizable=yes,scrollbars=yes`);
-        if (!win) alert("Popup was blocked. Please allow popups for this site.");
+        window.location.href = _currentDirectionsUrl; // direct navigation
       } else {
-        // 💻 Desktop: popup window
         const proxy = `gmaps-popup.html?to=${encodeURIComponent(_currentDirectionsUrl)}`;
-        const w = 800, h = 600, left = (screen.width - w) / 2, top = (screen.height - h) / 2;
-        const win = window.open(proxy,"DirectionsPopup",
+        const w=800,h=600,left=(screen.width-w)/2,top=(screen.height-h)/2;
+        const win=window.open(proxy,"DirectionsPopup",
           `width=${w},height=${h},top=${top},left=${left},resizable=yes,scrollbars=yes`);
         if (!win) alert("Popup was blocked. Please allow popups for this site.");
       }
     }
 
-    // Listen for messages from InfoBox iframe
-    window.addEventListener("message", (event) => {
-      if (event.data && event.data.action === "openDirections") {
-        openDirections();
-      }
-    });
-
     // Hook into InfoBox iframe
     viewer.infoBox.frame.addEventListener("load", () => {
-      const f = viewer.infoBox.frame;
+      const f=viewer.infoBox.frame;
       f.setAttribute("sandbox","allow-same-origin allow-popups allow-top-navigation-by-user-activation");
 
-      const doc = f.contentDocument || f.contentWindow.document;
+      const doc=f.contentDocument||f.contentWindow.document;
 
-      // --- Auto-resize InfoBox ---
-      const resizeInfoBox = () => {
-        const box = document.querySelector(".cesium-infoBox.cesium-infoBox-visible");
+      // Auto-resize InfoBox
+      const resizeInfoBox=()=>{
+        const box=document.querySelector(".cesium-infoBox.cesium-infoBox-visible");
         if (box) {
-          const innerHeight = doc.body.scrollHeight;
-          const capped = Math.min(innerHeight, window.innerHeight * 0.7);
-          const finalHeight = Math.max(capped, 230);
-          box.style.height = finalHeight + "px";
+          const innerHeight=doc.body.scrollHeight;
+          const capped=Math.min(innerHeight,window.innerHeight*0.7);
+          const finalHeight=Math.max(capped,230);
+          box.style.height=finalHeight+"px";
         }
       };
       resizeInfoBox();
-      const mo = new MutationObserver(resizeInfoBox);
-      mo.observe(doc.body, { childList: true, subtree: true, characterData: true });
+      new MutationObserver(resizeInfoBox).observe(doc.body,{childList:true,subtree:true,characterData:true});
 
-      // --- Inject popupBtn2 inside iframe ---
-      if (!doc.getElementById("popupBtn2")) {
-        const style = doc.createElement("style");
-        style.textContent = `
-          #popupBtn2 {
-            display: block;
-            margin: 15px auto 0 auto;
-            padding: 8px 8px;
-            background: #444;
-            border: none;
-            border-radius: 6px;
-            color: #fff;
-            cursor: pointer;
-            font-size: 14px;
-            width: auto;
-            min-width: 160px;
-            text-align: center;
-          }
-          #popupBtn2:hover { background:#666; }
-          #popupBtn2:disabled { opacity:0.5; cursor:not-allowed; }
+      // Inject slot for real button
+      if (!doc.getElementById("directionsSlot")) {
+        const slot=doc.createElement("div");
+        slot.id="directionsSlot";
+        doc.body.appendChild(slot);
+
+        // Create real button in parent context
+        const btnReal=document.createElement("button");
+        btnReal.id="popupBtn2";
+        btnReal.textContent="Get directions";
+        btnReal.disabled=true;
+        btnReal.style.cssText=`
+          display:block; margin:15px auto 0 auto;
+          padding:8px 8px; background:#444; border:none; border-radius:6px;
+          color:#fff; cursor:pointer; font-size:14px; min-width:160px; text-align:center;
         `;
-        doc.head.appendChild(style);
+        btnReal.addEventListener("click",openDirections);
 
-        const btn2 = doc.createElement("button");
-        btn2.id = "popupBtn2";
-        btn2.textContent = "Get directions";
-        btn2.disabled = true;
-        doc.body.appendChild(btn2);
-
-        // Instead of calling openDirections directly → send message to parent
-        btn2.addEventListener("click", () => {
-          window.parent.postMessage({ action: "openDirections" }, "*");
-        });
+        slot.appendChild(btnReal);
       }
     });
 
@@ -287,7 +245,7 @@
       treeContainer.appendChild(myRoot);
       buildTree(myPlaces._children,myRoot);
 
-      /* === Search filter === */
+      // Search filter
       document.getElementById("searchBox").addEventListener("input",function(){
         const term=this.value.toLowerCase();
         const allNodes=treeContainer.querySelectorAll("li,div.folder");
@@ -337,7 +295,7 @@
     document.getElementById("resetBtn").addEventListener("click",()=>location.reload());
     Array.from(document.getElementsByClassName('cesium-viewer-bottom')).forEach(b=>b.style.display='none');
 
-    /* ==== Address + Google Directions ==== */
+    // Address + Google Directions
     const _addrCache=new Map();
     let _currentDirectionsUrl="";
 
@@ -374,17 +332,17 @@
     function replace(entity,{address,lat,lon}){
       let html=entity.description?.getValue?.()??entity.description??"";
       const gUrl=`https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
-
-      const infoBoxLine=`<span class="directions-text">${address}<br></span>`;
+      const infoBoxLine=`<span class="directions-text">${address}</span>`;
       html=html.replace('<span class="spinner"></span> Fetching address...',infoBoxLine);
       entity.description=new Cesium.ConstantProperty(html);
-
       _currentDirectionsUrl=gUrl;
 
-      // Enable InfoBox button
-      const doc = viewer.infoBox.frame.contentDocument || viewer.infoBox.frame.contentWindow.document;
-      const btn2 = doc.getElementById("popupBtn2");
-      if (btn2) btn2.disabled = false;
+      // Enable buttons
+      const doc=viewer.infoBox.frame.contentDocument||viewer.infoBox.frame.contentWindow.document;
+      const btn2=doc.getElementById("popupBtn2");
+      if(btn2) btn2.disabled=false;
+      document.getElementById("popupBtnMobile").disabled=false;
+      document.getElementById("popupBtnMobile").onclick=openDirections;
     }
   });
   </script>
@@ -394,8 +352,8 @@
 <!-- 
 📜 AquaEarth KMZ Viewer – Version Changelog
 
-v553 → v554
-- Fixed mobile issue: InfoBox button now sends postMessage to parent.
-- Parent window runs openDirections(), restoring mobile reliability.
-- Keeps popup behavior on desktop, direct open on mobile.
+v555 → v556
+- Restored sidebar "Get directions" button, but mobile-only (hidden on desktop).
+- InfoBox button remains on desktop.
+- Both buttons now share unified openDirections() logic.
 -->
