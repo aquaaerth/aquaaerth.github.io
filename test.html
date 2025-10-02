@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- vs: 530 -->
+<!-- vs: 508 -->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -90,7 +90,7 @@
     /* InfoBox container min/max */
     .cesium-infoBox.cesium-infoBox-visible {
       height: auto !important;
-      min-height: 210px !important;
+      min-height: 230px !important;
       max-height: 70vh !important;
     }
     .cesium-infoBox-body {
@@ -100,14 +100,14 @@
 
     /* InfoBox description min/max */
     .cesium-infoBox-description {
-      min-height: 210px !important;
+      min-height: 230px !important;
       max-height: 70vh !important;
       overflow-y: auto !important;
     }
 
     /* InfoBox iframe min/max */
     .cesium-infoBox-iframe {
-      min-height: 210px !important;
+      min-height: 230px !important;
       max-height: 70vh !important;
       overflow-y: auto !important;
     }
@@ -156,13 +156,13 @@
 
       const doc = f.contentDocument || f.contentWindow.document;
 
-      // --- Auto-resize InfoBox to fit content (min 210px, max 70% window height) ---
+      // --- Auto-resize InfoBox to fit content (min 230px, max 70% window height) ---
       const resizeInfoBox = () => {
         const box = document.querySelector(".cesium-infoBox.cesium-infoBox-visible");
         if (box) {
           const innerHeight = doc.body.scrollHeight;
           const capped = Math.min(innerHeight, window.innerHeight * 0.7);
-          const finalHeight = Math.max(capped, 210);
+          const finalHeight = Math.max(capped, 230);
           box.style.height = finalHeight + "px";
         }
       };
@@ -178,7 +178,7 @@
           #popupBtn2 {
             display: block;
             margin: 20px auto 0 auto;
-            padding: 8px 16px;
+            padding: 8px 8px;
             background: #444;
             border: none;
             border-radius: 6px;
@@ -355,7 +355,7 @@
       let html=entity.description?.getValue?.()??entity.description??"";
       const gUrl=`https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
 
-      const infoBoxLine=`<span class="directions-text">${address}<br><br>(<b>Get Directions:</b>available via sidebar & below)</span>`;
+      const infoBoxLine=`<span class="directions-text">${address}<br><br>(<b>Get Directions:</b>via sidebar & below)</span>`;
       html=html.replace('<span class="spinner"></span> Fetching address...',infoBoxLine);
       entity.description=new Cesium.ConstantProperty(html);
 
