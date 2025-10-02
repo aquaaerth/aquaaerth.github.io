@@ -151,10 +151,6 @@
     function openDirections() {
       if (!_currentDirectionsUrl) return;
       const isMobile = /Mobi|Android/i.test(navigator.userAgent);
-      if (isMobile) {
-        // 📱 Mobile: direct link
-        window.location.href = _currentDirectionsUrl;
-      } else {
         // 💻 Desktop: popup window
         const proxy = `gmaps-popup.html?to=${encodeURIComponent(_currentDirectionsUrl)}`;
         const w = 800, h = 600, left = (screen.width - w) / 2, top = (screen.height - h) / 2;
@@ -162,7 +158,6 @@
           `width=${w},height=${h},top=${top},left=${left},resizable=yes,scrollbars=yes`);
         if (!win) alert("Popup was blocked. Please allow popups for this site.");
       }
-    }
 
     // Hook into InfoBox iframe
     viewer.infoBox.frame.addEventListener("load", () => {
