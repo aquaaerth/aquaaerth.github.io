@@ -56,17 +56,6 @@
       color: white;
     }
   </style>
-
-  <!-- Firebase Modular SDK -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-    window.onload = function () {
-      const input = document.getElementById("username");
-      if (input) input.focus();
-    };
-  </script>
 </head>
 <body>
   <img src="https://aquavisitorsystem.github.io/aqua.png" width="250px"><br>
@@ -74,7 +63,7 @@
   
   <form id="loginForm">
     <label for="username">Login:</label><br>
-    <input value="" placeholder="enter aqua userid | example: ckonkol" type="text" id="username" required><br>
+    <input value="" placeholder="enter aqua userid | example: ckonkol" type="text" id="username" required autofocus><br> <!-- ✅ auto-focus -->
 
     <label for="accessCode">Access Code:</label><br>
     <input value="" placeholder="enter passcode" type="password" id="accessCode" required><br>
