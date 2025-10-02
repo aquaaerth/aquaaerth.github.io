@@ -61,7 +61,29 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
           if (appHtml) {
             // 🔍 Check if it's a URL
           if (/^https?:\/\//i.test(appHtml.trim())) {
-  window.location.href = appHtml.trim(); // redirect to URL
+   const redirectUrl = appHtml.trim();
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <meta http-equiv="refresh" content="1;url=${redirectUrl}">
+      <title>Loading AquaEarth…</title>
+      <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 3rem; }
+      </style>
+    </head>
+    <body>
+      <img src="https://aquavisitorsystem.github.io/aqua.png" width="250"><br>
+      <h1>🔄 Loading AquaEarth, please wait…</h1>
+      <p style="font-size:12px;color:gray">If not redirected, <a href="${redirectUrl}">click here</a>.</p>
+    </body>
+    </html>
+  `;
+
+  const blob = new Blob([htmlContent], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  window.location.href = url;
 } else {
   document.open();
   document.write(appHtml);
