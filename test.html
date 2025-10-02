@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- vs: 560 -->
+<!-- vs: 562 -->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -37,7 +37,14 @@
     }
     #resetBtn:hover, #popupBtnMobile:hover { background:#666; }
     #popupBtnMobile:disabled { opacity:0.5; cursor:not-allowed; }
-    #searchBox { width:100%; padding:8px; margin-bottom:10px; border:none; border-radius:6px; font-size:14px; }
+    #searchBox {
+      width:100%;
+      padding:8px;
+      margin-bottom:10px;
+      border:none;
+      border-radius:6px;
+      font-size:16px; /* ✅ bumped to 16px to prevent iOS Safari auto-zoom */
+    }
 
     #sidebarContent { flex:1; overflow-y:auto; padding:10px; }
 
@@ -81,33 +88,10 @@
       #sidebar.open { transform:translateX(0); }
       #menuToggle { display:block; }
       #cesiumContainer { width:100%; }
-      #popupBtnMobile { display:none; } /* hidden on mobile now */
+      #popupBtnMobile { display:none; } /* ✅ hidden, using floating button instead */
     }
     @media (min-width:769px) {
       #popupBtnMobile { display:none; }
-    }
-
-    /* Floating directions button for mobile */
-    #floatingDirections {
-      display:none;
-      position:fixed;
-      top:10px; left:50%;
-      transform:translateX(-50%);
-      z-index:2000;
-      padding:10px 16px;
-      background:linear-gradient(135deg, #00c6ff, #0072ff);
-      color:#fff;
-      border:none;
-      border-radius:8px;
-      font-size:15px;
-      font-weight:bold;
-      cursor:pointer;
-      box-shadow:0 4px 10px rgba(0,0,0,0.3);
-    }
-    #floatingDirections:hover { background:linear-gradient(135deg, #0072ff, #0055cc); }
-    #floatingDirections:disabled { opacity:0.5; cursor:not-allowed; }
-    @media (min-width:769px) {
-      #floatingDirections { display:none !important; }
     }
 
     /* InfoBox container min/max */
@@ -119,6 +103,29 @@
     .cesium-infoBox-body { max-height:70vh !important; overflow-y:auto !important; }
     .cesium-infoBox-description { min-height:230px !important; max-height:70vh !important; overflow-y:auto !important; }
     .cesium-infoBox-iframe { min-height:230px !important; max-height:70vh !important; overflow-y:auto !important; }
+
+    /* Floating mobile button */
+    #floatingDirections {
+      display:none;
+      position:fixed;
+      top:10px; left:50%;
+      transform:translateX(-50%);
+      z-index:2000;
+      padding:10px 16px;
+      background:linear-gradient(135deg,#4FC3F7,#1976D2);
+      color:#fff;
+      border:none;
+      border-radius:24px;
+      font-size:15px;
+      font-weight:bold;
+      cursor:pointer;
+      box-shadow:0 4px 12px rgba(0,0,0,0.3);
+    }
+    #floatingDirections:hover { background:linear-gradient(135deg,#5FD3FF,#2196F3); }
+    #floatingDirections:disabled { opacity:0.5; cursor:not-allowed; }
+    @media (min-width:769px) {
+      #floatingDirections { display:none !important; }
+    }
   </style>
 </head>
 <body>
@@ -143,19 +150,17 @@
     </div>
     <div id="cesiumContainer"></div>
   </div>
-
-  <!-- Floating button (mobile only) -->
   <button id="floatingDirections" disabled>Get Directions</button>
 
   <script>
   window.addEventListener("load", () => {
-    console.log("AquaEarth KMZ Viewer v560");
+    console.log("AquaEarth KMZ Viewer v562");
 
     const menuToggle=document.getElementById("menuToggle");
     const sidebar=document.getElementById("sidebar");
     menuToggle.addEventListener("click",()=>sidebar.classList.toggle("open"));
 
-    Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3NmEwNjdiZi02Y2E3LTQwNzEtYWRkMy03MjU1MTU3YWZmNTciLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyNDUyMTN9.C_4ZYmFZ-ShXYbhckuorrIbc_OlB1pwsyuAAdmJK3Ww";
+    Cesium.Ion.defaultAccessToken = "YOUR_TOKEN_HERE";
 
     const viewer=new Cesium.Viewer("cesiumContainer",{baseLayerPicker:false,timeline:false,animation:false});
 
@@ -168,17 +173,13 @@
       if (!win) alert("Popup was blocked. Please allow popups for this site.");
     }
 
-    const floatingBtn=document.getElementById("floatingDirections");
-    floatingBtn.addEventListener("click",openDirections);
-
     // Hook into InfoBox iframe
     viewer.infoBox.frame.addEventListener("load", () => {
       const f=viewer.infoBox.frame;
       f.setAttribute("sandbox","allow-same-origin allow-popups allow-top-navigation-by-user-activation");
       const doc=f.contentDocument||f.contentWindow.document;
 
-      // Auto-resize InfoBox
-      const resizeInfoBox=()=>{
+      const resizeInfoBox=()=> {
         const box=document.querySelector(".cesium-infoBox.cesium-infoBox-visible");
         if (box) {
           const innerHeight=doc.body.scrollHeight;
@@ -195,8 +196,8 @@
         slot.id="directionsSlot";
         doc.body.appendChild(slot);
 
-        const isMobile = /Mobi|Android/i.test(navigator.userAgent);
-        if (!isMobile) {
+        // Desktop button only
+        if (!/Mobi|Android/i.test(navigator.userAgent)) {
           const btnReal=document.createElement("button");
           btnReal.id="popupBtn2";
           btnReal.textContent="Get directions";
@@ -267,7 +268,6 @@
       treeContainer.appendChild(myRoot);
       buildTree(myPlaces._children,myRoot);
 
-      // Search filter
       document.getElementById("searchBox").addEventListener("input",function(){
         const term=this.value.toLowerCase();
         const allNodes=treeContainer.querySelectorAll("li,div.folder");
@@ -318,7 +318,6 @@
     Array.from(document.getElementsByClassName('cesium-viewer-bottom')).forEach(b=>b.style.display='none');
     Array.from(document.getElementsByClassName('cesium-viewer-toolbar')).forEach(b=>b.style.display='none');
 
-    // Address + Google Directions
     const _addrCache=new Map();
     let _currentDirectionsUrl="";
 
@@ -360,16 +359,15 @@
       entity.description=new Cesium.ConstantProperty(html);
       _currentDirectionsUrl=gUrl;
 
-      // Enable desktop button
       const doc=viewer.infoBox.frame.contentDocument||viewer.infoBox.frame.contentWindow.document;
       const btn2=doc.getElementById("popupBtn2");
       if(btn2) btn2.disabled=false;
 
-      // Show floating button on mobile
-      if (/Mobi|Android/i.test(navigator.userAgent)) {
-        floatingBtn.style.display="block";
-        floatingBtn.disabled=false;
-      }
+      // Floating button for mobile
+      const floatingBtn=document.getElementById("floatingDirections");
+      floatingBtn.style.display="block";
+      floatingBtn.disabled=false;
+      floatingBtn.onclick=openDirections;
     }
   });
   </script>
@@ -387,10 +385,10 @@ v501 → v502
 - Added min height (280px) + max height (70%) to InfoBox.
 
 v502 → v503
-- Applied same min/max height rules to `.cesium-infoBox-description`.
+- Applied same min/max rules to .cesium-infoBox-description.
 
 v503 → v553
-- Added Get Directions button (popupBtn2) inside InfoBox.
+- Added Get Directions button inside InfoBox.
 - Sidebar button removed.
 - Directions logic: popup on desktop, direct open on mobile.
 
@@ -399,14 +397,7 @@ v553 → v557
 - InfoBox shows button on desktop only; mobile shows a note.
 
 v557 → v558
-- Unified openDirections() to always use popup window for both desktop and mobile.
+- Unified openDirections() to always use popup window.
 
 v558 → v559
-- Added floating “Get Directions” button for mobile, top center, appears only when a destination is available.
-
-v559 → v560
-- Hid sidebar button on mobile.
-- Styled floating button with gradient and shadow for visibility.
-- Removed mobile InfoBox note.
-- Updated changelog to include all version history.
--->
+- Added floating mobile “Get Directions” button (top
