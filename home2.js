@@ -1,10 +1,10 @@
 /**
- * AquaEarth Secure Login (Firestore HTML Loader with Agreement)
+ * AquaEarth Secure Login (Firestore HTML/URL Loader with Agreement)
  *
- * v2.2
- * - Added support for Firestore "app" field being a URL or raw HTML.
- * - If string looks like a URL (starts with http/https), redirect instead of writing HTML.
- * - Preserves legal agreement prompt.
+ * v2.4
+ * - If Firestore app field is a URL:
+ *   - Mobile → use InitLoad() to open Google Earth link
+ *   - Desktop → open fullscreen popup window
  */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -24,9 +24,8 @@ const db = getFirestore(app);
 
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-  var username = document.getElementById('username').value.trim();
+  let username = document.getElementById('username').value.trim().toLowerCase();
   const accessCode = document.getElementById('accessCode').value;
-  username = username.toLowerCase();
 
   try {
     const userRef = doc(db, "users", username);
@@ -35,17 +34,14 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     if (userSnap.exists()) {
       const storedCode = userSnap.data().accessCode;
       if (storedCode === accessCode) {
-        
-        // ✅ Capitalize first letter for logs
+
         const formattedUser = username.charAt(0).toUpperCase() + username.slice(1);
 
-        // ✅ Log successful login
         const now = new Date();
         const pad = (n) => n.toString().padStart(2, '0');
         const hhmm = `${pad(now.getHours())}${pad(now.getMinutes())}`;
         const mmddyy = `${pad(now.getMonth() + 1)}${pad(now.getDate())}${now.getFullYear().toString().slice(-2)}`;
-        const id = `${mmddyy}_${hhmm}`;
-        const docId = `${username}_${id}`;
+        const docId = `${username}_${mmddyy}_${hhmm}`;
 
         await setDoc(doc(collection(db, "login_logs"), docId), {
           username: formattedUser,
@@ -54,43 +50,25 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
           userAgent: navigator.userAgent
         });
 
-        // ✅ Legal prompt before loading app
         const ok = confirm("By clicking 'OK', you agree not to share this program or any of its files with anyone outside of Aqua-Aerobic Systems, Inc.");
         if (ok) {
           const appHtml = userSnap.data().app;
           if (appHtml) {
-            // 🔍 Check if it's a URL
-          if (/^https?:\/\//i.test(appHtml.trim())) {
-   const redirectUrl = appHtml.trim();
-  const htmlContent = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="UTF-8">
-      <meta http-equiv="refresh" content="5;url=${redirectUrl}">
-      <title>Loading AquaEarth…</title>
-      <style>
-        body { font-family: Arial, sans-serif; text-align: center; padding: 3rem; }
-      </style>
-    </head>
-    <body>
-      <img src="https://aquavisitorsystem.github.io/aqua.png" width="250"><br>
-      <h1>🔄 Loading AquaEarth, please wait…</h1>
-      <p style="font-size:12px;color:gray">If not redirected, <a href="${redirectUrl}">click here</a>.</p>
-    </body>
-    </html>
-  `;
+            if (/^https?:\/\//i.test(appHtml.trim())) {
+              // 🚀 URL case
+              window.GoogleEarthURL = appHtml.trim();
+              if (isMobileDevice()) {
+                InitLoad(); // open directly on mobile
+              } else {
+                openFullscreenUrl(appHtml.trim()); // desktop fullscreen
+              }
+            } else {
+              // 🚀 Inline HTML case
+              document.open();
+              document.write(appHtml);
+              document.close();
+            }
 
-  const blob = new Blob([htmlContent], { type: 'text/html' });
-  const url = URL.createObjectURL(blob);
-  window.location.href = url;
-} else {
-  document.open();
-  document.write(appHtml);
-  document.close();
-}
-
-            // Update log to reflect acceptance
             await setDoc(doc(db, "login_logs", docId), {
               username: formattedUser,
               timestamp: serverTimestamp(),
@@ -115,3 +93,37 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     alert("Something went wrong.");
   }
 });
+
+// 🔳 Mobile function
+function InitLoad() {
+  var link = document.createElement("a");
+  link.href = window.GoogleEarthURL;
+  link.target = "_blank";
+  link.click();
+}
+
+// 🔳 Desktop popup
+function openFullscreenUrl(url) {
+  const features = `
+    top=0,left=0,
+    width=${screen.availWidth},
+    height=${screen.availHeight},
+    fullscreen=yes,
+    toolbar=no,
+    menubar=no,
+    location=no,
+    status=no,
+    scrollbars=yes,
+    resizable=yes
+  `.replace(/\s+/g, '');
+
+  const win = window.open(url, "_blank", features);
+  if (!win) {
+    alert("Popup was blocked. Please allow popups for this site.");
+  }
+}
+
+// 🔳 Detect mobile
+function isMobileDevice() {
+  return /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
