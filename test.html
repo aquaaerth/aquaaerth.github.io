@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- vs: 508 -->
+<!-- vs: 505 -->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -105,7 +105,7 @@
     /* InfoBox container min/max */
     .cesium-infoBox.cesium-infoBox-visible {
       height: auto !important;
-      min-height: 230px !important;
+      min-height: 220px !important;
       max-height: 70vh !important;
     }
     .cesium-infoBox-body {
@@ -115,14 +115,14 @@
 
     /* InfoBox description min/max */
     .cesium-infoBox-description {
-      min-height: 230px !important;
+      min-height: 220px !important;
       max-height: 70vh !important;
       overflow-y: auto !important;
     }
 
     /* InfoBox iframe min/max */
     .cesium-infoBox-iframe {
-      min-height: 230px !important;
+      min-height: 220px !important;
       max-height: 70vh !important;
       overflow-y: auto !important;
     }
@@ -177,7 +177,7 @@
         if (box) {
           const innerHeight = doc.body.scrollHeight;
           const capped = Math.min(innerHeight, window.innerHeight * 0.7);
-          const finalHeight = Math.max(capped, 230);
+          const finalHeight = Math.max(capped, 220);
           box.style.height = finalHeight + "px";
         }
       };
@@ -191,6 +191,8 @@
         btn2.id = "popupBtn2";
         btn2.textContent = "Get directions (popup)";
         btn2.disabled = true;
+        const spaceNode = document.createTextNode(' ');
+        doc.body.appendChild(spaceNode);
         doc.body.appendChild(btn2);
 
         btn2.addEventListener("click", () => {
@@ -347,7 +349,7 @@
       let html=entity.description?.getValue?.()??entity.description??"";
       const gUrl=`https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
 
-      const infoBoxLine=`<span class="directions-text">${address}<br><br>(<b>Get Directions</b> is available via sidebar or infoBox button)</span>`;
+      const infoBoxLine=`<span class="directions-text">${address}<br><br>(<b>Get Directions</b> is available via sidebar or below)</span>`;
       html=html.replace('<span class="spinner"></span> Fetching address...',infoBoxLine);
       entity.description=new Cesium.ConstantProperty(html);
 
