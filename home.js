@@ -72,25 +72,8 @@ await setDoc(doc(collection(db, "login_logs"), docId), {
     });
     
 function createAndOpenHTML(htmlContent) {
-  // Clear the entire document body
-  document.body.innerHTML = "";
-
-  // Create a new container
-  const container = document.createElement("div");
-  container.innerHTML = htmlContent;
-
-  // Append new content
-  document.body.appendChild(container);
-
-  // If scripts exist in htmlContent, re-execute them
-  container.querySelectorAll("script").forEach(oldScript => {
-    const newScript = document.createElement("script");
-    if (oldScript.src) {
-      newScript.src = oldScript.src;   // external script
-    } else {
-      newScript.textContent = oldScript.textContent; // inline script
-    }
-    document.head.appendChild(newScript);
-  });
+    document.body.innerHTML = "";
+  document.write("");
+  document.write(htmlContent);
 }
 
