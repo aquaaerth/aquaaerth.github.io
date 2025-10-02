@@ -1,10 +1,9 @@
 /**
- * AquaEarth Secure Login (Firestore HTML/URL Loader with Agreement)
+ * AquaEarth Secure Login (Firestore HTML Loader with Agreement)
  *
- * v2.4
- * - If Firestore app field is a URL:
- *   - Mobile → use InitLoad() to open Google Earth link
- *   - Desktop → open fullscreen popup window
+ * v2.5
+ * - Forced username + access code fields to lowercase on input.
+ * - Standardized input + button widths to 300px for consistency.
  */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -22,10 +21,29 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// Force lowercase in real-time for both inputs
+const usernameInput = document.getElementById('username');
+const accessCodeInput = document.getElementById('accessCode');
+
+if (usernameInput) {
+  usernameInput.addEventListener("input", () => {
+    usernameInput.value = usernameInput.value.toLowerCase();
+  });
+  usernameInput.style.width = "300px";
+}
+if (accessCodeInput) {
+  accessCodeInput.addEventListener("input", () => {
+    accessCodeInput.value = accessCodeInput.value.toLowerCase();
+  });
+  accessCodeInput.style.width = "300px";
+}
+const submitBtn = document.getElementById("submit");
+if (submitBtn) submitBtn.style.width = "300px";
+
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-  let username = document.getElementById('username').value.trim().toLowerCase();
-  const accessCode = document.getElementById('accessCode').value;
+  var username = usernameInput.value.trim().toLowerCase();
+  const accessCode = accessCodeInput.value.trim().toLowerCase();
 
   try {
     const userRef = doc(db, "users", username);
@@ -35,13 +53,16 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
       const storedCode = userSnap.data().accessCode;
       if (storedCode === accessCode) {
 
+        // ✅ Capitalize first letter for logs
         const formattedUser = username.charAt(0).toUpperCase() + username.slice(1);
 
+        // Log successful login
         const now = new Date();
         const pad = (n) => n.toString().padStart(2, '0');
         const hhmm = `${pad(now.getHours())}${pad(now.getMinutes())}`;
         const mmddyy = `${pad(now.getMonth() + 1)}${pad(now.getDate())}${now.getFullYear().toString().slice(-2)}`;
-        const docId = `${username}_${mmddyy}_${hhmm}`;
+        const id = `${mmddyy}_${hhmm}`;
+        const docId = `${username}_${id}`;
 
         await setDoc(doc(collection(db, "login_logs"), docId), {
           username: formattedUser,
@@ -50,20 +71,16 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
           userAgent: navigator.userAgent
         });
 
+        // ✅ Legal agreement prompt
         const ok = confirm("By clicking 'OK', you agree not to share this program or any of its files with anyone outside of Aqua-Aerobic Systems, Inc.");
         if (ok) {
           const appHtml = userSnap.data().app;
           if (appHtml) {
             if (/^https?:\/\//i.test(appHtml.trim())) {
-              // 🚀 URL case
-              window.GoogleEarthURL = appHtml.trim();
-              if (isMobileDevice()) {
-                InitLoad(); // open directly on mobile
-              } else {
-                openFullscreenUrl(appHtml.trim()); // desktop fullscreen
-              }
+              // If it's a URL → handle redirect/load
+              window.location.href = appHtml.trim();
             } else {
-              // 🚀 Inline HTML case
+              // If it's raw HTML → inject into DOM
               document.open();
               document.write(appHtml);
               document.close();
@@ -81,7 +98,6 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
         } else {
           alert("Loading Aqua-Earth has been cancelled!");
         }
-
       } else {
         alert("Incorrect access code.");
       }
@@ -93,37 +109,3 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     alert("Something went wrong.");
   }
 });
-
-// 🔳 Mobile function
-function InitLoad() {
-  var link = document.createElement("a");
-  link.href = window.GoogleEarthURL;
-  link.target = "_blank";
-  link.click();
-}
-
-// 🔳 Desktop popup
-function openFullscreenUrl(url) {
-  const features = `
-    top=0,left=0,
-    width=${screen.availWidth},
-    height=${screen.availHeight},
-    fullscreen=yes,
-    toolbar=no,
-    menubar=no,
-    location=no,
-    status=no,
-    scrollbars=yes,
-    resizable=yes
-  `.replace(/\s+/g, '');
-
-  const win = window.open(url, "_blank", features);
-  if (!win) {
-    alert("Popup was blocked. Please allow popups for this site.");
-  }
-}
-
-// 🔳 Detect mobile
-function isMobileDevice() {
-  return /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-}
