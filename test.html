@@ -316,6 +316,7 @@
 
     document.getElementById("resetBtn").addEventListener("click",()=>location.reload());
     Array.from(document.getElementsByClassName('cesium-viewer-bottom')).forEach(b=>b.style.display='none');
+    Array.from(document.getElementsByClassName('cesium-viewer-toolbar')).forEach(b=>b.style.display='none');
 
     // Address + Google Directions
     const _addrCache=new Map();
