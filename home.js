@@ -72,7 +72,5 @@ await setDoc(doc(collection(db, "login_logs"), docId), {
     });
     
   function createAndOpenHTML(htmlContent) {
-    document.body.innerHTML = "";
-  document.write("");
-  document.write(htmlContent);
+    document.body.innerHTML = htmlContent;
 }
