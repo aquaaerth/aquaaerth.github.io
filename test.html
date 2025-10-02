@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- vs: 316 -->
+<!-- vs: 500 -->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -101,6 +101,16 @@
     }
     #popupBtn2:hover { background:#666; }
     #popupBtn2:disabled { opacity:0.5; cursor:not-allowed; }
+
+    /* Make InfoBox auto-fit content height with max cap */
+    .cesium-infoBox.cesium-infoBox-visible {
+      height: auto !important;
+      max-height: 400px !important;
+    }
+    .cesium-infoBox-body {
+      max-height: 400px !important;
+      overflow-y: auto !important;
+    }
   </style>
 </head>
 <body>
@@ -134,7 +144,7 @@
     const sidebar=document.getElementById("sidebar");
     menuToggle.addEventListener("click",()=>sidebar.classList.toggle("open"));
 
-      Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3NmEwNjdiZi02Y2E3LTQwNzEtYWRkMy03MjU1MTU3YWZmNTciLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyNDUyMTN9.C_4ZYmFZ-ShXYbhckuorrIbc_OlB1pwsyuAAdmJK3Ww";
+    Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3NmEwNjdiZi02Y2E3LTQwNzEtYWRkMy03MjU1MTU3YWZmNTciLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyNDUyMTN9.C_4ZYmFZ-ShXYbhckuorrIbc_OlB1pwsyuAAdmJK3Ww";
 
 
     const viewer=new Cesium.Viewer("cesiumContainer",{baseLayerPicker:false,timeline:false,animation:false});
@@ -146,7 +156,20 @@
 
       const doc = f.contentDocument || f.contentWindow.document;
 
-      // Inject popupBtn2 if not already added
+      // --- Auto-resize InfoBox to fit content (capped at 400px) ---
+      const resizeInfoBox = () => {
+        const box = document.querySelector(".cesium-infoBox.cesium-infoBox-visible");
+        if (box) {
+          const innerHeight = doc.body.scrollHeight;
+          const capped = Math.min(innerHeight, 400);
+          box.style.height = capped + "px";
+        }
+      };
+      resizeInfoBox();
+      const mo = new MutationObserver(resizeInfoBox);
+      mo.observe(doc.body, { childList: true, subtree: true, characterData: true });
+
+      // --- Inject popupBtn2 ---
       if (!doc.getElementById("popupBtn2")) {
         const btn2 = doc.createElement("button");
         btn2.id = "popupBtn2";
@@ -308,7 +331,7 @@
       let html=entity.description?.getValue?.()??entity.description??"";
       const gUrl=`https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
 
-      const infoBoxLine=`<span class="directions-text">${address}<br></span>`;
+      const infoBoxLine=`<span class="directions-text">${address}<br><br>(<b>Get Directions</b> is available via sidebar or infoBox button)</span>`;
       html=html.replace('<span class="spinner"></span> Fetching address...',infoBoxLine);
       entity.description=new Cesium.ConstantProperty(html);
 
