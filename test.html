@@ -153,7 +153,11 @@
       const isMobile = /Mobi|Android/i.test(navigator.userAgent);
       if (isMobile) {
         // 📱 Mobile: direct link
-        window.location.href = _currentDirectionsUrl;
+          const proxy = `gmaps-popup.html?to=${encodeURIComponent(_currentDirectionsUrl)}`;
+        const w = 800, h = 600, left = (screen.width - w) / 2, top = (screen.height - h) / 2;
+        const win = window.open(proxy,"DirectionsPopup",
+          `width=${w},height=${h},top=${top},left=${left},resizable=yes,scrollbars=yes`);
+        if (!win) alert("Popup was blocked. Please allow popups for this site.");
       } else {
         // 💻 Desktop: popup window
         const proxy = `gmaps-popup.html?to=${encodeURIComponent(_currentDirectionsUrl)}`;
