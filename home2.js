@@ -60,13 +60,13 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
           const appHtml = userSnap.data().app;
           if (appHtml) {
             // 🔍 Check if it's a URL
-            if (/^https?:\\/\\//i.test(appHtml.trim())) {
-              window.location.href = appHtml.trim(); // redirect to URL
-            } else {
-              document.open();
-              document.write(appHtml);
-              document.close();
-            }
+          if (/^https?:\/\//i.test(appHtml.trim())) {
+  window.location.href = appHtml.trim(); // redirect to URL
+} else {
+  document.open();
+  document.write(appHtml);
+  document.close();
+}
 
             // Update log to reflect acceptance
             await setDoc(doc(db, "login_logs", docId), {
