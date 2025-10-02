@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- vs: 510 -->
+<!-- vs: 512 -->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -193,6 +193,8 @@
         btn2.disabled = true;
         const nbsp  = document.createTextNode('\u00A0');
         doc.body.appendChild(nbsp);
+doc.body.appendChild(nbsp);
+doc.body.appendChild(nbsp);
         doc.body.appendChild(btn2);
 
         btn2.addEventListener("click", () => {
@@ -349,7 +351,7 @@
       let html=entity.description?.getValue?.()??entity.description??"";
       const gUrl=`https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
 
-      const infoBoxLine=`<span class="directions-text">${address}<br><br>(<b>Get Directions</b> is available via sidebar or below)</span>`;
+      const infoBoxLine=`<span class="directions-text">${address}<br><br>(<b>Get Directions:</b>available via sidebar & below)</span>`;
       html=html.replace('<span class="spinner"></span> Fetching address...',infoBoxLine);
       entity.description=new Cesium.ConstantProperty(html);
 
