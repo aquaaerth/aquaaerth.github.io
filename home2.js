@@ -1,10 +1,9 @@
 /**
- * AquaEarth Secure Login (Firestore HTML Loader)
+ * AquaEarth Secure Login (Firestore HTML Loader with Agreement)
  *
- * v2.0
- * - Removed static app.html.
- * - Now loads HTML directly from Firestore field "app".
- * - On refresh, user must log in again (no cached app).
+ * v2.1
+ * - Added legal confirmation prompt after successful login.
+ * - If user does NOT agree, HTML is not loaded.
  */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -50,18 +49,31 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
         await setDoc(doc(collection(db, "login_logs"), docId), {
           username: formattedUser,
           timestamp: serverTimestamp(),
-          status: "success accessing AquaEarth page",
+          status: "success login, awaiting agreement",
           userAgent: navigator.userAgent
         });
 
-        // ✅ Load HTML from Firestore field "app"
-        const appHtml = userSnap.data().app;
-        if (appHtml) {
-          document.open();
-          document.write(appHtml);
-          document.close();
+        // ✅ Legal prompt before loading app HTML
+        const ok = confirm("By clicking 'OK', you agree not to share this program or any of its files with anyone outside of Aqua-Aerobic Systems, Inc.");
+        if (ok) {
+          const appHtml = userSnap.data().app;
+          if (appHtml) {
+            document.open();
+            document.write(appHtml);
+            document.close();
+
+            // Update log to reflect acceptance
+            await setDoc(doc(db, "login_logs", docId), {
+              username: formattedUser,
+              timestamp: serverTimestamp(),
+              status: "agreed and accessed AquaEarth app",
+              userAgent: navigator.userAgent
+            });
+          } else {
+            alert("No app code found for this user.");
+          }
         } else {
-          alert("No app code found for this user.");
+          alert("Loading Aqua-Earth has been cancelled!");
         }
 
       } else {
