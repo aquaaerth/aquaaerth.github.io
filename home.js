@@ -1,12 +1,7 @@
 /**
- * AquaEarth Secure Login
- * v3.3
- * - Firebase login with Firestore
- * - Logs access
- * - Legal agreement prompt before loading app
- * - Footer version sync with bump script
+ * AquaEarth Secure Login – home.js
+ * v3.4
  */
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, doc, setDoc, getDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
@@ -22,6 +17,11 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+let _appHtml = null;
+let _docId = null;
+let _formattedUser = null;
+
+// Login form
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   let username = document.getElementById('username').value.trim().toLowerCase();
@@ -30,49 +30,30 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
   try {
     const userRef = doc(db, "users", username);
     const userSnap = await getDoc(userRef);
-
     if (userSnap.exists()) {
       const storedCode = userSnap.data().accessCode;
       if (storedCode === accessCode) {
-        const formattedUser = username.charAt(0).toUpperCase() + username.slice(1);
-
+        _formattedUser = username.charAt(0).toUpperCase() + username.slice(1);
         const now = new Date();
         const pad = (n) => n.toString().padStart(2, '0');
         const hhmm = `${pad(now.getHours())}${pad(now.getMinutes())}`;
         const mmddyy = `${pad(now.getMonth() + 1)}${pad(now.getDate())}${now.getFullYear().toString().slice(-2)}`;
         const id = `${mmddyy}_${hhmm}`;
-        const docId = `${username}_${id}`;
+        _docId = `${username}_${id}`;
 
-        await setDoc(doc(collection(db, "login_logs"), docId), {
-          username: formattedUser,
+        await setDoc(doc(collection(db, "login_logs"), _docId), {
+          username: _formattedUser,
           timestamp: serverTimestamp(),
-          status: "success login, awaiting agreement",
+          status: "login success – awaiting launch",
           userAgent: navigator.userAgent
         });
 
-        const ok = confirm("By clicking 'OK', you agree not to share this program or any of its files with anyone outside of Aqua-Aerobic Systems, Inc.");
-        if (ok) {
-          const appHtml = userSnap.data().app;
-          if (appHtml) {
-            if (/^https?:\/\//i.test(appHtml.trim())) {
-              window.location.href = appHtml.trim();
-            } else {
-              document.open();
-              document.write(appHtml);
-              document.close();
-            }
-            await setDoc(doc(db, "login_logs", docId), {
-              username: formattedUser,
-              timestamp: serverTimestamp(),
-              status: "agreed and accessed AquaEarth app",
-              userAgent: navigator.userAgent
-            });
-          } else {
-            alert("No app code found for this user.");
-          }
-        } else {
-          alert("Loading AquaEarth has been cancelled!");
-        }
+        _appHtml = userSnap.data().app;
+
+        // Switch UI
+        document.getElementById("loginForm").style.display = "none";
+        document.getElementById("welcomeDiv").style.display = "block";
+        document.getElementById("welcomeMsg").textContent = `Welcome, ${_formattedUser}`;
       } else {
         alert("Incorrect access code.");
       }
@@ -83,4 +64,32 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     console.error("Login error:", err);
     alert("Something went wrong.");
   }
+});
+
+// Launch button with legal confirm
+document.getElementById("launchBtn").addEventListener("click", async () => {
+  if (!_appHtml) return;
+  const ok = confirm("By clicking 'OK', you agree not to share this program or any of its files with anyone outside of Aqua-Aerobic Systems, Inc.");
+  if (ok) {
+    if (/^https?:\/\//i.test(_appHtml.trim())) {
+      window.location.href = _appHtml.trim();
+    } else {
+      document.open();
+      document.write(_appHtml);
+      document.close();
+    }
+    await setDoc(doc(db, "login_logs", _docId), {
+      username: _formattedUser,
+      timestamp: serverTimestamp(),
+      status: "agreed and launched AquaEarth app",
+      userAgent: navigator.userAgent
+    });
+  } else {
+    alert("Launch cancelled.");
+  }
+});
+
+// Logout button
+document.getElementById("logoutBtn").addEventListener("click", () => {
+  location.reload();
 });
