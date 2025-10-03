@@ -4,6 +4,7 @@
  * v3.4
  * - Welcome page after login with “Launch AquaEarth” button.
  * - Legal agreement prompt runs only at Launch.
+ 
  * - If declined, app does not load.
  * - No session persistence (user must log in again after refresh).
  */
