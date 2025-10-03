@@ -1,104 +1,41 @@
 <!DOCTYPE html>
-<!-- v3.3 -->
+<!-- v3.4 -->
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="description" content="Aqua Earth Secure Login">
-  <meta name="keywords" content="Aqua Earth">
-  <meta name="author" content="Chuck Konkol">
+  <meta name="description" content="Aqua Earth">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <title>AquaEarth Secure Login</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      padding: 2rem;
-    }
-    input {
-      width: 300px;
-      font-size: 18px;
-      margin: 10px 0;
-      padding: 6px;
-      text-transform: lowercase;
-      background-color: lightyellow;
-    }
-    button {
-      font-size: 18px;
-      padding: 8px 16px;
-      cursor: pointer;
-    }
-    footer {
-      position: fixed;
-      bottom: 5px;
-      width: 100%;
-      text-align: center;
-      font-size: 11px;
-      color: gray;
-      background: rgba(0,0,0,0.05);
-      padding: 3px;
-      border-radius: 4px;
-      cursor: pointer;
-    }
+    body { font-family: Arial, sans-serif; text-align: center; background: #f9f9f9; margin: 0; padding: 20px; }
+    input { width: 300px; font-size: 18px; margin: 5px 0; padding: 6px; text-transform: lowercase; }
+    button { font-size: 18px; padding: 8px 14px; margin: 5px; }
+    #welcomeDiv { display: none; margin-top: 2rem; }
+    footer { position: fixed; bottom: 0; left: 0; right: 0; background: #333; color: #fff; font-size: 12px; padding: 5px; cursor: pointer; }
   </style>
 </head>
 <body>
   <img src="https://aquavisitorsystem.github.io/aqua.png" width="250px"><br>
   <h1>AquaEarth Secure Login</h1>
+
+  <!-- Login Form -->
   <form id="loginForm">
     <label for="username">Login:</label><br>
-    <input type="text" id="username" placeholder="enter aqua userid | example: ckonkol" required><br><br>
+    <input type="text" id="username" placeholder="enter aqua userid" required><br><br>
     <label for="accessCode">Access Code:</label><br>
     <input type="password" id="accessCode" placeholder="enter passcode" required><br><br>
     <button type="submit">Login</button>
   </form>
-  <br>
-  <small>* See Chuck Konkol to request access, ext. 4574</small>
 
-  <!-- Footer with version -->
-  <footer>
-    <div id="footerVersion" onclick="toggleChangelog()">AquaEarth v3.3</div>
-  </footer>
-
-  <!-- Modal for Changelog -->
-  <div id="changelogModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;
-       background:rgba(0,0,0,0.6);z-index:2000;justify-content:center;align-items:center;">
-    <div id="changelogBox" style="background:#fff;color:#000;max-width:600px;width:90%;padding:20px;
-         border-radius:8px;overflow-y:auto;max-height:80vh;position:relative;">
-      <h2 style="margin-top:0;">📜 Changelog</h2>
-      <pre id="changelogContent" style="white-space:pre-wrap;font-size:13px;"></pre>
-      <button onclick="toggleChangelog()" 
-         style="margin-top:10px;padding:6px 12px;border:none;
-         background:#444;color:#fff;border-radius:4px;cursor:pointer;">
-         Close
-      </button>
-    </div>
+  <!-- Welcome Section -->
+  <div id="welcomeDiv">
+    <h2 id="welcomeMsg"></h2>
+    <button id="launchBtn">Launch AquaEarth</button>
+    <button id="logoutBtn">Logout</button>
   </div>
 
+  <footer>AquaEarth v3.4</footer>
+
   <script type="module" src="home.js"></script>
-  <script>
-    async function toggleChangelog(forceClose = false) {
-      const modal = document.getElementById("changelogModal");
-      const content = document.getElementById("changelogContent");
-      if (forceClose || modal.style.display === "flex") {
-        modal.style.display = "none";
-      } else {
-        try {
-          const res = await fetch("CHANGELOG.md?_=" + Date.now());
-          content.textContent = res.ok ? await res.text() : "⚠️ Unable to load changelog.";
-        } catch (err) {
-          content.textContent = "⚠️ Error: " + err;
-        }
-        modal.style.display = "flex";
-      }
-    }
-    document.addEventListener("click", function(e) {
-      const modal = document.getElementById("changelogModal");
-      const box = document.getElementById("changelogBox");
-      if (modal.style.display === "flex" && !box.contains(e.target) && e.target !== document.getElementById("footerVersion")) {
-        toggleChangelog(true);
-      }
-    });
-    window.onload = () => document.getElementById("username").focus();
-  </script>
 </body>
 </html>
