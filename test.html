@@ -1,5 +1,5 @@
-<!DOCTYPE html>
-<!-- vs: 562 -->
+<!DOCTYPE html> 
+<!-- vs: 564 -->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -88,7 +88,7 @@
       #sidebar.open { transform:translateX(0); }
       #menuToggle { display:block; }
       #cesiumContainer { width:100%; }
-      #popupBtnMobile { display:none; } /* ✅ hidden, using floating button instead */
+      #popupBtnMobile { display:none; }
     }
     @media (min-width:769px) {
       #popupBtnMobile { display:none; }
@@ -133,7 +133,6 @@
   <button id="menuToggle">☰ Menu</button>
   <div id="app">
     <div id="sidebar">
-      <!-- Docked header -->
       <div id="sidebarHeader">
         <img src="https://aquavisitorsystem.github.io/aqua.png" width="100%" style="background-color:white; border-radius:4px;">
         <h1>AquaEarth</h1>
@@ -142,8 +141,6 @@
         <button id="popupBtnMobile" disabled>Get directions</button>
         <input type="text" id="searchBox" placeholder="Search folders & placemarks...">
       </div>
-
-      <!-- Scrollable content -->
       <div id="sidebarContent">
         <div class="tree" id="kmlTree">Loading KMZ structure...</div>
         <div id="legend"></div>
@@ -154,14 +151,17 @@
   <button id="floatingDirections" disabled>Get Directions</button>
 
   <script>
+  // Centralized version control
+  const APP_VERSION = "v564";
+
   window.addEventListener("load", () => {
-    console.log("AquaEarth KMZ Viewer v562");
+    console.log("AquaEarth KMZ Viewer " + APP_VERSION);
 
     const menuToggle=document.getElementById("menuToggle");
     const sidebar=document.getElementById("sidebar");
     menuToggle.addEventListener("click",()=>sidebar.classList.toggle("open"));
 
-    Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3NmEwNjdiZi02Y2E3LTQwNzEtYWRkMy03MjU1MTU3YWZmNTciLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyNDUyMTN9.C_4ZYmFZ-ShXYbhckuorrIbc_OlB1pwsyuAAdmJK3Ww";
+    Cesium.Ion.defaultAccessToken = "YOUR_TOKEN_HERE";
 
     const viewer=new Cesium.Viewer("cesiumContainer",{baseLayerPicker:false,timeline:false,animation:false});
 
@@ -197,7 +197,6 @@
         slot.id="directionsSlot";
         doc.body.appendChild(slot);
 
-        // Desktop button only
         if (!/Mobi|Android/i.test(navigator.userAgent)) {
           const btnReal=document.createElement("button");
           btnReal.id="popupBtn2";
@@ -318,7 +317,6 @@
     document.getElementById("resetBtn").addEventListener("click",()=>location.reload());
     Array.from(document.getElementsByClassName('cesium-viewer-bottom')).forEach(b=>b.style.display='none');
     Array.from(document.getElementsByClassName('cesium-viewer-toolbar')).forEach(b=>b.style.display='none');
-    document.getElementById('resetBtn').remove();
 
     const _addrCache=new Map();
     let _currentDirectionsUrl="";
@@ -365,7 +363,6 @@
       const btn2=doc.getElementById("popupBtn2");
       if(btn2) btn2.disabled=false;
 
-      // Floating button for mobile
       const floatingBtn=document.getElementById("floatingDirections");
       floatingBtn.style.display="block";
       floatingBtn.disabled=false;
@@ -374,21 +371,8 @@
   });
   </script>
 </body>
-</html>
 
-<script>
-// remove rogue ' directly inside <body> at start
-if (document.body.firstChild && document.body.firstChild.nodeType === Node.TEXT_NODE) {
-  document.body.firstChild.textContent = document.body.firstChild.textContent.replace(/^'+/, "");
-}
-
-// remove rogue ' directly before </body> at end
-if (document.body.lastChild && document.body.lastChild.nodeType === Node.TEXT_NODE) {
-  document.body.lastChild.textContent = document.body.lastChild.textContent.replace(/'+$/, "");
-}
-</script>
-
-<!-- 
+<pre id="changelog" style="display:none">
 📜 AquaEarth KMZ Viewer – Version Changelog
 
 v500 → v501
@@ -414,4 +398,54 @@ v557 → v558
 - Unified openDirections() to always use popup window.
 
 v558 → v559
-- Added floating mobile “Get Directions” button (top
+- Added floating mobile “Get Directions” button (top).
+
+v559 → v560
+- Enhanced InfoBox sandboxing for security (allow-same-origin, popups, top-navigation by user).
+- MutationObserver added to auto-resize InfoBox dynamically when content changes.
+- Spinner + “Fetching address…” placeholder now injected when address is being resolved.
+
+v560 → v561
+- Integrated reverse geocoding with OpenStreetMap Nominatim for placemark addresses.
+- Address replaces spinner once fetched, with linkable Google Maps directions URL.
+- Unified floating mobile “Get Directions” button tied into openDirections() logic.
+- Desktop “Get Directions” button enabled in InfoBox once address is available.
+
+v561 → v562
+- Search reset behavior improved: resets camera, collapses all folders except root, unhides all placemarks.
+- Mobile experience polished: sidebar auto-closes when placemark selected; floating button shown/hidden correctly.
+- Styling adjustments: search box bumped to 16px (prevent iOS Safari zoom), better sidebar/header spacing.
+- Removed rogue Reset button duplication in Cesium toolbar; ensured only sidebar Reset is used.
+
+v562 → v563
+- Version constant incremented for tracking.
+- Ready for next feature or bugfix entry.
+</pre>
+</html>
+
+<script>
+// --- Rogue quote cleanup ---
+if (document.body.firstChild && document.body.firstChild.nodeType === Node.TEXT_NODE) {
+  document.body.firstChild.textContent =
+    document.body.firstChild.textContent.replace(/^'+/, "");
+}
+if (document.body.lastChild && document.body.lastChild.nodeType === Node.TEXT_NODE) {
+  document.body.lastChild.textContent =
+    document.body.lastChild.textContent.replace(/'+$/, "");
+}
+
+// --- Changelog updater ---
+(function updateChangelog() {
+  const logEl = document.getElementById("changelog");
+  if (!logEl) return;
+
+  let logText = logEl.textContent.trim();
+  if (!logText.includes(APP_VERSION)) {
+    logText += `\n\nv563 → ${APP_VERSION}\n- Version constant incremented for tracking.\n- Ready for next feature or bugfix entry.`;
+    logEl.textContent = logText;
+  }
+
+  console.log("AquaEarth KMZ Viewer " + APP_VERSION);
+  console.log("=== AquaEarth KMZ Changelog ===\n" + logText);
+})();
+</script>
