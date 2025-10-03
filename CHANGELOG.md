@@ -1,20 +1,25 @@
-# 📜 AquaEarth Secure Login – Changelog
+# AquaEarth Secure Login – Changelog
+
+## v3.7
+- Added footer in `index.html` with version + changelog link.
+- Synced version constant in `home.js` with footer display.
+- Console now logs version on load.
+
+## v3.6
+- Auto-launch app instantly on page refresh if logged in.
+- Centered login/welcome UI.
+- Maintained footer positioning at bottom.
+
+## v3.5
+- Kept user logged in until logout is pressed.
+- On refresh, reloads resource automatically.
+- Added Logout button.
+
+## v3.4
+- Welcome page after login with “Launch AquaEarth” button.
+- Legal agreement prompt runs only at Launch.
+- If declined, app does not load.
 
 ## v3.3
-- Added footer version with modal changelog (loads CHANGELOG.md)
-- Auto-focus on login input
-- Legal confirmation before loading app
-- Support loading HTML or external URL from Firestore field `app`
-- Firebase login + logging to `login_logs`
-
-## v3.2
-- Added lowercase enforcement on inputs
-- Limited input width to 300px
-- Improved styling for login form
-
-## v3.1
-- Added logout button placeholder (future)
-- Welcome page after login
-
-## v3.0
-- Initial Firebase login integration
+- Packaged project with index.html, home.js, bump-version.js, and changelog.
+- Added automated versioning support.
