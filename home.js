@@ -1,7 +1,12 @@
 /**
- * AquaEarth Secure Login – home.js
+ * AquaEarth Secure Login
  * v3.3
+ * - Firebase login with Firestore
+ * - Logs access
+ * - Legal agreement prompt before loading app
+ * - Footer version sync with bump script
  */
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, doc, setDoc, getDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
@@ -25,10 +30,12 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
   try {
     const userRef = doc(db, "users", username);
     const userSnap = await getDoc(userRef);
+
     if (userSnap.exists()) {
       const storedCode = userSnap.data().accessCode;
       if (storedCode === accessCode) {
         const formattedUser = username.charAt(0).toUpperCase() + username.slice(1);
+
         const now = new Date();
         const pad = (n) => n.toString().padStart(2, '0');
         const hhmm = `${pad(now.getHours())}${pad(now.getMinutes())}`;
