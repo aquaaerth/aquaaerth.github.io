@@ -1,11 +1,32 @@
 <!DOCTYPE html>
-<!-- v3.5 -->
+<!-- v3.6 -->
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>AquaEarth Secure Login</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <link href="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+    #loginForm, #welcomeDiv {
+      margin-top: 20px;
+    }
+    input {
+      margin: 5px 0;
+    }
+    button {
+      margin-top: 10px;
+    }
+  </style>
 </head>
 <body>
   <img src="https://aquavisitorsystem.github.io/aqua.png" width="250px"><br>
@@ -23,7 +44,7 @@
     <button style="font-size: 20px;" id="submit" type="submit">Login</button>
   </form>
 
-  <!-- ✅ Added back note -->
+  <!-- Help note -->
   <p style="font-size: 14px; color: grey;">
     * See Chuck Konkol to request access, ext. 4574
   </p>
