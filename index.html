@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v3.7 -->
+<!-- v3.9 -->
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -8,64 +8,43 @@
   <link href="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
   <style>
     body {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start; /* ⬅️ stick to top */
-      min-height: 100vh;
-      margin: 0;
-      font-family: Arial, sans-serif;
-      text-align: center;
-      padding-top: 40px;
+      display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+      min-height: 100vh; margin: 0; font-family: Arial, sans-serif; text-align: center; padding-top: 40px;
     }
-    #loginForm, #welcomeDiv {
-      margin-top: 20px;
-    }
-    input {
-      margin: 5px 0;
-    }
-    button {
-      margin-top: 10px;
-    }
+    #loginForm, #welcomeDiv { margin-top: 20px; }
+    input { margin: 5px 0; }
+    button { margin-top: 10px; }
     footer {
-      margin-top: auto;  /* ⬅️ pushes footer to bottom */
-      padding: 10px;
-      font-size: 12px;
-      color: grey;
-      border-top: 1px solid #ddd;
-      width: 100%;
-      text-align: center;
+      margin-top: auto; padding: 10px; font-size: 12px; color: grey; border-top: 1px solid #ddd;
+      width: 100%; text-align: center;
     }
-    footer a {
-      color: #4FC3F7;
-      text-decoration: none;
-    }
-    footer a:hover {
-      text-decoration: underline;
-    }
+    footer a { color: #4FC3F7; text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
   <img src="https://aquavisitorsystem.github.io/aqua.png" width="250px"><br>
   <h1 style="font-size: 30px;">AquaEarth Secure Login</h1>
 
+  <!-- Login Form -->
   <form id="loginForm">
     <label style="font-size: 20px;" for="username">Login:</label><br>
-    <input style="font-size: 20px;background-color: lightyellow; width: 300px; text-transform: lowercase; text-align: left;" 
+    <input style="font-size: 20px;background-color: lightyellow; width: 300px; text-transform: lowercase; text-align: left;"
            placeholder="enter aqua userid | example:ckonkol" type="text" id="username" required><br><br>
 
     <label style="font-size: 20px;" for="accessCode">Access Code:</label><br>
-    <input style="font-size: 20px;background-color: lightyellow; width: 300px; text-align: left;" 
+    <input style="font-size: 20px;background-color: lightyellow; width: 300px; text-align: left;"
            placeholder="enter passcode" type="password" id="accessCode" required><br><br>
 
     <button style="font-size: 20px;" id="submit" type="submit">Login</button>
   </form>
 
   <!-- Help note -->
-  <p style="font-size: 14px; color: grey;">
+  <p id="helpNote" style="font-size: 14px; color: grey;">
     * See Chuck Konkol to request access, ext. 4574
   </p>
 
+  <!-- Welcome Section (shown after successful login or session restore) -->
   <div id="welcomeDiv" style="display:none;">
     <h2 id="welcomeMsg"></h2>
     <button id="launchBtn">Launch AquaEarth</button>
@@ -74,10 +53,20 @@
 
   <!-- Footer -->
   <footer>
-    AquaEarth Secure Login — Version <strong>v3.7</strong>  
-    [<a href="CHANGELOG.md" target="_blank">View Changelog</a>]
+    AquaEarth Secure Login — Version <strong>v3.9</strong>
+    [<a href="CHANGELOG.md" target="_blank" rel="noopener">View Changelog</a>]
   </footer>
 
   <script type="module" src="home.js"></script>
+  <script>
+    // Focus the login field on load (if form is visible)
+    window.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('loginForm');
+      if (form && form.style.display !== 'none') {
+        const u = document.getElementById('username');
+        if (u) u.focus();
+      }
+    });
+  </script>
 </body>
 </html>
