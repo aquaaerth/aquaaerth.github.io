@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v3.6a -->
+<!-- v3.7 -->
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -16,7 +16,7 @@
       margin: 0;
       font-family: Arial, sans-serif;
       text-align: center;
-      padding-top: 40px; /* ⬅️ add breathing room */
+      padding-top: 40px;
     }
     #loginForm, #welcomeDiv {
       margin-top: 20px;
@@ -26,6 +26,22 @@
     }
     button {
       margin-top: 10px;
+    }
+    footer {
+      margin-top: auto;  /* ⬅️ pushes footer to bottom */
+      padding: 10px;
+      font-size: 12px;
+      color: grey;
+      border-top: 1px solid #ddd;
+      width: 100%;
+      text-align: center;
+    }
+    footer a {
+      color: #4FC3F7;
+      text-decoration: none;
+    }
+    footer a:hover {
+      text-decoration: underline;
     }
   </style>
 </head>
@@ -55,6 +71,12 @@
     <button id="launchBtn">Launch AquaEarth</button>
     <button id="logoutBtn">Logout</button>
   </div>
+
+  <!-- Footer -->
+  <footer>
+    AquaEarth Secure Login — Version <strong>v3.7</strong>  
+    [<a href="CHANGELOG.md" target="_blank">View Changelog</a>]
+  </footer>
 
   <script type="module" src="home.js"></script>
 </body>
