@@ -375,6 +375,18 @@
 </body>
 </html>
 
+<script>
+// remove rogue ' directly inside <body> at start
+if (document.body.firstChild && document.body.firstChild.nodeType === Node.TEXT_NODE) {
+  document.body.firstChild.textContent = document.body.firstChild.textContent.replace(/^'+/, "");
+}
+
+// remove rogue ' directly before </body> at end
+if (document.body.lastChild && document.body.lastChild.nodeType === Node.TEXT_NODE) {
+  document.body.lastChild.textContent = document.body.lastChild.textContent.replace(/'+$/, "");
+}
+</script>
+
 <!-- 
 📜 AquaEarth KMZ Viewer – Version Changelog
 
