@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v3.5 -->
+<!-- v3.4 -->
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -11,7 +11,7 @@
       display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
       min-height: 100vh; margin: 0; font-family: Arial, sans-serif; text-align: center; padding-top: 40px;
     }
-    #loginForm { margin-top: 20px; }
+    #loginForm, #welcomeDiv { margin-top: 20px; }
     input { margin: 5px 0; }
     button { margin-top: 10px; }
     footer {
@@ -39,20 +39,25 @@
     <button style="font-size: 20px;" id="submit" type="submit">Login</button>
   </form>
 
-  <!-- Help note -->
   <p style="font-size: 14px; color: grey;">
     * See Chuck Konkol to request access, ext. 4574
   </p>
 
-  <!-- Footer -->
+  <!-- Welcome section (hidden until login) -->
+  <div id="welcomeDiv" style="display:none;">
+    <h2 id="welcomeMsg"></h2>
+    <button id="launchBtn">Launch AquaEarth</button>
+    <button id="logoutBtn">Logout</button>
+  </div>
+
   <footer>
-    AquaEarth Secure Login — Version <strong>v3.5</strong>
-    [<a href="CHANGELOG.md" target="_blank" rel="noopener">View Changelog</a>]
+    AquaEarth Secure Login — Version <strong>v3.4</strong>
+    [<a href="CHANGELOG.md" target="_blank">View Changelog</a>]
   </footer>
 
   <script type="module" src="home.js"></script>
   <script>
-    // Focus the login field on load
+    // Focus on login field on load
     window.addEventListener('DOMContentLoaded', () => {
       const u = document.getElementById('username');
       if (u) u.focus();
