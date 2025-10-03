@@ -1,6 +1,6 @@
 /**
  * AquaEarth Secure Login – home.js
- * v3.4
+ * v3.5
  */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, doc, setDoc, getDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -72,16 +72,20 @@ document.getElementById("launchBtn").addEventListener("click", async () => {
   const ok = confirm("By clicking 'OK', you agree not to share this program or any of its files with anyone outside of Aqua-Aerobic Systems, Inc.");
   if (ok) {
     if (/^https?:\/\//i.test(_appHtml.trim())) {
-      window.location.href = _appHtml.trim();
+      // Open external URL in new tab
+      window.open(_appHtml.trim(), "_blank");
     } else {
-      document.open();
-      document.write(_appHtml);
-      document.close();
+      // Open HTML in a new window using Blob
+      const blob = new Blob([_appHtml], { type: "text/html" });
+      const url = URL.createObjectURL(blob);
+      const popup = window.open(url, "_blank", "width=1200,height=800,resizable=yes,scrollbars=yes");
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
     }
+
     await setDoc(doc(db, "login_logs", _docId), {
       username: _formattedUser,
       timestamp: serverTimestamp(),
-      status: "agreed and launched AquaEarth app",
+      status: "agreed and launched AquaEarth app (new window)",
       userAgent: navigator.userAgent
     });
   } else {
