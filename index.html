@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v3.4 -->
+<!-- v3.9 -->
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -29,12 +29,14 @@
   <!-- Login Form -->
   <form id="loginForm">
     <label style="font-size: 20px;" for="username">Login:</label><br>
-    <input style="font-size: 20px;background-color: lightyellow; width: 300px; text-transform: lowercase; text-align: left;"
-           placeholder="Enter Aqua user ID (e.g., ckonkol)" type="text" id="username" required><br><br>
+    <input style="font-size: 20px; background-color: lightyellow; width: 300px; text-transform: lowercase; text-align: left;"
+           placeholder="Enter Aqua user ID (e.g., ckonkol)"
+           type="text" id="username" required><br><br>
 
     <label style="font-size: 20px;" for="accessCode">Access Code:</label><br>
-    <input style="font-size: 20px;background-color: lightyellow; width: 300px; text-align: left;"
-           placeholder="enter passcode" type="password" id="accessCode" required><br><br>
+    <input style="font-size: 20px; background-color: lightyellow; width: 300px; text-align: left;"
+           placeholder="Enter passcode"
+           type="password" id="accessCode" required><br><br>
 
     <button style="font-size: 20px;" id="submit" type="submit">Login</button>
   </form>
@@ -43,7 +45,7 @@
     * See Chuck Konkol to request access, ext. 4574
   </p>
 
-  <!-- Welcome section (hidden until login) -->
+  <!-- Welcome section (hidden until login or restored session) -->
   <div id="welcomeDiv" style="display:none;">
     <h2 id="welcomeMsg"></h2>
     <button id="launchBtn">Launch AquaEarth</button>
@@ -51,13 +53,13 @@
   </div>
 
   <footer>
-    AquaEarth Secure Login — Version <strong>v3.4</strong>
+    AquaEarth Secure Login — Version <strong>v3.9</strong>
     [<a href="CHANGELOG.md" target="_blank">View Changelog</a>]
   </footer>
 
   <script type="module" src="home.js"></script>
   <script>
-    // Focus on login field on load
+    // Focus login field on load
     window.addEventListener('DOMContentLoaded', () => {
       const u = document.getElementById('username');
       if (u) u.focus();
