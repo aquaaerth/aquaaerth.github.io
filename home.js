@@ -1,15 +1,16 @@
 /**
  * AquaEarth Secure Login (Firestore HTML Loader with Agreement)
  *
- * v3.7
- * - Added footer in index.html with version + changelog link.
- * - Synced console log with version.
+ * v3.8
+ * - Added launchApp() reusable function.
+ * - On refresh, if user is logged in, app auto-launches immediately.
+ * - Reused launch logic across both manual button click and auto-restore.
  */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, doc, setDoc, getDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-const VERSION = "v3.7"; // keep in sync with index.html footer
+const VERSION = "v3.8";
 console.log(`🔐 AquaEarth Secure Login ${VERSION}`);
 
 const firebaseConfig = {
@@ -23,6 +24,34 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+
+/**
+ * Launch AquaEarth resource
+ */
+async function launchApp(appHtml, docId, username) {
+  if (!appHtml) {
+    alert("No app code found for this user.");
+    return;
+  }
+
+  if (/^https?:\/\//i.test(appHtml.trim())) {
+    window.open(appHtml.trim(), "_blank");
+  } else {
+    document.open();
+    document.write(appHtml);
+    document.close();
+  }
+
+  // Log access
+  if (docId && username) {
+    await setDoc(doc(db, "login_logs", docId), {
+      username,
+      timestamp: serverTimestamp(),
+      status: "agreed and accessed AquaEarth app (auto-launch or manual)",
+      userAgent: navigator.userAgent
+    });
+  }
+}
 
 document.getElementById("loginForm").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -57,29 +86,13 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
         document.getElementById("welcomeDiv").style.display = "block";
         document.getElementById("welcomeMsg").innerText = `Welcome, ${formattedUser}`;
 
+        const appHtml = userSnap.data().app;
+
         // Setup Launch button
         document.getElementById("launchBtn").onclick = async () => {
           const ok = confirm("By clicking 'OK', you agree not to share this program or any of its files with anyone outside of Aqua-Aerobic Systems, Inc.");
           if (ok) {
-            const appHtml = userSnap.data().app;
-            if (appHtml) {
-              if (/^https?:\/\//i.test(appHtml.trim())) {
-                window.open(appHtml.trim(), "_blank");
-              } else {
-                document.open();
-                document.write(appHtml);
-                document.close();
-              }
-
-              await setDoc(doc(db, "login_logs", docId), {
-                username: formattedUser,
-                timestamp: serverTimestamp(),
-                status: "agreed and accessed AquaEarth app",
-                userAgent: navigator.userAgent
-              });
-            } else {
-              alert("No app code found for this user.");
-            }
+            await launchApp(appHtml, docId, formattedUser);
           } else {
             alert("Loading Aqua-Earth has been cancelled!");
           }
@@ -91,10 +104,10 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
           location.reload();
         };
 
-        // Save session in localStorage
+        // Save session
         localStorage.setItem("aquaUser", JSON.stringify({
           username: formattedUser,
-          app: userSnap.data().app,
+          app: appHtml,
           docId
         }));
 
@@ -110,13 +123,12 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
   }
 });
 
-// Auto-launch after refresh
-window.addEventListener("load", () => {
+// Auto-launch after refresh if logged in
+window.addEventListener("load", async () => {
   const session = localStorage.getItem("aquaUser");
   if (session) {
-    const { username } = JSON.parse(session);
-    document.getElementById("loginForm").style.display = "none";
-    document.getElementById("welcomeDiv").style.display = "block";
-    document.getElementById("welcomeMsg").innerText = `Welcome back, ${username}`;
+    const { username, app, docId } = JSON.parse(session);
+    console.log(`⚡ Auto-launching app for ${username}...`);
+    await launchApp(app, docId, username);
   }
 });
