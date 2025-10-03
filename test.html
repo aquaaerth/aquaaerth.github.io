@@ -317,6 +317,8 @@
     document.getElementById("resetBtn").addEventListener("click",()=>location.reload());
     Array.from(document.getElementsByClassName('cesium-viewer-bottom')).forEach(b=>b.style.display='none');
     Array.from(document.getElementsByClassName('cesium-viewer-toolbar')).forEach(b=>b.style.display='none');
+    // ✅ Remove the Reset button after Cesium setup
+document.getElementById("resetBtn").remove();
 
     const _addrCache=new Map();
     let _currentDirectionsUrl="";
