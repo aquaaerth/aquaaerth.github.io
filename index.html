@@ -1,2 +1,117 @@
-<!-- simplified for demo -->
-<html><body><h1>AquaEarth Secure Login v3.3</h1></body></html>
+<!DOCTYPE html>
+<!-- v3.3 -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="description" content="Aqua Earth">
+  <meta name="keywords" content="Aqua Earth">
+  <meta name="author" content="Chuck Konkol">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>AquaEarth Secure Login</title>
+  <style>
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #f9f9f9;
+    }
+    form {
+      margin-top: 2rem;
+    }
+    input {
+      width: 300px;
+      font-size: 18px;
+      margin: 5px 0;
+      padding: 6px;
+      text-transform: lowercase;
+    }
+    button {
+      font-size: 18px;
+      padding: 8px 14px;
+    }
+    footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #333;
+      color: #fff;
+      font-size: 12px;
+      padding: 5px;
+      cursor: pointer;
+    }
+    #changelogModal {
+      display: none;
+      position: fixed;
+      z-index: 2000;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+    }
+    #changelogContent {
+      background: #fff;
+      width: 80%;
+      max-width: 700px;
+      margin: 5% auto;
+      padding: 20px;
+      text-align: left;
+      border-radius: 8px;
+      overflow-y: auto;
+      max-height: 80%;
+    }
+    #closeChangelog {
+      float: right;
+      cursor: pointer;
+      background: #c33;
+      color: white;
+      border: none;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <img src="https://aquavisitorsystem.github.io/aqua.png" width="250px"><br>
+  <h1>AquaEarth Secure Login</h1>
+  <form id="loginForm">
+    <label for="username">Login:</label><br>
+    <input value="" placeholder="enter aqua userid" type="text" id="username" required><br><br>
+    <label for="accessCode">Access Code:</label><br>
+    <input value="" placeholder="enter passcode" type="password" id="accessCode" required><br><br>
+    <button id="submit" type="submit">Login</button>
+  </form>
+
+  <footer id="versionFooter">AquaEarth v3.3 – View Changelog</footer>
+
+  <div id="changelogModal">
+    <div id="changelogContent">
+      <button id="closeChangelog">X</button>
+      <h2>Changelog</h2>
+      <div id="changelogBody">Loading...</div>
+    </div>
+  </div>
+
+  <script type="module" src="home.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const modal = document.getElementById("changelogModal");
+      const footer = document.getElementById("versionFooter");
+      const closeBtn = document.getElementById("closeChangelog");
+      const bodyDiv = document.getElementById("changelogBody");
+
+      footer.addEventListener("click", () => {
+        fetch("CHANGELOG.md?cache=" + Date.now())
+          .then(res => res.text())
+          .then(text => bodyDiv.textContent = text)
+          .catch(() => bodyDiv.textContent = "Unable to load changelog.");
+        modal.style.display = "block";
+      });
+      closeBtn.addEventListener("click", () => modal.style.display = "none");
+      window.onclick = (e) => { if (e.target == modal) modal.style.display = "none"; };
+      document.getElementById("username").focus();
+    });
+  </script>
+</body>
+</html>
