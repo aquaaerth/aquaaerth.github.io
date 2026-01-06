@@ -137,8 +137,6 @@
         <img src="https://aquavisitorsystem.github.io/aqua.png" width="100%" style="background-color:white; border-radius:4px;">
         <h1>AquaEarth</h1>
         <h2>Protecting the World’s Water</h2>
-        <h3>For additional edits to map locations, please contact Rose Melody x4428.</h2>
-        <h3>KMZ Updated: 12/17/2025</h3>
         <button id="resetBtn">Reset</button>
         <button id="popupBtnMobile" disabled>Get directions</button>
         <input type="text" id="searchBox" placeholder="Search folders & placemarks...">
@@ -146,11 +144,16 @@
       <div id="sidebarContent">
         <div class="tree" id="kmlTree">Loading KMZ structure...</div>
         <div id="legend"></div>
+  <br><div id="help" style="font-size: smaller;">For additional edits to map locations<br>please contact Rose Melody x4428.
+        <br><br>KMZ last updated: 12/17/2025
+</div>
       </div>
     </div>
     <div id="cesiumContainer"></div>
+
   </div>
   <button id="floatingDirections" disabled>Get Directions</button>
+
 
   <script>
   // Centralized version control
