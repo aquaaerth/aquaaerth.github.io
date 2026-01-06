@@ -36,6 +36,24 @@ window.addEventListener("DOMContentLoaded", () => {
   if (saved) {
     try {
       const data = JSON.parse(saved);
+
+      // --- SECURITY CONFIGURATION ---
+      const now = Date.now();
+      // 10 hours in milliseconds (10 * 60 * 60 * 1000)
+      // This covers an 8-hour shift + 2 hours of overtime/lunch buffer.
+      const maxSessionTime = 10 * 60 * 60 * 1000; 
+
+      // If no timestamp (legacy) or time has exceeded 10 hours:
+      if (!data.loginTime || (now - data.loginTime > maxSessionTime)) {
+        console.log("Session expired (10h limit). Clearing storage.");
+        localStorage.removeItem(STORAGE_KEY);
+        // Ensure UI is set for login
+        document.getElementById("loginForm").style.display = "block";
+        document.getElementById("welcomeDiv").style.display = "none";
+        return; 
+      }
+      // -----------------------------
+
       currentUser = data.user;
       currentDocId = data.docId;
       currentAppHtml = data.appHtml;
@@ -85,10 +103,12 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
     currentAppHtml = userSnap.data().app;
 
     // Save session
+   // Save session with timestamp
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       user: currentUser,
       docId: currentDocId,
-      appHtml: currentAppHtml
+      appHtml: currentAppHtml,
+      loginTime: Date.now() // <--- Added timestamp here
     }));
 
     // Show welcome
