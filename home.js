@@ -1,16 +1,17 @@
 /**
  * AquaEarth Secure Login (Firestore HTML Loader with Agreement)
  *
- * v3.10
+ * v3.11
  * - Keeps login session in localStorage.
- * - Enforces 10-hour session limit (Shift + Buffer).
- * - Displays countdown timer to user.
- * - Auto-logs out when timer expires.
+ * - Enforces 10-hour session limit.
+ * - VERSION CHECK: Expires session if server version differs from stored version.
+ * - Displays countdown timer.
  */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, doc, setDoc, getDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-const VERSION = "v3.10";
+// UPDATED VERSION
+const VERSION = "v3.11"; 
 console.log(`🔐 AquaEarth Secure Login ${VERSION}`);
 
 const firebaseConfig = {
@@ -28,7 +29,7 @@ const db = getFirestore(app);
 const STORAGE_KEY = "aquaearth_session";
 
 // --- SECURITY CONFIGURATION ---
-// 10 hours in milliseconds (10 * 60 * 60 * 1000)
+// 10 hours in milliseconds
 const SESSION_DURATION_MS = 10 * 60 * 60 * 1000; 
 
 let currentUser = null;
@@ -51,10 +52,8 @@ function formatTimeRemaining(ms) {
 function startSessionTimer(loginTimestamp) {
   const timerEl = document.getElementById("sessionTimer");
   
-  // Clear any existing timer to prevent duplicates
   if (timerInterval) clearInterval(timerInterval);
 
-  // Update immediately, then every second
   const updateTimer = () => {
     const now = Date.now();
     const expiresAt = loginTimestamp + SESSION_DURATION_MS;
@@ -63,17 +62,17 @@ function startSessionTimer(loginTimestamp) {
     if (remaining <= 0) {
       clearInterval(timerInterval);
       if (timerEl) timerEl.textContent = "Session Expired";
-      forceLogout(); // Auto-logout when time is up
+      forceLogout(); 
     } else {
       if (timerEl) timerEl.textContent = `Session expires in: ${formatTimeRemaining(remaining)}`;
     }
   };
 
-  updateTimer(); // Run once immediately
+  updateTimer();
   timerInterval = setInterval(updateTimer, 1000);
 }
 
-// --- Helper: Force Logout (Cleans up state and UI) ---
+// --- Helper: Force Logout ---
 function forceLogout() {
   localStorage.removeItem(STORAGE_KEY);
   currentUser = null;
@@ -86,7 +85,7 @@ function forceLogout() {
   document.getElementById("loginForm").style.display = "block";
 }
 
-// Restore session if exists
+// --- RESTORE SESSION HANDLER ---
 window.addEventListener("DOMContentLoaded", () => {
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) {
@@ -94,21 +93,29 @@ window.addEventListener("DOMContentLoaded", () => {
       const data = JSON.parse(saved);
       const now = Date.now();
 
-      // Check if session is expired (older than 10 hours)
+      // 1. CHECK VERSION
+      // If the stored version is strictly not equal to current VERSION,
+      // or if it doesn't exist (old session), logout immediately.
+      if (data.version !== VERSION) {
+        console.log(`Version mismatch (Stored: ${data.version} vs Current: ${VERSION}). Expiring session.`);
+        forceLogout();
+        return;
+      }
+
+      // 2. CHECK TIME LIMIT
       if (!data.loginTime || (now - data.loginTime > SESSION_DURATION_MS)) {
         console.log("Session expired (10h limit). Clearing storage.");
         forceLogout();
         return; 
       }
 
+      // Restore State
       currentUser = data.user;
       currentDocId = data.docId;
       currentAppHtml = data.appHtml;
 
-      // Start the UI timer
       startSessionTimer(data.loginTime);
 
-      // Skip login → show welcome page
       document.getElementById("loginForm").style.display = "none";
       document.getElementById("welcomeMsg").textContent = `Welcome, ${currentUser}`;
       document.getElementById("welcomeDiv").style.display = "block";
@@ -119,7 +126,7 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-// Login handler
+// --- LOGIN HANDLER ---
 document.getElementById("loginForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   let username = document.getElementById("username").value.trim().toLowerCase();
@@ -151,22 +158,19 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
     currentUser = formattedUser;
     currentDocId = docId;
     currentAppHtml = userSnap.data().app;
-
-    // Capture Login Time
     const loginTime = Date.now();
 
-    // Save session with timestamp
+    // SAVE SESSION (Now includes 'version')
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       user: currentUser,
       docId: currentDocId,
       appHtml: currentAppHtml,
-      loginTime: loginTime
+      loginTime: loginTime,
+      version: VERSION // <--- Added this to track version
     }));
 
-    // Start Timer
     startSessionTimer(loginTime);
 
-    // Show welcome
     document.getElementById("loginForm").style.display = "none";
     document.getElementById("welcomeMsg").textContent = `Welcome, ${formattedUser}`;
     document.getElementById("welcomeDiv").style.display = "block";
