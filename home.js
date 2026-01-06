@@ -11,7 +11,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getFirestore, doc, setDoc, getDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // UPDATED VERSION
-const VERSION = "v3.11"; 
+const VERSION = "v3.12"; 
 console.log(`🔐 AquaEarth Secure Login ${VERSION}`);
 
 const firebaseConfig = {
