@@ -189,14 +189,7 @@ document.getElementById("launchBtn").addEventListener("click", async () => {
   if (!ok) return alert("Loading AquaEarth has been cancelled!");
 
   if (/^https?:\/\//i.test(currentAppHtml.trim())) {
-    window.open(currentAppHtml.trim(), "_blank");
-  } else {
-    document.open();
-    document.write(currentAppHtml);
-    document.close();
-  }
-
-  if (currentDocId && currentUser) {
+      if (currentDocId && currentUser) {
     await setDoc(doc(db, "login_logs", currentDocId), {
       username: currentUser,
       timestamp: serverTimestamp(),
@@ -204,6 +197,21 @@ document.getElementById("launchBtn").addEventListener("click", async () => {
       userAgent: navigator.userAgent
     });
   }
+    window.open(currentAppHtml.trim(), "_blank");
+  } else {
+      if (currentDocId && currentUser) {
+    await setDoc(doc(db, "login_logs", currentDocId), {
+      username: currentUser,
+      timestamp: serverTimestamp(),
+      status: "agreed and launched AquaEarth app",
+      userAgent: navigator.userAgent
+    });
+  }
+    document.open();
+    document.write(currentAppHtml);
+    document.close();
+  }
+
 });
 
 // Logout
