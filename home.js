@@ -1,17 +1,18 @@
 /**
  * AquaEarth Secure Login (Firestore HTML Loader with Agreement)
  *
- * v3.11
+ * v3.13
  * - Keeps login session in localStorage.
  * - Enforces 10-hour session limit.
  * - VERSION CHECK: Expires session if server version differs from stored version.
  * - Displays countdown timer.
+ * - LOGGING UPDATE: Detects Browser (Chrome, Safari, etc.) and Device (Windows, Mac, iPhone, etc.)
  */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, doc, setDoc, getDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // UPDATED VERSION
-const VERSION = "v3.12"; 
+const VERSION = "v3.13"; 
 console.log(`🔐 AquaEarth Secure Login ${VERSION}`);
 
 const firebaseConfig = {
@@ -36,6 +37,26 @@ let currentUser = null;
 let currentDocId = null;
 let currentAppHtml = null;
 let timerInterval = null;
+
+// --- HELPER: DETECT BROWSER ---
+function getBrowser(ua) {
+  if (ua.indexOf("Edg") > -1) return "Edge";
+  if (ua.indexOf("Chrome") > -1 && ua.indexOf("Edg") === -1 && ua.indexOf("OPR") === -1) return "Chrome";
+  if (ua.indexOf("Safari") > -1 && ua.indexOf("Chrome") === -1) return "Safari";
+  if (ua.indexOf("Firefox") > -1) return "Firefox";
+  if (ua.indexOf("Trident") > -1) return "Internet Explorer";
+  return "Other";
+}
+
+// --- HELPER: DETECT DEVICE TYPE ---
+function getDevice(ua) {
+  if (/iPhone|iPad|iPod/.test(ua)) return "iPhone/iPad";
+  if (/Android/.test(ua)) return "Android";
+  if (/Windows/.test(ua)) return "Windows";
+  if (/Mac/.test(ua) && !/iPhone|iPad|iPod/.test(ua)) return "Mac"; // Exclude iOS devices identifying as Mac-like
+  if (/Linux/.test(ua)) return "Linux";
+  return "Other";
+}
 
 // --- Helper: Format Milliseconds to HH:MM:SS ---
 function formatTimeRemaining(ms) {
@@ -94,8 +115,6 @@ window.addEventListener("DOMContentLoaded", () => {
       const now = Date.now();
 
       // 1. CHECK VERSION
-      // If the stored version is strictly not equal to current VERSION,
-      // or if it doesn't exist (old session), logout immediately.
       if (data.version !== VERSION) {
         console.log(`Version mismatch (Stored: ${data.version} vs Current: ${VERSION}). Expiring session.`);
         forceLogout();
@@ -148,11 +167,18 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
     const mmddyy = `${pad(now.getMonth() + 1)}${pad(now.getDate())}${now.getFullYear().toString().slice(-2)}`;
     const docId = `${username}_${mmddyy}_${hhmm}`;
 
+    // Get Browser and Device Info
+    const ua = navigator.userAgent;
+    const browserName = getBrowser(ua);
+    const deviceType = getDevice(ua);
+
     await setDoc(doc(collection(db, "login_logs"), docId), {
       username: formattedUser,
       timestamp: serverTimestamp(),
       status: "login success – welcome page",
-      userAgent: navigator.userAgent
+      browser: browserName,    // Replaced raw userAgent with Browser
+      deviceType: deviceType,  // Added Device Type
+      rawUserAgent: ua         // Optional: Kept raw string just in case
     });
 
     currentUser = formattedUser;
@@ -160,13 +186,13 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
     currentAppHtml = userSnap.data().app;
     const loginTime = Date.now();
 
-    // SAVE SESSION (Now includes 'version')
+    // SAVE SESSION
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       user: currentUser,
       docId: currentDocId,
       appHtml: currentAppHtml,
       loginTime: loginTime,
-      version: VERSION // <--- Added this to track version
+      version: VERSION 
     }));
 
     startSessionTimer(loginTime);
@@ -189,29 +215,30 @@ document.getElementById("launchBtn").addEventListener("click", async () => {
   const ok = confirm("By clicking 'OK', you agree not to share this program or any of its files with anyone outside of Aqua-Aerobic Systems, Inc.");
   if (!ok) return alert("Loading AquaEarth has been cancelled!");
 
-  // 2. CREATE NEW LOG ENTRY (The Fix)
-  // We generate a new ID so we don't overwrite the "Login Success" log.
+  // 2. CREATE NEW LOG ENTRY
   if (currentUser) {
     try {
-      // Get current time for the Launch event
       const now = new Date();
       const pad = (n) => n.toString().padStart(2, "0");
       const hhmm = `${pad(now.getHours())}${pad(now.getMinutes())}`;
       const mmddyy = `${pad(now.getMonth() + 1)}${pad(now.getDate())}${now.getFullYear().toString().slice(-2)}`;
 
-      // Create a UNIQUE ID by adding "_launch" suffix
-      // Example ID: ckonkol_012926_1205_launch
       const launchDocId = `${currentUser}_${mmddyy}_${hhmm}_launch`;
+      
+      // Get Browser and Device Info
+      const ua = navigator.userAgent;
+      const browserName = getBrowser(ua);
+      const deviceType = getDevice(ua);
 
       await setDoc(doc(db, "login_logs", launchDocId), {
         username: currentUser,
-        timestamp: serverTimestamp(), // Captures exact launch time
+        timestamp: serverTimestamp(), 
         status: "agreed and launched AquaEarth app",
-        userAgent: navigator.userAgent
+        browser: browserName,    // Replaced raw userAgent with Browser
+        deviceType: deviceType   // Added Device Type
       });
     } catch (err) {
       console.error("Logging launch failed:", err);
-      // We don't stop the app from launching if logging fails
     }
   }
 
@@ -224,11 +251,11 @@ document.getElementById("launchBtn").addEventListener("click", async () => {
     document.close();
   }
 });
-// --- ADD THIS TO HOME.JS ---
+
+// --- LOGOUT HANDLER ---
 const logoutBtn = document.getElementById("logoutBtn");
 if (logoutBtn) {
   logoutBtn.addEventListener("click", () => {
-    // Defines what happens when the button is clicked
     if (confirm("Are you sure you want to logout?")) {
       forceLogout();
     }
