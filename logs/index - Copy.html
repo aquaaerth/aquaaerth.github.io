@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AquaEarth Live Logs</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f9; }
+    h1 { text-align: center; color: #333; }
+    
+    .controls { 
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+      margin-bottom: 20px; 
+      gap: 15px;
+    }
+    
+    /* Live Indicator */
+    .live-indicator {
+      display: flex;
+      align-items: center;
+      font-size: 14px;
+      font-weight: bold;
+      color: #d32f2f;
+      border: 1px solid #d32f2f;
+      padding: 5px 10px;
+      border-radius: 20px;
+      background: white;
+    }
+    
+    .dot {
+      height: 10px;
+      width: 10px;
+      background-color: #d32f2f;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 8px;
+      animation: pulse 1.5s infinite;
+    }
+    
+    @keyframes pulse {
+      0% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.2); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    button { padding: 10px 20px; font-size: 16px; cursor: pointer; border: none; color: white; border-radius: 4px; }
+    #exportBtn { background: #66BB6A; } 
+    #exportBtn:hover { background: #43A047; }
+    
+    table { width: 100%; border-collapse: collapse; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+    th { background-color: #0277BD; color: white; }
+    tr:hover { background-color: #f1f1f1; }
+    .timestamp { font-family: monospace; color: #555; }
+    .status { font-weight: bold; }
+    
+    /* Highlight new rows briefly */
+    @keyframes flash {
+      0% { background-color: #e3f2fd; }
+      100% { background-color: transparent; }
+    }
+    .new-row { animation: flash 2s ease-out; }
+  </style>
+</head>
+<body>
+
+  <h1>🔐 AquaEarth Login Activity</h1>
+  
+  <div class="controls">
+    <div class="live-indicator">
+      <span class="dot"></span> Live Monitoring
+    </div>
+    <button id="exportBtn">Export CSV</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Time (Local) ▼</th>
+        <th>User</th>
+        <th>Status</th>
+        <th>User Agent / Browser</th>
+      </tr>
+    </thead>
+    <tbody id="logTableBody">
+      <tr><td colspan="4" style="text-align:center;">Connecting to live stream...</td></tr>
+    </tbody>
+  </table>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, onSnapshot, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCQaPz_Ph1xEKQP6rb6FlRY7haL9_ns8wk",
+      authDomain: "aqua-earth-b2da7.firebaseapp.com",
+      projectId: "aqua-earth-b2da7",
+      storageBucket: "aqua-earth-b2da7.firebasestorage.app",
+      messagingSenderId: "794773574573",
+      appId: "1:794773574573:web:966db3e78218ea69b40724"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const tableBody = document.getElementById("logTableBody");
+    const exportBtn = document.getElementById("exportBtn");
+
+    let currentLogs = [];
+
+    // --- LIVE LISTENER FUNCTION ---
+    function startLiveListener() {
+      // Logic: query() allows us to sort (orderBy) and restrict (limit)
+      const q = query(
+        collection(db, "login_logs"), 
+        orderBy("timestamp", "desc"), // <--- THIS ENSURES TIME DESC SORT (Newest First)
+        limit(100)
+      );
+
+      // onSnapshot triggers every time the database changes
+      onSnapshot(q, (snapshot) => {
+        tableBody.innerHTML = ""; // Clear table to rebuild
+        currentLogs = [];         // Clear export data
+
+        if (snapshot.empty) {
+            tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No logs found.</td></tr>';
+            return;
+        }
+
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          
+          // Format Date
+          let dateStr = "Processing...";
+          if (data.timestamp && typeof data.timestamp.toDate === 'function') {
+             dateStr = data.timestamp.toDate().toLocaleString();
+          } else if (data.timestamp) {
+             dateStr = new Date(data.timestamp).toLocaleString();
+          }
+
+          // Store for export
+          currentLogs.push({
+             time: dateStr,
+             user: data.username || "Unknown",
+             status: data.status || "N/A",
+             userAgent: data.userAgent || "Unknown"
+          });
+
+          // Render Row
+          const row = document.createElement("tr");
+          // Add animation class if this is a fresh update
+          row.className = "new-row"; 
+          
+          row.innerHTML = `
+            <td class="timestamp">${dateStr}</td>
+            <td>${data.username || "Unknown"}</td>
+            <td class="status" style="color: ${data.status && data.status.includes('launched') ? 'green' : 'orange'}">
+                ${data.status || "N/A"}
+            </td>
+            <td style="font-size: 12px; color: grey;">${data.userAgent || "Unknown"}</td>
+          `;
+          tableBody.appendChild(row);
+        });
+      }, (error) => {
+        console.error("Live listener error:", error);
+        tableBody.innerHTML = `<tr><td colspan="4" style="color:red; text-align:center;">Connection Error: ${error.message}</td></tr>`;
+      });
+    }
+
+    // Export Function
+    function downloadCSV() {
+        if (currentLogs.length === 0) {
+            alert("No logs to export.");
+            return;
+        }
+        let csvContent = "data:text/csv;charset=utf-8,Time,User,Status,User Agent\n";
+        currentLogs.forEach(row => {
+            const cleanUserAgent = row.userAgent.replace(/"/g, '""'); 
+            const cleanStatus = row.status.replace(/"/g, '""');
+            csvContent += `"${row.time}","${row.user}","${cleanStatus}","${cleanUserAgent}"\n`;
+        });
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `aquaearth_logs_LIVE_${new Date().toISOString().slice(0,10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    exportBtn.addEventListener("click", downloadCSV);
+
+    // Start Listening Immediately
+    startLiveListener();
+
+  </script>
+</body>
+</html>

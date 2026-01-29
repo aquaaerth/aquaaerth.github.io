@@ -224,3 +224,13 @@ document.getElementById("launchBtn").addEventListener("click", async () => {
     document.close();
   }
 });
+// --- ADD THIS TO HOME.JS ---
+const logoutBtn = document.getElementById("logoutBtn");
+if (logoutBtn) {
+  logoutBtn.addEventListener("click", () => {
+    // Defines what happens when the button is clicked
+    if (confirm("Are you sure you want to logout?")) {
+      forceLogout();
+    }
+  });
+}
