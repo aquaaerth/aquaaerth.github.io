@@ -2,18 +2,51 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>AquaEarth Login Logs</title>
+  <title>AquaEarth Live Logs</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f9; }
     h1 { text-align: center; color: #333; }
-    .controls { text-align: center; margin-bottom: 20px; }
     
-    /* Button Styling */
-    button { padding: 10px 20px; font-size: 16px; cursor: pointer; border: none; color: white; border-radius: 4px; margin: 0 5px; }
-    #refreshBtn { background: #4FC3F7; }
-    #refreshBtn:hover { background: #039BE5; }
-    #exportBtn { background: #66BB6A; } /* Green for Export */
+    .controls { 
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+      margin-bottom: 20px; 
+      gap: 15px;
+    }
+    
+    /* Live Indicator */
+    .live-indicator {
+      display: flex;
+      align-items: center;
+      font-size: 14px;
+      font-weight: bold;
+      color: #d32f2f;
+      border: 1px solid #d32f2f;
+      padding: 5px 10px;
+      border-radius: 20px;
+      background: white;
+    }
+    
+    .dot {
+      height: 10px;
+      width: 10px;
+      background-color: #d32f2f;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 8px;
+      animation: pulse 1.5s infinite;
+    }
+    
+    @keyframes pulse {
+      0% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.2); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    button { padding: 10px 20px; font-size: 16px; cursor: pointer; border: none; color: white; border-radius: 4px; }
+    #exportBtn { background: #66BB6A; } 
     #exportBtn:hover { background: #43A047; }
     
     table { width: 100%; border-collapse: collapse; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
@@ -22,6 +55,13 @@
     tr:hover { background-color: #f1f1f1; }
     .timestamp { font-family: monospace; color: #555; }
     .status { font-weight: bold; }
+    
+    /* Highlight new rows briefly */
+    @keyframes flash {
+      0% { background-color: #e3f2fd; }
+      100% { background-color: transparent; }
+    }
+    .new-row { animation: flash 2s ease-out; }
   </style>
 </head>
 <body>
@@ -29,29 +69,30 @@
   <h1>🔐 AquaEarth Login Activity</h1>
   
   <div class="controls">
-    <button id="refreshBtn">Refresh Logs</button>
+    <div class="live-indicator">
+      <span class="dot"></span> Live Monitoring
+    </div>
     <button id="exportBtn">Export CSV</button>
   </div>
 
   <table>
     <thead>
       <tr>
-        <th>Time (Local)</th>
+        <th>Time (Local) ▼</th>
         <th>User</th>
         <th>Status</th>
         <th>User Agent / Browser</th>
       </tr>
     </thead>
     <tbody id="logTableBody">
-      <tr><td colspan="4" style="text-align:center;">Loading logs...</td></tr>
+      <tr><td colspan="4" style="text-align:center;">Connecting to live stream...</td></tr>
     </tbody>
   </table>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getFirestore, collection, onSnapshot, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    // 1. Configuration (Same as home.js)
     const firebaseConfig = {
       apiKey: "AIzaSyCQaPz_Ph1xEKQP6rb6FlRY7haL9_ns8wk",
       authDomain: "aqua-earth-b2da7.firebaseapp.com",
@@ -65,44 +106,41 @@
     const db = getFirestore(app);
 
     const tableBody = document.getElementById("logTableBody");
-    const refreshBtn = document.getElementById("refreshBtn");
     const exportBtn = document.getElementById("exportBtn");
 
-    // Store logs here so we can export them without re-fetching
     let currentLogs = [];
 
-    // 2. Fetch Function
-    async function fetchLogs() {
-      tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Loading...</td></tr>';
-      currentLogs = []; // Clear previous data
+    // --- LIVE LISTENER FUNCTION ---
+    function startLiveListener() {
+      // Logic: query() allows us to sort (orderBy) and restrict (limit)
+      const q = query(
+        collection(db, "login_logs"), 
+        orderBy("timestamp", "desc"), // <--- THIS ENSURES TIME DESC SORT (Newest First)
+        limit(100)
+      );
 
-      try {
-        const q = query(
-          collection(db, "login_logs"), 
-          orderBy("timestamp", "desc"),
-          limit(200) // Increased limit for export utility
-        );
+      // onSnapshot triggers every time the database changes
+      onSnapshot(q, (snapshot) => {
+        tableBody.innerHTML = ""; // Clear table to rebuild
+        currentLogs = [];         // Clear export data
 
-        const querySnapshot = await getDocs(q);
-        tableBody.innerHTML = "";
-
-        if (querySnapshot.empty) {
+        if (snapshot.empty) {
             tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No logs found.</td></tr>';
             return;
         }
 
-        querySnapshot.forEach((doc) => {
+        snapshot.forEach((doc) => {
           const data = doc.data();
           
           // Format Date
-          let dateStr = "N/A";
+          let dateStr = "Processing...";
           if (data.timestamp && typeof data.timestamp.toDate === 'function') {
              dateStr = data.timestamp.toDate().toLocaleString();
           } else if (data.timestamp) {
              dateStr = new Date(data.timestamp).toLocaleString();
           }
 
-          // Save formatted data for CSV Export
+          // Store for export
           currentLogs.push({
              time: dateStr,
              user: data.username || "Unknown",
@@ -112,6 +150,9 @@
 
           // Render Row
           const row = document.createElement("tr");
+          // Add animation class if this is a fresh update
+          row.className = "new-row"; 
+          
           row.innerHTML = `
             <td class="timestamp">${dateStr}</td>
             <td>${data.username || "Unknown"}</td>
@@ -122,54 +163,37 @@
           `;
           tableBody.appendChild(row);
         });
-
-      } catch (error) {
-        console.error("Error fetching logs:", error);
-        tableBody.innerHTML = `<tr><td colspan="4" style="color:red; text-align:center;">Error: ${error.message}</td></tr>`;
-      }
+      }, (error) => {
+        console.error("Live listener error:", error);
+        tableBody.innerHTML = `<tr><td colspan="4" style="color:red; text-align:center;">Connection Error: ${error.message}</td></tr>`;
+      });
     }
 
-    // 3. Export CSV Function
+    // Export Function
     function downloadCSV() {
         if (currentLogs.length === 0) {
-            alert("No logs to export. Please try refreshing first.");
+            alert("No logs to export.");
             return;
         }
-
-        // CSV Header
-        let csvContent = "data:text/csv;charset=utf-8,";
-        csvContent += "Time,User,Status,User Agent\n";
-
-        // CSV Rows
+        let csvContent = "data:text/csv;charset=utf-8,Time,User,Status,User Agent\n";
         currentLogs.forEach(row => {
-            // Escape quotes inside data to prevent CSV breaking
             const cleanUserAgent = row.userAgent.replace(/"/g, '""'); 
             const cleanStatus = row.status.replace(/"/g, '""');
-            
-            // Wrap fields in quotes to handle commas safely
-            const rowString = `"${row.time}","${row.user}","${cleanStatus}","${cleanUserAgent}"`;
-            csvContent += rowString + "\n";
+            csvContent += `"${row.time}","${row.user}","${cleanStatus}","${cleanUserAgent}"\n`;
         });
-
-        // Trigger Download
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
-        
-        const filename = `aquaearth_logs_${new Date().toISOString().slice(0,10)}.csv`;
-        link.setAttribute("download", filename);
-        
+        link.setAttribute("download", `aquaearth_logs_LIVE_${new Date().toISOString().slice(0,10)}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
     }
 
-    // 4. Event Listeners
-    refreshBtn.addEventListener("click", fetchLogs);
     exportBtn.addEventListener("click", downloadCSV);
 
-    // Initial Load
-    fetchLogs();
+    // Start Listening Immediately
+    startLiveListener();
 
   </script>
 </body>

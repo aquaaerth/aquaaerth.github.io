@@ -181,19 +181,41 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
   }
 });
 
+// Launch
 document.getElementById("launchBtn").addEventListener("click", async () => {
+  // 1. Validation Checks
   if (!currentAppHtml) return alert("No app code found for this user.");
 
   const ok = confirm("By clicking 'OK', you agree not to share this program or any of its files with anyone outside of Aqua-Aerobic Systems, Inc.");
   if (!ok) return alert("Loading AquaEarth has been cancelled!");
-  if (currentDocId && currentUser) {
-    await setDoc(doc(db, "login_logs", currentDocId), {
-      username: currentUser,
-      timestamp: serverTimestamp(),
-      status: "agreed and launched AquaEarth app",
-      userAgent: navigator.userAgent
-    });
+
+  // 2. CREATE NEW LOG ENTRY (The Fix)
+  // We generate a new ID so we don't overwrite the "Login Success" log.
+  if (currentUser) {
+    try {
+      // Get current time for the Launch event
+      const now = new Date();
+      const pad = (n) => n.toString().padStart(2, "0");
+      const hhmm = `${pad(now.getHours())}${pad(now.getMinutes())}`;
+      const mmddyy = `${pad(now.getMonth() + 1)}${pad(now.getDate())}${now.getFullYear().toString().slice(-2)}`;
+
+      // Create a UNIQUE ID by adding "_launch" suffix
+      // Example ID: ckonkol_012926_1205_launch
+      const launchDocId = `${currentUser}_${mmddyy}_${hhmm}_launch`;
+
+      await setDoc(doc(db, "login_logs", launchDocId), {
+        username: currentUser,
+        timestamp: serverTimestamp(), // Captures exact launch time
+        status: "agreed and launched AquaEarth app",
+        userAgent: navigator.userAgent
+      });
+    } catch (err) {
+      console.error("Logging launch failed:", err);
+      // We don't stop the app from launching if logging fails
+    }
   }
+
+  // 3. Launch the App
   if (/^https?:\/\//i.test(currentAppHtml.trim())) {
     window.open(currentAppHtml.trim(), "_blank");
   } else {
@@ -201,9 +223,4 @@ document.getElementById("launchBtn").addEventListener("click", async () => {
     document.write(currentAppHtml);
     document.close();
   }
-});
-
-// Logout
-document.getElementById("logoutBtn").addEventListener("click", () => {
-  forceLogout();
 });
