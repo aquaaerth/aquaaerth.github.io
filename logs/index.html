@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AquaEarth Login Logs</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f9; }
+    h1 { text-align: center; color: #333; }
+    .controls { text-align: center; margin-bottom: 20px; }
+    button { padding: 10px 20px; font-size: 16px; cursor: pointer; background: #4FC3F7; border: none; color: white; border-radius: 4px; }
+    button:hover { background: #039BE5; }
+    
+    table { width: 100%; border-collapse: collapse; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+    th { background-color: #0277BD; color: white; }
+    tr:hover { background-color: #f1f1f1; }
+    .timestamp { font-family: monospace; color: #555; }
+    .status { font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <h1>🔐 AquaEarth Login Activity</h1>
+  
+  <div class="controls">
+    <button id="refreshBtn">Refresh Logs</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Time (Local)</th>
+        <th>User</th>
+        <th>Status</th>
+        <th>User Agent / Browser</th>
+      </tr>
+    </thead>
+    <tbody id="logTableBody">
+      <tr><td colspan="4" style="text-align:center;">Loading logs...</td></tr>
+    </tbody>
+  </table>
+
+  <script type="module">
+    // 1. Import exactly what we need, matching your home.js version
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    // 2. Configuration (Copied from your home.js)
+    const firebaseConfig = {
+      apiKey: "AIzaSyCQaPz_Ph1xEKQP6rb6FlRY7haL9_ns8wk",
+      authDomain: "aqua-earth-b2da7.firebaseapp.com",
+      projectId: "aqua-earth-b2da7",
+      storageBucket: "aqua-earth-b2da7.firebasestorage.app",
+      messagingSenderId: "794773574573",
+      appId: "1:794773574573:web:966db3e78218ea69b40724"
+    };
+
+    // 3. Initialize
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const tableBody = document.getElementById("logTableBody");
+    const refreshBtn = document.getElementById("refreshBtn");
+
+    // 4. Function to Fetch and Render Logs
+    async function fetchLogs() {
+      tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Loading...</td></tr>';
+      
+      try {
+        // Query: Collection 'login_logs', Order by 'timestamp' DESC, Limit to recent 100
+        const q = query(
+          collection(db, "login_logs"), 
+          orderBy("timestamp", "desc"),
+          limit(100) 
+        );
+
+        const querySnapshot = await getDocs(q);
+        
+        // Clear loading message
+        tableBody.innerHTML = "";
+
+        if (querySnapshot.empty) {
+            tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No logs found.</td></tr>';
+            return;
+        }
+
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          
+          // Convert Firestore Timestamp to readable local date string
+          let dateStr = "N/A";
+          if (data.timestamp && typeof data.timestamp.toDate === 'function') {
+             dateStr = data.timestamp.toDate().toLocaleString();
+          } else if (data.timestamp) {
+             // Fallback if it's already a date object or string
+             dateStr = new Date(data.timestamp).toLocaleString();
+          }
+
+          // Create Row
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td class="timestamp">${dateStr}</td>
+            <td>${data.username || "Unknown"}</td>
+            <td class="status" style="color: ${data.status.includes('launched') ? 'green' : 'orange'}">
+                ${data.status || "N/A"}
+            </td>
+            <td style="font-size: 12px; color: grey;">${data.userAgent || "Unknown"}</td>
+          `;
+          tableBody.appendChild(row);
+        });
+
+      } catch (error) {
+        console.error("Error fetching logs:", error);
+        tableBody.innerHTML = `<tr><td colspan="4" style="color:red; text-align:center;">Error loading logs: ${error.message}<br>Check Console (F12) for details.</td></tr>`;
+      }
+    }
+
+    // Load on start
+    fetchLogs();
+
+    // Refresh button listener
+    refreshBtn.addEventListener("click", fetchLogs);
+
+  </script>
+</body>
+</html>
