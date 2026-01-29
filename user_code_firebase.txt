@@ -145,7 +145,8 @@
         <div class="tree" id="kmlTree">Loading KMZ structure...</div>
         <div id="legend"></div>
   <br><div id="help" style="font-size: smaller;">For additional edits to map locations<br>please contact Rose Melody x4428.
-        <br><br>KMZ last updated: 1/29/2026
+        <br><br>KMZ last updated: 1/29/2026<br><br>
+        <a href="/logs/" target="_blank" style="color: #8992b3;">live activity log</a>
 </div>
       </div>
     </div>

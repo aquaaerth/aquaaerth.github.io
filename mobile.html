@@ -1,3 +1,5 @@
+<!DOCTYPE html> 
+<!-- vs: 564 -->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -143,7 +145,8 @@
         <div class="tree" id="kmlTree">Loading KMZ structure...</div>
         <div id="legend"></div>
   <br><div id="help" style="font-size: smaller;">For additional edits to map locations<br>please contact Rose Melody x4428.
-        <br><br>KMZ last updated: 1/29/2026
+        <br><br>KMZ last updated: 1/29/2026<br><br>
+        <a href="/logs/" target="_blank" style="color: #8992b3;">live activity log</a>
 </div>
       </div>
     </div>
@@ -376,6 +379,56 @@
   });
   </script>
 </body>
+
+<pre id="changelog" style="display:none">
+📜 AquaEarth KMZ Viewer – Version Changelog
+
+v500 → v501
+- Changed InfoBox max height from fixed 400px to 70% of window height.
+- Allowed dynamic, content-driven sizing.
+
+v501 → v502
+- Added min height (280px) + max height (70%) to InfoBox.
+
+v502 → v503
+- Applied same min/max rules to .cesium-infoBox-description.
+
+v503 → v553
+- Added Get Directions button inside InfoBox.
+- Sidebar button removed.
+- Directions logic: popup on desktop, direct open on mobile.
+
+v553 → v557
+- Reintroduced sidebar button (mobile only).
+- InfoBox shows button on desktop only; mobile shows a note.
+
+v557 → v558
+- Unified openDirections() to always use popup window.
+
+v558 → v559
+- Added floating mobile “Get Directions” button (top).
+
+v559 → v560
+- Enhanced InfoBox sandboxing for security (allow-same-origin, popups, top-navigation by user).
+- MutationObserver added to auto-resize InfoBox dynamically when content changes.
+- Spinner + “Fetching address…” placeholder now injected when address is being resolved.
+
+v560 → v561
+- Integrated reverse geocoding with OpenStreetMap Nominatim for placemark addresses.
+- Address replaces spinner once fetched, with linkable Google Maps directions URL.
+- Unified floating mobile “Get Directions” button tied into openDirections() logic.
+- Desktop “Get Directions” button enabled in InfoBox once address is available.
+
+v561 → v562
+- Search reset behavior improved: resets camera, collapses all folders except root, unhides all placemarks.
+- Mobile experience polished: sidebar auto-closes when placemark selected; floating button shown/hidden correctly.
+- Styling adjustments: search box bumped to 16px (prevent iOS Safari zoom), better sidebar/header spacing.
+- Removed rogue Reset button duplication in Cesium toolbar; ensured only sidebar Reset is used.
+
+v562 → v563
+- Version constant incremented for tracking.
+- Ready for next feature or bugfix entry.
+</pre>
 </html>
 
 <script>
@@ -389,4 +442,18 @@ if (document.body.lastChild && document.body.lastChild.nodeType === Node.TEXT_NO
     document.body.lastChild.textContent.replace(/'+$/, "");
 }
 
+// --- Changelog updater ---
+(function updateChangelog() {
+  const logEl = document.getElementById("changelog");
+  if (!logEl) return;
+
+  let logText = logEl.textContent.trim();
+  if (!logText.includes(APP_VERSION)) {
+    logText += `\n\nv563 → ${APP_VERSION}\n- Version constant incremented for tracking.\n- Ready for next feature or bugfix entry.`;
+    logEl.textContent = logText;
+  }
+
+  console.log("AquaEarth KMZ Viewer " + APP_VERSION);
+  console.log("=== AquaEarth KMZ Changelog ===\n" + logText);
+})();
 </script>
