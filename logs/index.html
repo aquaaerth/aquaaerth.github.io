@@ -81,11 +81,12 @@
         <th>Time (Local) ▼</th>
         <th>User</th>
         <th>Status</th>
-        <th>User Agent / Browser</th>
+        <th>Browser</th>
+        <th>Device</th>
       </tr>
     </thead>
     <tbody id="logTableBody">
-      <tr><td colspan="4" style="text-align:center;">Connecting to live stream...</td></tr>
+      <tr><td colspan="5" style="text-align:center;">Connecting to live stream...</td></tr>
     </tbody>
   </table>
 
@@ -110,22 +111,42 @@
 
     let currentLogs = [];
 
+    // --- HELPERS FOR OLD LOGS ---
+    // These ensure old history logs still show correct Browser/Device
+    function getBrowser(ua) {
+      if (!ua) return "Unknown";
+      if (ua.indexOf("Edg") > -1) return "Edge";
+      if (ua.indexOf("Chrome") > -1 && ua.indexOf("Edg") === -1 && ua.indexOf("OPR") === -1) return "Chrome";
+      if (ua.indexOf("Safari") > -1 && ua.indexOf("Chrome") === -1) return "Safari";
+      if (ua.indexOf("Firefox") > -1) return "Firefox";
+      if (ua.indexOf("Trident") > -1) return "Internet Explorer";
+      return "Other";
+    }
+
+    function getDevice(ua) {
+      if (!ua) return "Unknown";
+      if (/iPhone|iPad|iPod/.test(ua)) return "iPhone/iPad";
+      if (/Android/.test(ua)) return "Android";
+      if (/Windows/.test(ua)) return "Windows";
+      if (/Mac/.test(ua) && !/iPhone|iPad|iPod/.test(ua)) return "Mac";
+      if (/Linux/.test(ua)) return "Linux";
+      return "Other";
+    }
+
     // --- LIVE LISTENER FUNCTION ---
     function startLiveListener() {
-      // Logic: query() allows us to sort (orderBy) and restrict (limit)
       const q = query(
         collection(db, "login_logs"), 
-        orderBy("timestamp", "desc"), // <--- THIS ENSURES TIME DESC SORT (Newest First)
+        orderBy("timestamp", "desc"), 
         limit(100)
       );
 
-      // onSnapshot triggers every time the database changes
       onSnapshot(q, (snapshot) => {
-        tableBody.innerHTML = ""; // Clear table to rebuild
-        currentLogs = [];         // Clear export data
+        tableBody.innerHTML = ""; 
+        currentLogs = [];         
 
         if (snapshot.empty) {
-            tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No logs found.</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No logs found.</td></tr>';
             return;
         }
 
@@ -140,17 +161,32 @@
              dateStr = new Date(data.timestamp).toLocaleString();
           }
 
+          // --- SMART DATA PARSING ---
+          // Use stored 'browser' if available (New Logs), otherwise parse 'userAgent' (Old Logs)
+          let browserDisplay = data.browser;
+          let deviceDisplay = data.deviceType;
+          
+          if (!browserDisplay && data.userAgent) {
+             browserDisplay = getBrowser(data.userAgent);
+          }
+          if (!deviceDisplay && data.userAgent) {
+             deviceDisplay = getDevice(data.userAgent);
+          }
+
+          browserDisplay = browserDisplay || "Unknown";
+          deviceDisplay = deviceDisplay || "Unknown";
+
           // Store for export
           currentLogs.push({
              time: dateStr,
              user: data.username || "Unknown",
              status: data.status || "N/A",
-             userAgent: data.userAgent || "Unknown"
+             browser: browserDisplay,
+             device: deviceDisplay
           });
 
           // Render Row
           const row = document.createElement("tr");
-          // Add animation class if this is a fresh update
           row.className = "new-row"; 
           
           row.innerHTML = `
@@ -159,13 +195,14 @@
             <td class="status" style="color: ${data.status && data.status.includes('launched') ? 'green' : 'orange'}">
                 ${data.status || "N/A"}
             </td>
-            <td style="font-size: 12px; color: grey;">${data.userAgent || "Unknown"}</td>
+            <td>${browserDisplay}</td>
+            <td>${deviceDisplay}</td>
           `;
           tableBody.appendChild(row);
         });
       }, (error) => {
         console.error("Live listener error:", error);
-        tableBody.innerHTML = `<tr><td colspan="4" style="color:red; text-align:center;">Connection Error: ${error.message}</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="5" style="color:red; text-align:center;">Connection Error: ${error.message}</td></tr>`;
       });
     }
 
@@ -175,11 +212,10 @@
             alert("No logs to export.");
             return;
         }
-        let csvContent = "data:text/csv;charset=utf-8,Time,User,Status,User Agent\n";
+        let csvContent = "data:text/csv;charset=utf-8,Time,User,Status,Browser,Device\n";
         currentLogs.forEach(row => {
-            const cleanUserAgent = row.userAgent.replace(/"/g, '""'); 
             const cleanStatus = row.status.replace(/"/g, '""');
-            csvContent += `"${row.time}","${row.user}","${cleanStatus}","${cleanUserAgent}"\n`;
+            csvContent += `"${row.time}","${row.user}","${cleanStatus}","${row.browser}","${row.device}"\n`;
         });
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
