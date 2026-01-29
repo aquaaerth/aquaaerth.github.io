@@ -187,9 +187,6 @@ document.getElementById("launchBtn").addEventListener("click", async () => {
 
   const ok = confirm("By clicking 'OK', you agree not to share this program or any of its files with anyone outside of Aqua-Aerobic Systems, Inc.");
   if (!ok) return alert("Loading AquaEarth has been cancelled!");
-
-  if (/^https?:\/\//i.test(currentAppHtml.trim())) {
-      if (currentDocId && currentUser) {
     await setDoc(doc(db, "login_logs", currentDocId), {
       username: currentUser,
       timestamp: serverTimestamp(),
@@ -197,21 +194,15 @@ document.getElementById("launchBtn").addEventListener("click", async () => {
       userAgent: navigator.userAgent
     });
   }
+  if (/^https?:\/\//i.test(currentAppHtml.trim())) {
+      if (currentDocId && currentUser) {
     window.open(currentAppHtml.trim(), "_blank");
   } else {
       if (currentDocId && currentUser) {
-    await setDoc(doc(db, "login_logs", currentDocId), {
-      username: currentUser,
-      timestamp: serverTimestamp(),
-      status: "agreed and launched AquaEarth app",
-      userAgent: navigator.userAgent
-    });
-  }
     document.open();
     document.write(currentAppHtml);
     document.close();
   }
-
 });
 
 // Logout
