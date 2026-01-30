@@ -1,0 +1,298 @@
+<!DOCTYPE html> 
+<!-- vs: 564 -->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>AquaEarth KMZ Viewer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Cesium.js"></script>
+  <link href="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+
+  <style>
+    html, body { width:100%; height:100%; margin:0; padding:0; overflow:hidden; font-family:sans-serif; }
+    #app { display:flex; flex-direction:row; height:100%; }
+
+    /* Sidebar */
+    #sidebar {
+      width:300px; min-width:260px;
+      background:#1e1e1e; color:#fff;
+      display:flex; flex-direction:column;
+      padding:0; overflow:hidden;
+      transition:transform 0.3s ease;
+      z-index:1000;
+    }
+    #sidebarHeader {
+      background:#1e1e1e;
+      padding:10px;
+      position:sticky;
+      top:0;
+      z-index:10;
+      border-bottom:1px solid #333;
+    }
+    #sidebarHeader h1 { margin:0; font-size:20px; color:#4FC3F7; }
+    #sidebarHeader h2 { margin:2px 0 12px 0; font-size:12px; font-weight:normal; color:#bbb; }
+    #resetBtn, #popupBtnMobile {
+      width:100%; padding:10px; margin-bottom:10px; background:#444;
+      border:none; border-radius:6px; color:#fff; cursor:pointer; font-size:14px;
+    }
+    #resetBtn:hover, #popupBtnMobile:hover { background:#666; }
+    #popupBtnMobile:disabled { opacity:0.5; cursor:not-allowed; }
+    #searchBox {
+      width:100%;
+      padding:8px;
+      margin-bottom:10px;
+      border:none;
+      border-radius:6px;
+      font-size:16px; /* ✅ bumped to 16px to prevent iOS Safari auto-zoom */
+    }
+
+    #sidebarContent { flex:1; overflow-y:auto; padding:10px; }
+
+    /* Tree */
+    .tree ul { list-style:none; padding-left:18px; margin:4px 0; }
+    .tree li { margin:2px 0; cursor:pointer; }
+    .folder::before { content:"▶ "; display:inline-block; transition:transform 0.2s; }
+    .folder.expanded::before { transform:rotate(90deg); }
+    .collapsed > ul { display:none; }
+    .placemark::before { content:"• "; color:#00c3ff; }
+    .placemark:hover { text-decoration:underline; color:#a3d3ff; }
+    .hidden { display:none !important; }
+
+    /* Legend */
+    #legend { margin-top:12px; padding:8px; background:#2a2a2a; border-radius:6px; font-size:13px; }
+    #legend h4 { margin:0 0 6px; font-size:14px; color:#ddd; }
+    .legend-item { display:flex; align-items:center; margin:4px 0; }
+    .legend-item img { width:18px; height:18px; margin-right:6px; }
+
+    /* Spinner */
+    @keyframes spin { 0%{transform:rotate(0deg);} 100%{transform:rotate(360deg);} }
+    .spinner { width:12px; height:12px; border:2px solid #ccc; border-top:2px solid #444;
+      border-radius:50%; display:inline-block; animation:spin 1s linear infinite; }
+
+    .directions-text { color:#fff; font-weight:bold; font-size:12px; }
+
+    /* Map container */
+    #cesiumContainer { flex:1; height:100%; }
+
+    /* Mobile adjustments */
+    #menuToggle {
+      display:none; position:absolute; top:10px; left:10px; z-index:1500;
+      background:#4FC3F7; color:#07263a; border:none; padding:8px 12px;
+      border-radius:6px; font-size:16px; font-weight:bold; cursor:pointer;
+    }
+    @media (max-width:768px) {
+      #sidebar {
+        position:absolute; top:0; left:0; bottom:0; transform:translateX(-100%);
+        box-shadow:2px 0 6px rgba(0,0,0,0.5);
+      }
+      #sidebar.open { transform:translateX(0); }
+      #menuToggle { display:block; }
+      #cesiumContainer { width:100%; }
+      #popupBtnMobile { display:none; }
+    }
+    @media (min-width:769px) {
+      #popupBtnMobile { display:none; }
+    }
+
+    /* InfoBox container min/max */
+    .cesium-infoBox.cesium-infoBox-visible {
+      height:auto !important;
+      max-height:70vh !important;
+      max-width:200px !important;
+      padding-bottom:5px;
+    }
+    .cesium-infoBox-body { max-height:70vh !important; overflow-y:auto !important; }
+    .cesium-infoBox-description { min-height:230px !important; max-height:70vh !important; overflow-y:auto !important; }
+    .cesium-infoBox-iframe { min-height:230px !important; max-height:70vh !important; overflow-y:auto !important; }
+
+    /* Floating mobile button */
+    #floatingDirections {
+      display:none;
+      position:fixed;
+      top:10px; left:50%;
+      transform:translateX(-50%);
+      z-index:2000;
+      padding:10px 16px;
+      background:linear-gradient(135deg,#4FC3F7,#1976D2);
+      color:#fff;
+      border:none;
+      border-radius:24px;
+      font-size:15px;
+      font-weight:bold;
+      cursor:pointer;
+      box-shadow:0 4px 12px rgba(0,0,0,0.3);
+    }
+    #floatingDirections:hover { background:linear-gradient(135deg,#5FD3FF,#2196F3); }
+    #floatingDirections:disabled { opacity:0.5; cursor:not-allowed; }
+    @media (min-width:769px) {
+      #floatingDirections { display:none !important; }
+    }
+  </style>
+</head>
+<body>
+  <button id="menuToggle">☰ Menu</button>
+  <div id="app">
+    <div id="sidebar">
+      <div id="sidebarHeader">
+        <img src="https://aquavisitorsystem.github.io/aqua.png" width="100%" style="background-color:white; border-radius:4px;">
+        <h1>AquaEarth</h1>
+        <h2>Protecting the World’s Water</h2>
+        <button id="resetBtn">Reset</button>
+        <button id="popupBtnMobile" disabled>Get directions</button>
+        <input type="text" id="searchBox" placeholder="Search folders & placemarks...">
+      </div>
+      <div id="sidebarContent">
+        <div class="tree" id="kmlTree">Loading KMZ structure...</div>
+        <div id="legend"></div>
+  <br><div id="help" style="font-size: smaller;">For additional edits to map locations<br>please contact Rose Melody x4428.
+        <br><br>KMZ last updated: 1/29/2026<br><br>
+        <a href="/logs/" target="_blank" style="color: #8992b3;">live activity log</a>
+</div>
+      </div>
+    </div>
+    <div id="cesiumContainer"></div>
+
+  </div>
+  <button id="floatingDirections" disabled>Get Directions</button>
+
+
+  <script>
+<script>
+// Centralized version control
+const APP_VERSION = "v567-DEBUG";
+
+window.addEventListener("load", () => {
+    alert("Step 1: Page Loaded. Checking WebGL...");
+
+    // Check WebGL 1 support
+    const canvas = document.createElement("canvas");
+    const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+    if (!gl) {
+        alert("CRITICAL: WebGL 1.0 is NOT supported or is disabled in Safari settings on this phone.");
+    } else {
+        console.log("WebGL 1.0 OK");
+    }
+
+    try {
+        alert("Step 2: Attempting Cesium Init...");
+        Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3NmEwNjdiZi02Y2E3LTQwNzEtYWRkMy03MjU1MTU3YWZmNTciLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyNDUyMTN9.C_4ZYmFZ-ShXYbhckuorrIbc_OlB1pwsyuAAdmJK3Ww";
+
+        const viewer = new Cesium.Viewer("cesiumContainer", {
+            baseLayerPicker: false,
+            timeline: false,
+            animation: false,
+            contextOptions: {
+                requestWebgl2: false // Forcing WebGL 1.0 for cross-device stability
+            }
+        });
+        
+        alert("Step 3: Cesium Viewer Created Successfully.");
+
+        const kmlUrl = "AASI Installations.kmz";
+        alert("Step 4: Requesting KMZ file...");
+
+        Cesium.KmlDataSource.load(kmlUrl, {
+            camera: viewer.scene.camera,
+            canvas: viewer.scene.canvas
+        }).then(ds => {
+            alert("Step 5: KMZ Loaded! Items: " + ds.entities.values.length);
+            viewer.dataSources.add(ds);
+            
+            // ... rest of your tree building logic ...
+            setupAppLogic(viewer, ds); 
+
+        }).catch(err => {
+            alert("Step 5 ERROR: KMZ failed to load. " + err.message);
+        });
+
+    } catch (e) {
+        alert("INITIALIZATION ERROR: " + e.name + ": " + e.message);
+    }
+});
+
+// Wrap your existing tree/address logic in this function
+function setupAppLogic(viewer, ds) {
+    // [Insert your existing buildTree, searchBox, and address logic here]
+    console.log("App logic attached");
+}
+</script>
+  </script>
+</body>
+
+<pre id="changelog" style="display:none">
+📜 AquaEarth KMZ Viewer – Version Changelog
+
+v500 → v501
+- Changed InfoBox max height from fixed 400px to 70% of window height.
+- Allowed dynamic, content-driven sizing.
+
+v501 → v502
+- Added min height (280px) + max height (70%) to InfoBox.
+
+v502 → v503
+- Applied same min/max rules to .cesium-infoBox-description.
+
+v503 → v553
+- Added Get Directions button inside InfoBox.
+- Sidebar button removed.
+- Directions logic: popup on desktop, direct open on mobile.
+
+v553 → v557
+- Reintroduced sidebar button (mobile only).
+- InfoBox shows button on desktop only; mobile shows a note.
+
+v557 → v558
+- Unified openDirections() to always use popup window.
+
+v558 → v559
+- Added floating mobile “Get Directions” button (top).
+
+v559 → v560
+- Enhanced InfoBox sandboxing for security (allow-same-origin, popups, top-navigation by user).
+- MutationObserver added to auto-resize InfoBox dynamically when content changes.
+- Spinner + “Fetching address…” placeholder now injected when address is being resolved.
+
+v560 → v561
+- Integrated reverse geocoding with OpenStreetMap Nominatim for placemark addresses.
+- Address replaces spinner once fetched, with linkable Google Maps directions URL.
+- Unified floating mobile “Get Directions” button tied into openDirections() logic.
+- Desktop “Get Directions” button enabled in InfoBox once address is available.
+
+v561 → v562
+- Search reset behavior improved: resets camera, collapses all folders except root, unhides all placemarks.
+- Mobile experience polished: sidebar auto-closes when placemark selected; floating button shown/hidden correctly.
+- Styling adjustments: search box bumped to 16px (prevent iOS Safari zoom), better sidebar/header spacing.
+- Removed rogue Reset button duplication in Cesium toolbar; ensured only sidebar Reset is used.
+
+v562 → v563
+- Version constant incremented for tracking.
+- Ready for next feature or bugfix entry.
+</pre>
+</html>
+
+<script>
+// --- Rogue quote cleanup ---
+if (document.body.firstChild && document.body.firstChild.nodeType === Node.TEXT_NODE) {
+  document.body.firstChild.textContent =
+    document.body.firstChild.textContent.replace(/^'+/, "");
+}
+if (document.body.lastChild && document.body.lastChild.nodeType === Node.TEXT_NODE) {
+  document.body.lastChild.textContent =
+    document.body.lastChild.textContent.replace(/'+$/, "");
+}
+
+// --- Changelog updater ---
+(function updateChangelog() {
+  const logEl = document.getElementById("changelog");
+  if (!logEl) return;
+
+  let logText = logEl.textContent.trim();
+  if (!logText.includes(APP_VERSION)) {
+    logText += `\n\nv563 → ${APP_VERSION}\n- Version constant incremented for tracking.\n- Ready for next feature or bugfix entry.`;
+    logEl.textContent = logText;
+  }
+
+  console.log("AquaEarth KMZ Viewer " + APP_VERSION);
+  console.log("=== AquaEarth KMZ Changelog ===\n" + logText);
+})();
+</script>

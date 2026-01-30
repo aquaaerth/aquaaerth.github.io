@@ -1,442 +1,383 @@
-<!DOCTYPE html> 
+older iphones won't load: <!DOCTYPE html> 
 <!-- vs: 564 -->
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>AquaEarth KMZ Viewer</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <script src="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Cesium.js"></script>
-  <link href="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+  <meta charset="utf-8" />
+  <title>AquaEarth KMZ Viewer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Cesium.js"></script>
+  <link href="https://cesium.com/downloads/cesiumjs/releases/1.119/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
 
-  <style>
-    html, body { width:100%; height:100%; margin:0; padding:0; overflow:hidden; font-family:sans-serif; }
-    #app { display:flex; flex-direction:row; height:100%; }
+  <style>
+    html, body { width:100%; height:100%; margin:0; padding:0; overflow:hidden; font-family:sans-serif; }
+    #app { display:flex; flex-direction:row; height:100%; }
 
-    /* Sidebar */
-    #sidebar {
-      width:300px; min-width:260px;
-      background:#1e1e1e; color:#fff;
-      display:flex; flex-direction:column;
-      padding:0; overflow:hidden;
-      transition:transform 0.3s ease;
-      z-index:1000;
-    }
-    #sidebarHeader {
-      background:#1e1e1e;
-      padding:10px;
-      position:sticky;
-      top:0;
-      z-index:10;
-      border-bottom:1px solid #333;
-    }
-    #sidebarHeader h1 { margin:0; font-size:20px; color:#4FC3F7; }
-    #sidebarHeader h2 { margin:2px 0 12px 0; font-size:12px; font-weight:normal; color:#bbb; }
-    #resetBtn, #popupBtnMobile {
-      width:100%; padding:10px; margin-bottom:10px; background:#444;
-      border:none; border-radius:6px; color:#fff; cursor:pointer; font-size:14px;
-    }
-    #resetBtn:hover, #popupBtnMobile:hover { background:#666; }
-    #popupBtnMobile:disabled { opacity:0.5; cursor:not-allowed; }
-    #searchBox {
-      width:100%;
-      padding:8px;
-      margin-bottom:10px;
-      border:none;
-      border-radius:6px;
-      font-size:16px; /* ✅ bumped to 16px to prevent iOS Safari auto-zoom */
-    }
+    /* Sidebar */
+    #sidebar {
+      width:300px; min-width:260px;
+      background:#1e1e1e; color:#fff;
+      display:flex; flex-direction:column;
+      padding:0; overflow:hidden;
+      transition:transform 0.3s ease;
+      z-index:1000;
+    }
+    #sidebarHeader {
+      background:#1e1e1e;
+      padding:10px;
+      position:sticky;
+      top:0;
+      z-index:10;
+      border-bottom:1px solid #333;
+    }
+    #sidebarHeader h1 { margin:0; font-size:20px; color:#4FC3F7; }
+    #sidebarHeader h2 { margin:2px 0 12px 0; font-size:12px; font-weight:normal; color:#bbb; }
+    #resetBtn, #popupBtnMobile {
+      width:100%; padding:10px; margin-bottom:10px; background:#444;
+      border:none; border-radius:6px; color:#fff; cursor:pointer; font-size:14px;
+    }
+    #resetBtn:hover, #popupBtnMobile:hover { background:#666; }
+    #popupBtnMobile:disabled { opacity:0.5; cursor:not-allowed; }
+    #searchBox {
+      width:100%;
+      padding:8px;
+      margin-bottom:10px;
+      border:none;
+      border-radius:6px;
+      font-size:16px; /* ✅ bumped to 16px to prevent iOS Safari auto-zoom */
+    }
 
-    #sidebarContent { flex:1; overflow-y:auto; padding:10px; }
+    #sidebarContent { flex:1; overflow-y:auto; padding:10px; }
 
-    /* Tree */
-    .tree ul { list-style:none; padding-left:18px; margin:4px 0; }
-    .tree li { margin:2px 0; cursor:pointer; }
-    .folder::before { content:"▶ "; display:inline-block; transition:transform 0.2s; }
-    .folder.expanded::before { transform:rotate(90deg); }
-    .collapsed > ul { display:none; }
-    .placemark::before { content:"• "; color:#00c3ff; }
-    .placemark:hover { text-decoration:underline; color:#a3d3ff; }
-    .hidden { display:none !important; }
+    /* Tree */
+    .tree ul { list-style:none; padding-left:18px; margin:4px 0; }
+    .tree li { margin:2px 0; cursor:pointer; }
+    .folder::before { content:"▶ "; display:inline-block; transition:transform 0.2s; }
+    .folder.expanded::before { transform:rotate(90deg); }
+    .collapsed > ul { display:none; }
+    .placemark::before { content:"• "; color:#00c3ff; }
+    .placemark:hover { text-decoration:underline; color:#a3d3ff; }
+    .hidden { display:none !important; }
 
-    /* Legend */
-    #legend { margin-top:12px; padding:8px; background:#2a2a2a; border-radius:6px; font-size:13px; }
-    #legend h4 { margin:0 0 6px; font-size:14px; color:#ddd; }
-    .legend-item { display:flex; align-items:center; margin:4px 0; }
-    .legend-item img { width:18px; height:18px; margin-right:6px; }
+    /* Legend */
+    #legend { margin-top:12px; padding:8px; background:#2a2a2a; border-radius:6px; font-size:13px; }
+    #legend h4 { margin:0 0 6px; font-size:14px; color:#ddd; }
+    .legend-item { display:flex; align-items:center; margin:4px 0; }
+    .legend-item img { width:18px; height:18px; margin-right:6px; }
 
-    /* Spinner */
-    @keyframes spin { 0%{transform:rotate(0deg);} 100%{transform:rotate(360deg);} }
-    .spinner { width:12px; height:12px; border:2px solid #ccc; border-top:2px solid #444;
-      border-radius:50%; display:inline-block; animation:spin 1s linear infinite; }
+    /* Spinner */
+    @keyframes spin { 0%{transform:rotate(0deg);} 100%{transform:rotate(360deg);} }
+    .spinner { width:12px; height:12px; border:2px solid #ccc; border-top:2px solid #444;
+      border-radius:50%; display:inline-block; animation:spin 1s linear infinite; }
 
-    .directions-text { color:#fff; font-weight:bold; font-size:12px; }
+    .directions-text { color:#fff; font-weight:bold; font-size:12px; }
 
-    /* Map container */
-    #cesiumContainer { flex:1; height:100%; }
+    /* Map container */
+    #cesiumContainer { flex:1; height:100%; }
 
-    /* Mobile adjustments */
-    #menuToggle {
-      display:none; position:absolute; top:10px; left:10px; z-index:1500;
-      background:#4FC3F7; color:#07263a; border:none; padding:8px 12px;
-      border-radius:6px; font-size:16px; font-weight:bold; cursor:pointer;
-    }
-    @media (max-width:768px) {
-      #sidebar {
-        position:absolute; top:0; left:0; bottom:0; transform:translateX(-100%);
-        box-shadow:2px 0 6px rgba(0,0,0,0.5);
-      }
-      #sidebar.open { transform:translateX(0); }
-      #menuToggle { display:block; }
-      #cesiumContainer { width:100%; }
-      #popupBtnMobile { display:none; }
-    }
-    @media (min-width:769px) {
-      #popupBtnMobile { display:none; }
-    }
+    /* Mobile adjustments */
+    #menuToggle {
+      display:none; position:absolute; top:10px; left:10px; z-index:1500;
+      background:#4FC3F7; color:#07263a; border:none; padding:8px 12px;
+      border-radius:6px; font-size:16px; font-weight:bold; cursor:pointer;
+    }
+    @media (max-width:768px) {
+      #sidebar {
+        position:absolute; top:0; left:0; bottom:0; transform:translateX(-100%);
+        box-shadow:2px 0 6px rgba(0,0,0,0.5);
+      }
+      #sidebar.open { transform:translateX(0); }
+      #menuToggle { display:block; }
+      #cesiumContainer { width:100%; }
+      #popupBtnMobile { display:none; }
+    }
+    @media (min-width:769px) {
+      #popupBtnMobile { display:none; }
+    }
 
-    /* InfoBox container min/max */
-    .cesium-infoBox.cesium-infoBox-visible {
-      height:auto !important;
-      max-height:70vh !important;
-      max-width:200px !important;
-      padding-bottom:5px;
-    }
-    .cesium-infoBox-body { max-height:70vh !important; overflow-y:auto !important; }
-    .cesium-infoBox-description { min-height:230px !important; max-height:70vh !important; overflow-y:auto !important; }
-    .cesium-infoBox-iframe { min-height:230px !important; max-height:70vh !important; overflow-y:auto !important; }
+    /* InfoBox container min/max */
+    .cesium-infoBox.cesium-infoBox-visible {
+      height:auto !important;
+      max-height:70vh !important;
+      max-width:200px !important;
+      padding-bottom:5px;
+    }
+    .cesium-infoBox-body { max-height:70vh !important; overflow-y:auto !important; }
+    .cesium-infoBox-description { min-height:230px !important; max-height:70vh !important; overflow-y:auto !important; }
+    .cesium-infoBox-iframe { min-height:230px !important; max-height:70vh !important; overflow-y:auto !important; }
 
-    /* Floating mobile button */
-    #floatingDirections {
-      display:none;
-      position:fixed;
-      top:10px; left:50%;
-      transform:translateX(-50%);
-      z-index:2000;
-      padding:10px 16px;
-      background:linear-gradient(135deg,#4FC3F7,#1976D2);
-      color:#fff;
-      border:none;
-      border-radius:24px;
-      font-size:15px;
-      font-weight:bold;
-      cursor:pointer;
-      box-shadow:0 4px 12px rgba(0,0,0,0.3);
-    }
-    #floatingDirections:hover { background:linear-gradient(135deg,#5FD3FF,#2196F3); }
-    #floatingDirections:disabled { opacity:0.5; cursor:not-allowed; }
-    @media (min-width:769px) {
-      #floatingDirections { display:none !important; }
-    }
-  </style>
+    /* Floating mobile button */
+    #floatingDirections {
+      display:none;
+      position:fixed;
+      top:10px; left:50%;
+      transform:translateX(-50%);
+      z-index:2000;
+      padding:10px 16px;
+      background:linear-gradient(135deg,#4FC3F7,#1976D2);
+      color:#fff;
+      border:none;
+      border-radius:24px;
+      font-size:15px;
+      font-weight:bold;
+      cursor:pointer;
+      box-shadow:0 4px 12px rgba(0,0,0,0.3);
+    }
+    #floatingDirections:hover { background:linear-gradient(135deg,#5FD3FF,#2196F3); }
+    #floatingDirections:disabled { opacity:0.5; cursor:not-allowed; }
+    @media (min-width:769px) {
+      #floatingDirections { display:none !important; }
+    }
+  </style>
 </head>
 <body>
-  <button id="menuToggle">☰ Menu</button>
-  <div id="app">
-    <div id="sidebar">
-      <div id="sidebarHeader">
-        <img src="https://aquavisitorsystem.github.io/aqua.png" width="100%" style="background-color:white; border-radius:4px;">
-        <h1>AquaEarth</h1>
-        <h2>Protecting the World’s Water</h2>
-        <button id="resetBtn">Reset</button>
-        <button id="popupBtnMobile" disabled>Get directions</button>
-        <input type="text" id="searchBox" placeholder="Search folders & placemarks...">
-      </div>
-      <div id="sidebarContent">
-        <div class="tree" id="kmlTree">Loading KMZ structure...</div>
-        <div id="legend"></div>
-  <br><div id="help" style="font-size: smaller;">For additional edits to map locations<br>please contact Rose Melody x4428.
-        <br><br>KMZ last updated: 1/29/2026<br><br>
-        <a href="/logs/" target="_blank" style="color: #8992b3;">live activity log</a>
+  <button id="menuToggle">☰ Menu</button>
+  <div id="app">
+    <div id="sidebar">
+      <div id="sidebarHeader">
+        <img src="https://aquavisitorsystem.github.io/aqua.png" width="100%" style="background-color:white; border-radius:4px;">
+        <h1>AquaEarth</h1>
+        <h2>Protecting the World’s Water</h2>
+        <button id="resetBtn">Reset</button>
+        <button id="popupBtnMobile" disabled>Get directions</button>
+        <input type="text" id="searchBox" placeholder="Search folders & placemarks...">
+      </div>
+      <div id="sidebarContent">
+        <div class="tree" id="kmlTree">Loading KMZ structure...</div>
+        <div id="legend"></div>
+  <br><div id="help" style="font-size: smaller;">For additional edits to map locations<br>please contact Rose Melody x4428.
+        <br><br>KMZ last updated: 1/29/2026<br><br>
+        <a href="/logs/" target="_blank" style="color: #8992b3;">live activity log</a>
 </div>
-      </div>
-    </div>
-    <div id="cesiumContainer"></div>
+      </div>
+    </div>
+    <div id="cesiumContainer"></div>
 
-  </div>
-  <button id="floatingDirections" disabled>Get Directions</button>
+  </div>
+  <button id="floatingDirections" disabled>Get Directions</button>
 
 
-  <script>
-// Centralized version control
-var APP_VERSION = "v566-legacy";
+  <script>
+  // Centralized version control
+  const APP_VERSION = "v565";
 
-window.addEventListener("load", function() {
-    console.log("AquaEarth KMZ Viewer " + APP_VERSION);
+  window.addEventListener("load", () => {
+    console.log("AquaEarth KMZ Viewer " + APP_VERSION);
 
-    var menuToggle = document.getElementById("menuToggle");
-    var sidebar = document.getElementById("sidebar");
-    
-    if (menuToggle) {
-        menuToggle.addEventListener("click", function() {
-            sidebar.classList.toggle("open");
-        });
-    }
+    const menuToggle=document.getElementById("menuToggle");
+    const sidebar=document.getElementById("sidebar");
+    menuToggle.addEventListener("click",()=>sidebar.classList.toggle("open"));
 
-    Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3NmEwNjdiZi02Y2E3LTQwNzEtYWRkMy03MjU1MTU3YWZmNTciLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyNDUyMTN9.C_4ZYmFZ-ShXYbhckuorrIbc_OlB1pwsyuAAdmJK3Ww";
+        Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI3NmEwNjdiZi02Y2E3LTQwNzEtYWRkMy03MjU1MTU3YWZmNTciLCJpZCI6MzQ1OTkyLCJpYXQiOjE3NTkyNDUyMTN9.C_4ZYmFZ-ShXYbhckuorrIbc_OlB1pwsyuAAdmJK3Ww";
 
-    var viewer = new Cesium.Viewer("cesiumContainer", {
-        baseLayerPicker: false,
-        timeline: false,
-        animation: false
-    });
+    const viewer=new Cesium.Viewer("cesiumContainer",{baseLayerPicker:false,timeline:false,animation:false});
 
-    var _currentDirectionsUrl = "";
+    function openDirections() {
+      if (!_currentDirectionsUrl) return;
+      const proxy = `gmaps-popup.html?to=${encodeURIComponent(_currentDirectionsUrl)}`;
+      const w=800,h=600,left=(screen.width-w)/2,top=(screen.height-h)/2;
+      const win=window.open(proxy,"DirectionsPopup",
+        `width=${w},height=${h},top=${top},left=${left},resizable=yes,scrollbars=yes`);
+      if (!win) alert("Popup was blocked. Please allow popups for this site.");
+    }
 
-    function openDirections() {
-        if (!_currentDirectionsUrl) return;
-        var proxy = "gmaps-popup.html?to=" + encodeURIComponent(_currentDirectionsUrl);
-        var w = 800, h = 600;
-        var left = (screen.width - w) / 2;
-        var top = (screen.height - h) / 2;
-        var win = window.open(proxy, "DirectionsPopup",
-            "width=" + w + ",height=" + h + ",top=" + top + ",left=" + left + ",resizable=yes,scrollbars=yes");
-        if (!win) alert("Popup was blocked. Please allow popups for this site.");
-    }
+    // Hook into InfoBox iframe
+    viewer.infoBox.frame.addEventListener("load", () => {
+      const f=viewer.infoBox.frame;
+      f.setAttribute("sandbox","allow-same-origin allow-popups allow-top-navigation-by-user-activation");
+      const doc=f.contentDocument||f.contentWindow.document;
 
-    // Hook into InfoBox iframe
-    viewer.infoBox.frame.addEventListener("load", function() {
-        var f = viewer.infoBox.frame;
-        f.setAttribute("sandbox", "allow-same-origin allow-popups allow-top-navigation-by-user-activation");
-        var doc = f.contentDocument || f.contentWindow.document;
+      const resizeInfoBox=()=> {
+        const box=document.querySelector(".cesium-infoBox.cesium-infoBox-visible");
+        if (box) {
+          const innerHeight=doc.body.scrollHeight;
+          const capped=Math.min(innerHeight,window.innerHeight*0.7);
+          const finalHeight=Math.max(capped,230);
+          box.style.height=finalHeight+"px";
+        }
+      };
+      resizeInfoBox();
+      new MutationObserver(resizeInfoBox).observe(doc.body,{childList:true,subtree:true,characterData:true});
 
-        var resizeInfoBox = function() {
-            var box = document.querySelector(".cesium-infoBox.cesium-infoBox-visible");
-            if (box && doc.body) {
-                var innerHeight = doc.body.scrollHeight;
-                var capped = Math.min(innerHeight, window.innerHeight * 0.7);
-                var finalHeight = Math.max(capped, 230);
-                box.style.height = finalHeight + "px";
-            }
-        };
+      if (!doc.getElementById("directionsSlot")) {
+        const slot=doc.createElement("div");
+        slot.id="directionsSlot";
+        doc.body.appendChild(slot);
 
-        resizeInfoBox();
-        
-        if (typeof MutationObserver !== "undefined") {
-            new MutationObserver(resizeInfoBox).observe(doc.body, {
-                childList: true,
-                subtree: true,
-                characterData: true
-            });
-        }
+        if (!/Mobi|Android/i.test(navigator.userAgent)) {
+          const btnReal=document.createElement("button");
+          btnReal.id="popupBtn2";
+          btnReal.textContent="Get directions";
+          btnReal.disabled=true;
+          btnReal.style.cssText=`
+            display:block; margin:15px auto 0 auto;
+            padding:8px 8px; background:#444; border:none; border-radius:6px;
+            color:#fff; cursor:pointer; font-size:14px; min-width:160px; text-align:center;
+          `;
+          btnReal.addEventListener("click",openDirections);
+          slot.appendChild(btnReal);
+        }
+      }
+    });
 
-        if (!doc.getElementById("directionsSlot")) {
-            var slot = doc.createElement("div");
-            slot.id = "directionsSlot";
-            doc.body.appendChild(slot);
+    viewer.camera.setView({destination:Cesium.Rectangle.fromDegrees(-125,24,-66,49)});
 
-            if (!/Mobi|Android/i.test(navigator.userAgent)) {
-                var btnReal = doc.createElement("button");
-                btnReal.id = "popupBtn2";
-                btnReal.textContent = "Get directions";
-                btnReal.disabled = true;
-                btnReal.style.cssText = "display:block; margin:15px auto 0 auto; " +
-                    "padding:8px 8px; background:#444; border:none; border-radius:6px; " +
-                    "color:#fff; cursor:pointer; font-size:14px; min-width:160px; text-align:center;";
-                btnReal.addEventListener("click", openDirections);
-                slot.appendChild(btnReal);
-            }
-        }
-    });
+    const folderColorMap={"Biological Installations":Cesium.Color.GREEN,"Filter Installations":Cesium.Color.ORANGE,"Tours":Cesium.Color.BLUE};
+    const pinBuilder=new Cesium.PinBuilder();
+    function getIconForEntity(entity){
+      let parent=entity.parent;
+      while(parent){
+        if(parent.name&&folderColorMap[parent.name]){
+          return pinBuilder.fromColor(folderColorMap[parent.name],32).toDataURL();
+        }
+        parent=parent.parent;
+      }
+      return pinBuilder.fromColor(Cesium.Color.CYAN,32).toDataURL();
+    }
 
-    viewer.camera.setView({
-        destination: Cesium.Rectangle.fromDegrees(-125, 24, -66, 49)
-    });
+    const kmlUrl="AASI Installations.kmz";
+    Cesium.KmlDataSource.load(kmlUrl,{camera:viewer.scene.camera,canvas:viewer.scene.canvas}).then(ds=>{
+      viewer.dataSources.add(ds);
+      ds.entities.values.forEach(e=>{ if(e.billboard) e.billboard.image=getIconForEntity(e); });
 
-    var folderColorMap = {
-        "Biological Installations": Cesium.Color.GREEN,
-        "Filter Installations": Cesium.Color.ORANGE,
-        "Tours": Cesium.Color.BLUE
-    };
-    
-    var pinBuilder = new Cesium.PinBuilder();
+      const treeContainer=document.getElementById("kmlTree");
+      treeContainer.innerHTML="";
+      const myPlaces=ds.entities.values.find(e=>e.name&&e.name.trim()==="My Places");
+      if(!myPlaces||!myPlaces._children){ treeContainer.textContent="No 'My Places'"; return; }
 
-    function getIconForEntity(entity) {
-        var parent = entity.parent;
-        while (parent) {
-            if (parent.name && folderColorMap[parent.name]) {
-                return pinBuilder.fromColor(folderColorMap[parent.name], 32).toDataURL();
-            }
-            parent = parent.parent;
-        }
-        return pinBuilder.fromColor(Cesium.Color.CYAN, 32).toDataURL();
-    }
+      function buildTree(entities,parentEl){
+        const ul=document.createElement("ul"); parentEl.appendChild(ul);
+        entities.forEach(entity=>{
+          if(entity.show===false) return;
+          const li=document.createElement("li");
+          if(entity._children&&entity._children.length>0){
+            li.textContent=entity.name||"Folder";
+            li.classList.add("folder","collapsed");
+            li.onclick=e=>{ e.stopPropagation(); li.classList.toggle("collapsed"); li.classList.toggle("expanded"); };
+            ul.appendChild(li); buildTree(entity._children,li);
+          } else {
+            li.textContent=entity.name||"Unnamed";
+            li.classList.add("placemark");
+            li.onclick=e=>{
+              e.stopPropagation();
+              if(entity.position){
+                viewer.flyTo(entity,{duration:2});
+                viewer.selectedEntity=entity;
+              }
+              if(window.innerWidth<=768){ sidebar.classList.remove("open"); }
+            };
+            ul.appendChild(li);
+          }
+        });
+      }
+      const myRoot=document.createElement("div");
+      myRoot.textContent="AASI Installations"; myRoot.classList.add("folder","expanded");
+      treeContainer.appendChild(myRoot);
+      buildTree(myPlaces._children,myRoot);
 
-    var kmlUrl = "AASI Installations.kmz";
-    Cesium.KmlDataSource.load(kmlUrl, {
-        camera: viewer.scene.camera,
-        canvas: viewer.scene.canvas
-    }).then(function(ds) {
-        viewer.dataSources.add(ds);
-        ds.entities.values.forEach(function(e) {
-            if (e.billboard) e.billboard.image = getIconForEntity(e);
-        });
+      document.getElementById("searchBox").addEventListener("input",function(){
+        const term=this.value.toLowerCase();
+        const allNodes=treeContainer.querySelectorAll("li,div.folder");
+        allNodes.forEach(el=>el.classList.remove("hidden"));
+        if(term===""){ 
+          viewer.camera.setView({destination:Cesium.Rectangle.fromDegrees(-125,24,-66,49)});
+          const folders=treeContainer.querySelectorAll(".folder");
+          folders.forEach((f,i)=>{ 
+            if(i===0){ f.classList.add("expanded"); f.classList.remove("collapsed"); }
+            else { f.classList.add("collapsed"); f.classList.remove("expanded"); }
+            f.classList.remove("hidden"); 
+          });
+          treeContainer.querySelectorAll(".placemark").forEach(pm=>pm.classList.remove("hidden"));
+          return;
+        }
+        allNodes.forEach(el=>{
+          const text=el.textContent.toLowerCase();
+          if(el.classList.contains("folder")){
+            if(text.includes(term)){ 
+              el.classList.add("expanded"); el.classList.remove("collapsed");
+              el.querySelectorAll("li,div").forEach(d=>d.classList.remove("hidden"));
+            } else {
+              let has=false; el.querySelectorAll("li,div").forEach(ch=>{ if(ch.textContent.toLowerCase().includes(term)) has=true; });
+              if(!has) el.classList.add("hidden");
+            }
+          }
+          if(el.classList.contains("placemark")){
+            if(text.includes(term)){
+              let p=el.parentElement; 
+              while(p&&p!==treeContainer){ 
+                if(p.classList.contains("folder")){ 
+                  p.classList.add("expanded"); 
+                  p.classList.remove("collapsed"); 
+                  p.classList.remove("hidden"); 
+                } 
+                p=p.parentElement; 
+              }
+            } else {
+              let pf=el.closest(".folder"); 
+              if(!pf||!pf.textContent.toLowerCase().includes(term)) el.classList.add("hidden");
+            }
+          }
+        });
+      });
+    });
 
-        var treeContainer = document.getElementById("kmlTree");
-        treeContainer.innerHTML = "";
-        
-        var entities = ds.entities.values;
-        var myPlaces = null;
-        for (var i = 0; i < entities.length; i++) {
-            if (entities[i].name && entities[i].name.trim() === "My Places") {
-                myPlaces = entities[i];
-                break;
-            }
-        }
+    document.getElementById("resetBtn").addEventListener("click",()=>location.reload());
+    Array.from(document.getElementsByClassName('cesium-viewer-bottom')).forEach(b=>b.style.display='none');
+    Array.from(document.getElementsByClassName('cesium-viewer-toolbar')).forEach(b=>b.style.display='none');
+    // ✅ Remove the Reset button after Cesium setup
+    document.getElementById("resetBtn").remove();
 
-        if (!myPlaces || !myPlaces._children) {
-            treeContainer.textContent = "No 'My Places'";
-            return;
-        }
+    const _addrCache=new Map();
+    let _currentDirectionsUrl="";
 
-        function buildTree(entitiesList, parentEl) {
-            var ul = document.createElement("ul");
-            parentEl.appendChild(ul);
-            entitiesList.forEach(function(entity) {
-                if (entity.show === false) return;
-                var li = document.createElement("li");
-                if (entity._children && entity._children.length > 0) {
-                    li.textContent = entity.name || "Folder";
-                    li.classList.add("folder", "collapsed");
-                    li.onclick = function(e) {
-                        e.stopPropagation();
-                        li.classList.toggle("collapsed");
-                        li.classList.toggle("expanded");
-                    };
-                    ul.appendChild(li);
-                    buildTree(entity._children, li);
-                } else {
-                    li.textContent = entity.name || "Unnamed";
-                    li.classList.add("placemark");
-                    li.onclick = function(e) {
-                        e.stopPropagation();
-                        if (entity.position) {
-                            viewer.flyTo(entity, { duration: 2 });
-                            viewer.selectedEntity = entity;
-                        }
-                        if (window.innerWidth <= 768) {
-                            sidebar.classList.remove("open");
-                        }
-                    };
-                    ul.appendChild(li);
-                }
-            });
-        }
+    viewer.selectedEntityChanged.addEventListener(entity=>{
+      if(!entity||!entity.position) return;
+      addAddress(entity);
+    });
 
-        var myRoot = document.createElement("div");
-        myRoot.textContent = "AASI Installations";
-        myRoot.classList.add("folder", "expanded");
-        treeContainer.appendChild(myRoot);
-        buildTree(myPlaces._children, myRoot);
+    async function addAddress(entity){
+      let html=entity.description?.getValue?.()??entity.description??"";
+      if(typeof html!=="string") html=String(html);
+      if(html.includes("Address:")||html.includes("Fetching address")) return;
 
-        document.getElementById("searchBox").addEventListener("input", function() {
-            var term = this.value.toLowerCase();
-            var allNodes = treeContainer.querySelectorAll("li,div.folder");
-            for (var i = 0; i < allNodes.length; i++) {
-                allNodes[i].classList.remove("hidden");
-            }
+      html+=`
+        <hr><div style="font:12px system-ui;color:#bbb">
+          <b>Address:</b><br><span class="spinner"></span> Fetching address...
+        </div>`;
+      entity.description=new Cesium.ConstantProperty(html);
 
-            if (term === "") {
-                viewer.camera.setView({ destination: Cesium.Rectangle.fromDegrees(-125, 24, -66, 49) });
-                var folders = treeContainer.querySelectorAll(".folder");
-                folders.forEach(function(f, idx) {
-                    if (idx === 0) {
-                        f.classList.add("expanded");
-                        f.classList.remove("collapsed");
-                    } else {
-                        f.classList.add("collapsed");
-                        f.classList.remove("expanded");
-                    }
-                    f.classList.remove("hidden");
-                });
-                return;
-            }
+      const carto=Cesium.Cartographic.fromCartesian(entity.position.getValue(Cesium.JulianDate.now()));
+      const lat=Cesium.Math.toDegrees(carto.latitude), lon=Cesium.Math.toDegrees(carto.longitude);
+      const key=`${lat.toFixed(6)},${lon.toFixed(6)}`;
+      if(_addrCache.has(key)){ replace(entity,_addrCache.get(key)); return; }
 
-            // Simple search logic for legacy compatibility
-            for (var j = 0; j < allNodes.length; j++) {
-                var el = allNodes[j];
-                var text = el.textContent.toLowerCase();
-                if (!text.includes(term)) {
-                    el.classList.add("hidden");
-                } else {
-                    el.classList.remove("hidden");
-                }
-            }
-        });
-    });
+      try{
+        const r=await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`);
+        const j=await r.json();
+        const info={address:j.display_name,lat,lon};
+        _addrCache.set(key,info);
+        replace(entity,info);
+      }catch(e){ console.warn("geocode fail",e); }
+    }
 
-    var bottomWidgets = document.getElementsByClassName('cesium-viewer-bottom');
-    for (var i = 0; i < bottomWidgets.length; i++) { bottomWidgets[i].style.display = 'none'; }
+    function replace(entity,{address,lat,lon}){
+      let html=entity.description?.getValue?.()??entity.description??"";
+      const gUrl=`https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}`;
+      const infoBoxLine=`<span class="directions-text">${address}</span>`;
+      html=html.replace('<span class="spinner"></span> Fetching address...',infoBoxLine);
+      entity.description=new Cesium.ConstantProperty(html);
+      _currentDirectionsUrl=gUrl;
 
-    var resetBtn = document.getElementById("resetBtn");
-    if (resetBtn) resetBtn.remove();
+      const doc=viewer.infoBox.frame.contentDocument||viewer.infoBox.frame.contentWindow.document;
+      const btn2=doc.getElementById("popupBtn2");
+      if(btn2) btn2.disabled=false;
 
-    var _addrCache = {};
-
-    viewer.selectedEntityChanged.addEventListener(function(entity) {
-        if (!entity || !entity.position) return;
-        addAddress(entity);
-    });
-
-    function addAddress(entity) {
-        var html = "";
-        if (entity.description && typeof entity.description.getValue === 'function') {
-            html = entity.description.getValue();
-        } else {
-            html = entity.description || "";
-        }
-
-        if (typeof html !== "string") html = String(html);
-        if (html.indexOf("Address:") !== -1 || html.indexOf("Fetching address") !== -1) return;
-
-        html += '<hr><div style="font:12px system-ui;color:#bbb"><b>Address:</b><br><span class="spinner"></span> Fetching address...</div>';
-        entity.description = new Cesium.ConstantProperty(html);
-
-        var carto = Cesium.Cartographic.fromCartesian(entity.position.getValue(Cesium.JulianDate.now()));
-        var lat = Cesium.Math.toDegrees(carto.latitude);
-        var lon = Cesium.Math.toDegrees(carto.longitude);
-        var key = lat.toFixed(6) + "," + lon.toFixed(6);
-
-        if (_addrCache[key]) {
-            replace(entity, _addrCache[key]);
-            return;
-        }
-
-        fetch("https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=" + lat + "&lon=" + lon)
-            .then(function(r) { return r.json(); })
-            .then(function(j) {
-                var info = { address: j.display_name, lat: lat, lon: lon };
-                _addrCache[key] = info;
-                replace(entity, info);
-            })
-            .catch(function(e) { console.warn("geocode fail", e); });
-    }
-
-    function replace(entity, info) {
-        var html = "";
-        if (entity.description && typeof entity.description.getValue === 'function') {
-            html = entity.description.getValue();
-        } else {
-            html = entity.description || "";
-        }
-
-        var gUrl = "https://maps.google.com/?q=" + info.lat + "," + info.lon;
-        var infoBoxLine = '<span class="directions-text">' + info.address + '</span>';
-        html = html.replace('<span class="spinner"></span> Fetching address...', infoBoxLine);
-        entity.description = new Cesium.ConstantProperty(html);
-        _currentDirectionsUrl = gUrl;
-
-        var iframe = viewer.infoBox.frame;
-        var doc = iframe.contentDocument || iframe.contentWindow.document;
-        var btn2 = doc.getElementById("popupBtn2");
-        if (btn2) btn2.disabled = false;
-
-        var floatingBtn = document.getElementById("floatingDirections");
-        floatingBtn.style.display = "block";
-        floatingBtn.disabled = false;
-        floatingBtn.onclick = openDirections;
-    }
-});
-  </script>
+      const floatingBtn=document.getElementById("floatingDirections");
+      floatingBtn.style.display="block";
+      floatingBtn.disabled=false;
+      floatingBtn.onclick=openDirections;
+    }
+  });
+  </script>
 </body>
 
 <pre id="changelog" style="display:none">
@@ -493,26 +434,26 @@ v562 → v563
 <script>
 // --- Rogue quote cleanup ---
 if (document.body.firstChild && document.body.firstChild.nodeType === Node.TEXT_NODE) {
-  document.body.firstChild.textContent =
-    document.body.firstChild.textContent.replace(/^'+/, "");
+  document.body.firstChild.textContent =
+    document.body.firstChild.textContent.replace(/^'+/, "");
 }
 if (document.body.lastChild && document.body.lastChild.nodeType === Node.TEXT_NODE) {
-  document.body.lastChild.textContent =
-    document.body.lastChild.textContent.replace(/'+$/, "");
+  document.body.lastChild.textContent =
+    document.body.lastChild.textContent.replace(/'+$/, "");
 }
 
 // --- Changelog updater ---
 (function updateChangelog() {
-  const logEl = document.getElementById("changelog");
-  if (!logEl) return;
+  const logEl = document.getElementById("changelog");
+  if (!logEl) return;
 
-  let logText = logEl.textContent.trim();
-  if (!logText.includes(APP_VERSION)) {
-    logText += `\n\nv563 → ${APP_VERSION}\n- Version constant incremented for tracking.\n- Ready for next feature or bugfix entry.`;
-    logEl.textContent = logText;
-  }
+  let logText = logEl.textContent.trim();
+  if (!logText.includes(APP_VERSION)) {
+    logText += `\n\nv563 → ${APP_VERSION}\n- Version constant incremented for tracking.\n- Ready for next feature or bugfix entry.`;
+    logEl.textContent = logText;
+  }
 
-  console.log("AquaEarth KMZ Viewer " + APP_VERSION);
-  console.log("=== AquaEarth KMZ Changelog ===\n" + logText);
+  console.log("AquaEarth KMZ Viewer " + APP_VERSION);
+  console.log("=== AquaEarth KMZ Changelog ===\n" + logText);
 })();
 </script>
